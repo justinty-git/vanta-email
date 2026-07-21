@@ -329,21 +329,24 @@
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Email Content Score</span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-success-bg); color:var(--badge-success-text); white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>Live tool</span>
             </div>
-            <span style="font-size:0.75rem; color:var(--text-secondary);">Scores pasted draft content live against the FY27 rubric — for anyone submitting content</span>
+            <span style="font-size:0.75rem; color:var(--text-secondary);">Paste a draft and analyze it against the FY27 rubric — for anyone submitting content</span>
           </div>
           <div style="display:flex; align-items:center; gap:7px; margin-top:8px; font-size:0.75rem; color:var(--text-tertiary);">
             <i class="fa-clock-rotate-left alpaca-fa-regular" style="font-size:11px;"></i>
             <span>v1 scores pasted text. PDF / DOCX upload is a planned fast-follow once scoring is validated.</span>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:12px; align-items:start;">
-            <textarea onChange="{{ onBriefInput }}" onInput="{{ onBriefInput }}" defaultValue="{{ briefText }}" spellcheck="false" style="width:100%; min-height:400px; resize:vertical; padding:12px 14px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem; line-height:1.5;"></textarea>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <textarea onChange="{{ onBriefInput }}" onInput="{{ onBriefInput }}" defaultValue="{{ briefText }}" spellcheck="false" style="width:100%; min-height:400px; resize:vertical; padding:12px 14px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem; line-height:1.5;"></textarea>
+              <button onClick="{{ onAnalyzeBrief }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-wand-magic-sparkles alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
+            </div>
             <div style="display:flex; flex-direction:column; gap:10px;">
               <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:var(--r-md); background:{{ briefOverall.bg }};">
                 <span style="font-size:0.8125rem; color:var(--text-secondary);">Overall</span>
                 <span style="font-size:0.875rem; font-weight:600; color:{{ briefOverall.color }};">{{ briefOverall.label }}</span>
               </div>
               <sc-for list="{{ briefMetrics }}" as="m" hint-placeholder-count="4">
-                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid var(--border-table);">
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px 12px; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ m.accent }};">
                   <div style="min-width:0;">
                     <div style="font-size:0.8125rem; font-weight:500; color:var(--text-primary);">{{ m.label }}</div>
                     <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ m.finding }}</div>
@@ -360,14 +363,17 @@
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:2px; flex-wrap:wrap;">
             <div style="display:flex; align-items:center; gap:7px;">
               <i class="fa-envelope-circle-check alpaca-fa-regular" style="color:var(--text-tertiary); font-size:13px;"></i>
-              <span style="font-size:0.9375rem; font-weight:600; color:var(--text-primary);">Outlook Rendering Pre-Flight</span>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.625rem; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--badge-success-bg); color:var(--badge-success-text); white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:8px;"></i>Live tool</span>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.625rem; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--badge-neutral-bg); color:var(--badge-neutral-text); white-space:nowrap;"><i class="fa-code alpaca-fa-solid" style="font-size:8px;"></i>MOps utility</span>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Outlook Rendering Pre-Flight</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-success-bg); color:var(--badge-success-text); white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>Live tool</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-neutral-bg); color:var(--badge-neutral-text); white-space:nowrap;"><i class="fa-code alpaca-fa-solid" style="font-size:9px;"></i>MOps utility</span>
             </div>
             <span style="font-size:0.6875rem; color:var(--text-tertiary);">For raw-HTML builders, not brief submitters</span>
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px; align-items:start;">
-            <textarea onChange="{{ onHtmlInput }}" onInput="{{ onHtmlInput }}" defaultValue="{{ htmlText }}" spellcheck="false" style="width:100%; min-height:130px; resize:vertical; padding:9px 11px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.75rem; line-height:1.5; font-family:var(--code-font);"></textarea>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <textarea onChange="{{ onHtmlInput }}" onInput="{{ onHtmlInput }}" defaultValue="{{ htmlText }}" spellcheck="false" style="width: 641px; min-height: 130px; resize: vertical; padding: 9px 11px; border-radius: var(--r-sm); border: 1px solid var(--border-card); background: var(--input-bg); color: var(--text-primary); font-size: 0.75rem; line-height: 1.5; font-family: var(--code-font); height: 413px"></textarea>
+              <button onClick="{{ onAnalyzeHtml }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-wand-magic-sparkles alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
+            </div>
             <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
               <sc-for list="{{ preflight }}" as="p" hint-placeholder-count="4">
                 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:8px 11px; border-bottom:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ p.accent }};">
@@ -562,8 +568,7 @@ class Component extends DCLogic {
     activeTab: 'overview', dark: false,
     sendSort: { key: 'overlapNum', dir: 'desc' },
     anomalySort: { key: 'riskRank', dir: 'desc' },
-    rapidOpen: false,
-    lookupQuery: '', lookupSelected: 'q3',
+    rapidOpen: false, lookupQuery: '', lookupSelected: 'q3',
     briefText: `Subject: Unlock next-level compliance — the Q3 Security Benchmark Report is here!
 
 Hi {{first_name}},
@@ -574,6 +579,7 @@ Get started today. Read the full report. Download the summary. Book a demo with 
 
 Thanks,
 The Vanta Team`,
+    analyzedBriefText: undefined,
     htmlText: `<table width="100%">
   <tr>
     <td style="border:1px solid #000; padding:20px;">
@@ -583,6 +589,7 @@ The Vanta Team`,
     </td>
   </tr>
 </table>`,
+    analyzedHtmlText: undefined,
   };
 
   headerStyle() {
@@ -669,9 +676,9 @@ The Vanta Team`,
     if (riskN >= 3) riskS = ['Fail', bad, badb, riskN + ' spam-filter triggers (' + excl + ' "!", ' + caps + ' all-caps).'];
     else if (riskN >= 1) riskS = ['Warn', warn, warnb, riskN + ' spam-filter trigger' + (riskN > 1 ? 's' : '') + ' to review.'];
     else riskS = ['Pass', ok, okb, 'No obvious spam triggers.'];
-    const mk = (label, s) => ({ label, status: s[0], statusColor: s[1], statusBg: s[2], finding: s[3] });
+    const mk = (label, s) => ({ label, status: s[0], statusColor: s[1], statusBg: s[2], finding: s[3], accent: s[0] === 'Fail' ? bad : s[0] === 'Warn' ? warn : ok });
     const metrics = [mk('CTA density', ctaS), mk('Subject clarity / jargon', subjS), mk('Mobile readability', readS), mk('Rendering / spam risk', riskS)];
-    if (words === 0) return { metrics: metrics.map(m => ({ ...m, status: '—', statusColor: 'var(--text-tertiary)', statusBg: 'var(--bg-card-alt)', finding: 'Paste a brief to score it.' })), overall: { label: 'Awaiting input', color: 'var(--text-tertiary)', bg: 'var(--bg-card-alt)' } };
+    if (words === 0) return { metrics: metrics.map(m => ({ ...m, status: '—', statusColor: 'var(--text-tertiary)', statusBg: 'var(--bg-card-alt)', finding: 'Paste a brief to score it.', accent: 'var(--border-table)' })), overall: { label: 'Awaiting input', color: 'var(--text-tertiary)', bg: 'var(--bg-card-alt)' } };
     const order = { Pass: 0, Warn: 1, Fail: 2 };
     const worst = metrics.reduce((m, x) => order[x.status] > order[m] ? x.status : m, 'Pass');
     const overall = worst === 'Fail' ? { label: 'Needs work', color: bad, bg: badb } : worst === 'Warn' ? { label: 'Review before send', color: warn, bg: warnb } : { label: 'Ready to send', color: ok, bg: okb };
@@ -683,6 +690,10 @@ The Vanta Team`,
     const warn = 'var(--badge-warning-text)', warnb = 'var(--badge-warning-bg)';
     const bad = 'var(--badge-danger-text)', badb = 'var(--badge-danger-bg)';
     const P = ['Pass', ok, okb, 'fa-check alpaca-fa-solid'], W = ['Warn', warn, warnb, 'fa-triangle-exclamation alpaca-fa-solid'], F = ['Fail', bad, badb, 'fa-xmark alpaca-fa-solid'];
+    if (html === null || html === undefined) {
+      const wait = ['—', 'var(--text-tertiary)', 'var(--bg-card-alt)', 'fa-circle alpaca-fa-regular'];
+      return ['Fixed-width container base', 'No display:block on <span>', 'Stacked text line-height', 'CTA borders off wrapping <td>'].map(rule => ({ rule, detail: 'Click Analyze to check.', resultLabel: wait[0], resultColor: wait[1], resultBg: wait[2], resultIcon: wait[3], accent: 'transparent' }));
+    }
     const h = html || '';
     const checks = [];
     const bad100 = /width:\s*100%/i.test(h) && !/max-width:\s*600px/i.test(h);
@@ -694,7 +705,7 @@ The Vanta Team`,
     checks.push({ rule: 'Stacked text line-height', detail: lh && !mso ? 'line-height set without mso-line-height-rule:exactly.' : lh ? 'line-height paired with mso-line-height-rule:exactly.' : 'No stacked line-height rules detected.', st: lh && !mso ? W : P });
     const tdb = /<td[^>]*style=["'][^"']*border/i.test(h);
     checks.push({ rule: 'CTA borders off wrapping <td>', detail: tdb ? 'Border on a wrapping <td> — move to VML stroke / inline <a>.' : 'No borders on wrapping <td> cells.', st: tdb ? W : P });
-    return checks.map(c => ({ rule: c.rule, detail: c.detail, resultLabel: c.st[0], resultColor: c.st[1], resultBg: c.st[2], resultIcon: c.st[3], accent: c.st[0] === 'Fail' ? bad : c.st[0] === 'Warn' ? warn : 'transparent' }));
+    return checks.map(c => ({ rule: c.rule, detail: c.detail, resultLabel: c.st[0], resultColor: c.st[1], resultBg: c.st[2], resultIcon: c.st[3], accent: c.st[0] === 'Fail' ? bad : c.st[0] === 'Warn' ? warn : ok }));
   }
 
   emailCatalog() {
@@ -746,7 +757,7 @@ The Vanta Team`,
   renderVals() {
     const active = this.state.activeTab;
     const dark = this.state.dark;
-    const brief = this.analyzeBrief(this.state.briefText);
+    const brief = this.analyzeBrief(this.state.analyzedBriefText === undefined ? this.state.briefText : this.state.analyzedBriefText);
     const q = (this.state.lookupQuery || '').trim().toLowerCase();
     const catalog = this.emailCatalog();
     const results = catalog.filter(e => !q || e.name.toLowerCase().includes(q) || e.date.toLowerCase().includes(q) || e.eid.toLowerCase().includes(q));
@@ -816,11 +827,13 @@ The Vanta Team`,
 
       briefText: this.state.briefText,
       onBriefInput: (e) => this.setState({ briefText: e.target.value }),
+      onAnalyzeBrief: () => this.setState(s => ({ analyzedBriefText: s.briefText })),
       briefMetrics: brief.metrics, briefOverall: brief.overall,
 
       htmlText: this.state.htmlText,
       onHtmlInput: (e) => this.setState({ htmlText: e.target.value }),
-      preflight: this.analyzeHtml(this.state.htmlText),
+      onAnalyzeHtml: () => this.setState(s => ({ analyzedHtmlText: s.htmlText })),
+      preflight: this.analyzeHtml(this.state.analyzedHtmlText === undefined ? this.state.htmlText : this.state.analyzedHtmlText),
 
       healthKpis: [
         { label: 'Avg CTOR (30d)', value: '18.4%', trend: '+1.2pt', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-arrow-up alpaca-fa-solid' },
