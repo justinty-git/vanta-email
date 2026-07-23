@@ -4,9 +4,9 @@ import { useState } from "react";
 
 type LookupResult = {
   id: string;
-  type: "contact" | "list";
   name: string;
   meta: string;
+  state: string;
 };
 
 export default function HealthLookup() {
@@ -102,7 +102,7 @@ export default function HealthLookup() {
           type="text"
           value={query}
           onChange={(e) => runSearch(e.target.value)}
-          placeholder="Search contacts or lists by name or email…"
+          placeholder="Search sent emails by name…"
           style={{
             width: "100%",
             padding: "9px 12px",
@@ -154,7 +154,7 @@ export default function HealthLookup() {
           !error &&
           results.map((r) => (
             <div
-              key={`${r.type}-${r.id}`}
+              key={r.id}
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -182,8 +182,7 @@ export default function HealthLookup() {
                   flexShrink: 0,
                 }}
               >
-                {r.type === "list" ? "List · " : ""}
-                {r.meta}
+                {r.state} · {r.meta}
               </span>
             </div>
           ))}
@@ -197,7 +196,7 @@ export default function HealthLookup() {
               textAlign: "center",
             }}
           >
-            No contacts or lists match &ldquo;{query}&rdquo;.
+            No sent emails match &ldquo;{query}&rdquo;.
           </div>
         )}
       </div>

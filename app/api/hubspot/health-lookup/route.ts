@@ -2,14 +2,15 @@ import { NextResponse } from "next/server";
 import { hubspotFetch } from "@/lib/hubspot";
 
 // GET /api/hubspot/health-lookup?query=<search term>
-// Search-only, no dropdown (per prior design decision — dropdowns break at
-// scale). Merges contact and list matches into one typeahead-friendly list.
+// Search sent/scheduled marketing emails by name (matches the original
+// design: "Search sent emails by name, date, or ID…"). Search-only,
+// no dropdown — dropdowns break at scale per prior design decision.
 
 type LookupResult = {
   id: string;
-  type: "contact" | "list";
   name: string;
-  meta: string;
+  meta: string; // e.g. "Sent Jul 16, 2026"
+  state: string;
 };
 
 export async function GET(request: Request) {
@@ -24,45 +25,33 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [contactsRes, listsRes] = await Promise.all([
-      hubspotFetch("/crm/v3/objects/contacts/search", {
-        method: "POST",
-        body: JSON.stringify({
-          query,
-          limit: 5,
-          properties: ["email", "firstname", "lastname"],
-        }),
-      }),
-      hubspotFetch(
-        `/crm/v3/lists/search?query=${encodeURIComponent(query)}&count=5`
-      ).catch(() => ({ lists: [] })), // list search endpoint varies by scope tier — fail soft
-    ]);
-
-    const contactResults: LookupResult[] = (contactsRes.results || []).map(
-      (c: any) => ({
-        id: c.id,
-        type: "contact",
-        name:
-          [c.properties?.firstname, c.properties?.lastname]
-            .filter(Boolean)
-            .join(" ") || c.properties?.email || `Contact ${c.id}`,
-        meta: c.properties?.email || "",
-      })
+    // Marketing Emails API doesn't support free-text search server-side,
+    // so pull a reasonably-sized recent batch and filter by name here.
+    // Fine for now; revisit with pagination if the account's email volume
+    // makes this batch too small to reliably match older sends.
+    const data = await hubspotFetch(
+      "/marketing/v3/emails?limit=100&sort=-updatedAt"
     );
 
-    const listResults: LookupResult[] = (listsRes.lists || []).map(
-      (l: any) => ({
-        id: String(l.listId),
-        type: "list",
-        name: l.name,
-        meta: `${l.additionalProperties?.hs_list_size ?? "?"} contacts`,
-      })
+    const q = query.toLowerCase();
+    const matches = (data.results || []).filter((email: any) =>
+      (email.name || "").toLowerCase().includes(q)
     );
 
-    return NextResponse.json({
-      status: "ok",
-      results: [...contactResults, ...listResults],
-    });
+    const results: LookupResult[] = matches.slice(0, 10).map((email: any) => ({
+      id: email.id,
+      name: email.name,
+      meta: email.publishDate
+        ? new Date(email.publishDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "No send date",
+      state: email.state,
+    }));
+
+    return NextResponse.json({ status: "ok", results });
   } catch (error) {
     return NextResponse.json(
       { status: "error", message: (error as Error).message },
