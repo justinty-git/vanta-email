@@ -17,10 +17,18 @@ export async function GET(request: Request) {
   }
 
   try {
+    // HubSpot's statistics endpoint requires a startTimestamp — use a wide
+    // window (5 years back to now) so we effectively get lifetime stats
+    // for the email regardless of when it was sent.
+    const startTimestamp = new Date("2021-01-01").toISOString();
+    const endTimestamp = new Date().toISOString();
+
     const data = await hubspotFetch(
       `/marketing/v3/emails/statistics/list?emailIds=${encodeURIComponent(
         emailId
-      )}`
+      )}&startTimestamp=${encodeURIComponent(
+        startTimestamp
+      )}&endTimestamp=${encodeURIComponent(endTimestamp)}`
     );
 
     const counters = data.aggregate?.counters || {};
