@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --font-base: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --sand-100:#faf8f8; --sand-200:#f2efef; --sand-300:#ebe8e8; --sand-400:#dcdbdb; --sand-500:#c9c8c7;
+  --sand-600:#bab8b8; --sand-700:#a6a4a4; --sand-800:#8a8888; --sand-900:#6e6c6b; --sand-1000:#545352;
+  --sand-1100:#424141; --sand-1200:#333232; --sand-1300:#242323; --sand-1400:#151414;
+  --purple-100:#f7f0fe; --purple-200:#f1e3ff; --purple-300:#ebd6ff; --purple-400:#dfbfff; --purple-500:#d5aaff;
+  --purple-600:#c98fff; --purple-700:#bc77fc; --purple-800:#a555f2; --purple-900:#8e34e3; --purple-1000:#771fcb;
+  --purple-1100:#5a1799; --purple-1200:#3f1369; --purple-1300:#280d42; --purple-1400:#1d0b2e;
+  --green-100:#f2faf4; --green-300:#dcf2e2; --green-500:#98e3ab; --green-600:#70d48b; --green-700:#53bd6f;
+  --green-800:#1f9c3a; --green-900:#098228; --green-1000:#047023; --green-1200:#004215; --green-1300:#002b0e;
+  --orange-100:#fcf8f2; --orange-300:#fae9d2; --orange-500:#f7bc6f; --orange-600:#f2a23f; --orange-700:#ef8909;
+  --orange-800:#d66800; --orange-900:#b85407; --orange-1000:#a34a00; --orange-1200:#572801; --orange-1300:#3b1b01;
+  --red-100:#fef5f5; --red-300:#fcdede; --red-500:#f9a7a7; --red-600:#f78888; --red-700:#f06c6c;
+  --red-800:#e05151; --red-900:#c93c46; --red-1000:#b22d3f; --red-1200:#611822; --red-1300:#400b12;
+  --blue-100:#f2f8ff; --blue-300:#d8eafe; --blue-500:#91c3fe; --blue-600:#6daffe; --blue-700:#499bfd;
+  --blue-800:#2984f0; --blue-900:#0d6ee0; --blue-1000:#0d5bba; --blue-1200:#03346e; --blue-1300:#001e42;
+  --r-xs:2px; --r-sm:4px; --r-md:6px; --r-lg:8px; --r-xl:12px;
+  --shadow-card: 0px 1px 4px 0px rgba(51,51,51,0.08);
+
+  --bg-page: var(--sand-100);
+  --bg-card: #ffffff;
+  --bg-card-alt: var(--sand-200);
+  --bg-header: #110438;
+  --header-border: rgba(159,87,255,.3);
+  --border-card: var(--sand-400);
+  --border-table: var(--sand-300);
+  --border-table-strong: var(--sand-500);
+  --table-header-bg: var(--sand-200);
+  --tab-bg: #ffffff;
+  --tab-border: var(--sand-400);
+  --tab-active: var(--purple-1000);
+  --text-primary: var(--sand-1400);
+  --text-secondary: var(--sand-900);
+  --text-tertiary: var(--sand-1000);
+  --text-heading-strong: var(--sand-1100);
+  --icon-accent: var(--purple-900);
+  --badge-success-bg: var(--green-100); --badge-success-text: var(--green-900);
+  --badge-warning-bg: var(--orange-100); --badge-warning-text: var(--orange-900);
+  --badge-danger-bg: var(--red-100); --badge-danger-text: var(--red-900);
+  --badge-info-bg: var(--blue-100); --badge-info-text: var(--blue-900);
+  --badge-neutral-bg: var(--sand-200); --badge-neutral-text: var(--sand-1000);
+  --dataviz-primary: var(--purple-800);
+  --input-bg: var(--sand-100);
+  --code-font: "Monaco", ui-monospace, monospace;
+}
+
+/* Vanta FY27 dark mode — deep-purple system */
+[data-theme="dark"] {
+  --bg-page: #17002f;
+  --bg-card: #110438;
+  --bg-card-alt: #1c0660;
+  --bg-header: #110438;
+  --header-border: rgba(159,87,255,.3);
+  --border-card: rgba(159,87,255,.2);
+  --border-table: rgba(255,255,255,.09);
+  --border-table-strong: rgba(159,87,255,.32);
+  --table-header-bg: #0f0226;
+  --tab-bg: #110438;
+  --tab-border: rgba(159,87,255,.3);
+  --tab-active: #9f57ff;
+  --text-primary: #f8f4f2;
+  --text-secondary: #9d8fba;
+  --text-tertiary: #787480;
+  --text-heading-strong: #d0ccd8;
+  --icon-accent: #9f57ff;
+  --badge-success-bg: rgba(89,195,74,.15); --badge-success-text: #59c34a;
+  --badge-warning-bg: rgba(242,162,63,.15); --badge-warning-text: #f2a23f;
+  --badge-danger-bg: rgba(232,94,94,.15); --badge-danger-text: #e85e5e;
+  --badge-info-bg: rgba(109,175,254,.15); --badge-info-text: #6daffe;
+  --badge-neutral-bg: rgba(255,255,255,.08); --badge-neutral-text: #9d8fba;
+  --dataviz-primary: #9f57ff;
+  --input-bg: rgba(255,255,255,.05);
+}
+
+* { box-sizing: border-box; }
+body { margin:0; font-family: var(--font-base); -webkit-font-smoothing:antialiased; background: var(--bg-page); }
+a { color: var(--purple-900); text-decoration: none; }
+a:hover { color: var(--purple-1000); text-decoration: underline; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--sand-500); border-radius: 4px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(159,87,255,.35); }
+textarea, input { font-family: var(--font-base); }
+textarea:focus, input:focus { outline: 2px solid var(--purple-1100); outline-offset: -2px; }
