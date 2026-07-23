@@ -56,12 +56,23 @@ it there from the Service Key setup, no action needed.
 Don't rewrite the whole legacy export at once. For each feature, in this
 order:
 
-1. **Health Lookup** (simplest — single search, no cross-referencing)
-2. **Workflow Watchdog** (read-only status list)
+1. **Health Lookup** — ✅ done, live at `/health-lookup` (standalone preview,
+   not yet merged into the main tab layout). Search finds real sent/scheduled
+   emails by name; clicking a result pulls real stats (delivered, open rate,
+   click rate) from `/api/hubspot/email-stats`.
+2. **Workflow Watchdog** (read-only status list) — not started
 3. **Send Conflict Detector** (most complex — cross-references multiple
-   scheduled emails against list membership)
+   scheduled emails against list membership) — API route proven working
+   (`/api/hubspot/conflicts` returns real scheduled emails), actual
+   conflict-detection logic (comparing dates + audience overlap) not yet
+   built
 
 For each: replace the corresponding section inside `public/legacy/index.html`
 with a real React component in `app/`, wired to fetch from its
 `app/api/hubspot/*` route. Once a panel is migrated, its old markup can be
 deleted from the legacy export.
+
+**Next concrete step:** merge `app/health-lookup/HealthLookup.tsx` into the
+real Health tab in `app/page.tsx` (replacing the "Needs connector" placeholder
+that currently lives in `public/legacy/index.html`), instead of it living on
+its own separate `/health-lookup` route.
