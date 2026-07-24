@@ -686,12 +686,21 @@ class Component extends DCLogic {
       this.loadAnomalies();
       this.loadPerformance();
       this.loadWorkflows();
-      this.loadUnderutilized();
     }, 60 * 60 * 1000);
+
+    // Underutilized Numbers gets its own, slower cadence — weekly coverage
+    // across 400K+ contacts doesn't meaningfully shift within an hour, so
+    // checking it 24x a day would just show 24 nearly-identical numbers.
+    // Daily actually matches how fast this metric changes, not just a
+    // lighter-load compromise.
+    this._underutilizedInterval = setInterval(() => {
+      this.loadUnderutilized();
+    }, 24 * 60 * 60 * 1000);
   }
 
   componentWillUnmount() {
     if (this._refreshInterval) clearInterval(this._refreshInterval);
+    if (this._underutilizedInterval) clearInterval(this._underutilizedInterval);
   }
 
   async loadUnderutilized() {
@@ -1405,7 +1414,7 @@ class Component extends DCLogic {
         ? 'Checking marketing contact coverage…'
         : this.state.underutilizedError
         ? this.state.underutilizedError
-        : 'Marketing contacts only (hs_marketable_status) · auto-refreshes hourly' + (this.state.underutilizedData ? ' · checked ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
+        : 'Marketing contacts only (hs_marketable_status) · auto-refreshes daily' + (this.state.underutilizedData ? ' · checked ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
       underutilizedHasData: !!(this.state.underutilizedData && this.state.underutilizedData.totalMarketable > 0),
       underutilizedCoveragePct: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(1) + '%' : '—',
       underutilizedCount: this.state.underutilizedData ? this.state.underutilizedData.underutilized.toLocaleString() : '—',
