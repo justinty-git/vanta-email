@@ -211,9 +211,9 @@
             <div style="display:flex; align-items:center; gap:8px;">
               <i class="fa-triangle-exclamation alpaca-fa-regular" style="color:var(--badge-warning-text); font-size:15px;"></i>
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Send Conflict Detector</span>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-info-bg); color:var(--badge-info-text); white-space:nowrap;"><i class="fa-plug alpaca-fa-solid" style="font-size:9px;"></i>Needs connector · HubSpot</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ conflictsBadgeBg }}; color:{{ conflictsBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ conflictsBadgeLabel }}</span>
             </div>
-            <span style="font-size:0.75rem; color:var(--text-secondary);">Next 14 days · &gt;50% overlap within 48hrs = conflict</span>
+            <span style="font-size:0.75rem; color:var(--text-secondary);">{{ conflictsCaption }}</span>
           </div>
           <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
             <div style="display:grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 0.9fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
@@ -232,6 +232,9 @@
                 </span>
               </div>
             </sc-for>
+            <sc-if value="{{ conflictsEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center; border-top:1px solid var(--border-table);">No scheduled sends in the next window.</div>
+            </sc-if>
           </div>
         </div>
 
@@ -463,11 +466,12 @@
 
         <!-- Flagged Anomalies -->
         <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
             <i class="fa-radar alpaca-fa-regular" style="color:var(--badge-danger-text); font-size:15px;"></i>
             <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Flagged Anomalies</span>
-            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-info-bg); color:var(--badge-info-text); white-space:nowrap;"><i class="fa-plug alpaca-fa-solid" style="font-size:9px;"></i>Needs connector · Snowflake</span>
+            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ anomaliesBadgeBg }}; color:{{ anomaliesBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ anomaliesBadgeLabel }}</span>
           </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ anomaliesCaption }}</div>
           <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
             <div style="display:grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.4fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
               <sc-for list="{{ anomalyHeaders }}" as="h" hint-placeholder-count="5">
@@ -486,6 +490,9 @@
                 <span style="font-size:0.8125rem; color:var(--text-secondary);">{{ a.cause }}</span>
               </div>
             </sc-for>
+            <sc-if value="{{ anomaliesEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center;">No anomalies in the recent send batch.</div>
+            </sc-if>
           </div>
         </div>
 
@@ -517,13 +524,19 @@
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
               <i class="fa-magnifying-glass-chart alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Email Health Lookup</span>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-info-bg); color:var(--badge-info-text); white-space:nowrap;"><i class="fa-plug alpaca-fa-solid" style="font-size:9px;"></i>Needs connector · HubSpot</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ lookupBadgeBg }}; color:{{ lookupBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ lookupBadgeLabel }}</span>
             </div>
             <div style="position:relative;">
               <i class="fa-magnifying-glass alpaca-fa-regular" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-tertiary); font-size:12px;"></i>
-              <input type="text" onInput="{{ onLookupSearch }}" onChange="{{ onLookupSearch }}" defaultValue="{{ lookupQuery }}" placeholder="Search sent emails by name, date, or ID…" style="width:100%; padding:9px 12px 9px 32px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.875rem;">
+              <input type="text" onInput="{{ onLookupSearch }}" onChange="{{ onLookupSearch }}" defaultValue="{{ lookupQuery }}" placeholder="Search sent emails by name…" style="width:100%; padding:9px 12px 9px 32px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.875rem;">
             </div>
             <div style="margin-top:8px; max-height:118px; overflow-y:auto; border:1px solid var(--border-table); border-radius:var(--r-sm);">
+              <sc-if value="{{ lookupLoadingState }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center;">Searching…</div>
+              </sc-if>
+              <sc-if value="{{ lookupErrorState }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px; font-size:0.8125rem; color:var(--badge-danger-text); text-align:center;">{{ lookupErrorState }}</div>
+              </sc-if>
               <sc-for list="{{ lookupResults }}" as="r" hint-placeholder-count="4">
                 <button onClick="{{ r.onClick }}" style="{{ r.style }}">
                   <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.name }}</span>
@@ -568,7 +581,11 @@ class Component extends DCLogic {
     activeTab: 'overview', dark: false,
     sendSort: { key: 'overlapNum', dir: 'desc' },
     anomalySort: { key: 'riskRank', dir: 'desc' },
-    rapidOpen: false, lookupQuery: '', lookupSelected: 'q3',
+    rapidOpen: false,
+    lookupQuery: '', lookupResults: [], lookupLoading: false, lookupError: null, lookupSearched: false,
+    lookupSelected: null, lookupMetrics: null, lookupMetricsLoading: false, lookupMetricsError: null,
+    conflictsLoading: true, conflictsError: null, conflictsData: null,
+    anomaliesLoading: true, anomaliesError: null, anomaliesData: null,
     briefText: `Subject: Unlock next-level compliance — the Q3 Security Benchmark Report is here!
 
 Hi {{first_name}},
@@ -591,6 +608,124 @@ The Vanta Team`,
 </table>`,
     analyzedHtmlText: undefined,
   };
+
+  componentDidMount() {
+    this.loadConflicts();
+    this.loadAnomalies();
+  }
+
+  async loadAnomalies() {
+    this.setState({ anomaliesLoading: true, anomaliesError: null });
+    try {
+      const res = await fetch('/api/hubspot/anomalies');
+      const data = await res.json();
+      if (data.status === 'error') {
+        this.setState({ anomaliesError: data.message, anomaliesData: null });
+      } else {
+        this.setState({ anomaliesData: data });
+      }
+    } catch (err) {
+      this.setState({ anomaliesError: "Couldn't reach the anomaly-detection service. Try again." });
+    } finally {
+      this.setState({ anomaliesLoading: false });
+    }
+  }
+
+  async loadConflicts() {
+    this.setState({ conflictsLoading: true, conflictsError: null });
+    try {
+      const res = await fetch('/api/hubspot/conflicts');
+      const data = await res.json();
+      if (data.status === 'error') {
+        this.setState({ conflictsError: data.message, conflictsData: null });
+      } else {
+        this.setState({ conflictsData: data });
+      }
+    } catch (err) {
+      this.setState({ conflictsError: "Couldn't reach the conflict-detection service. Try again." });
+    } finally {
+      this.setState({ conflictsLoading: false });
+    }
+  }
+
+  formatSendDate(iso) {
+    const d = new Date(iso);
+    const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+    return date + ', ' + time;
+  }
+
+  // Turns the real /api/hubspot/conflicts response into the row shape the
+  // existing Send Conflict Detector table already renders (campaign/date/
+  // audience/overlap/status columns), so no table markup had to change.
+  buildSendScheduleRows() {
+    const data = this.state.conflictsData;
+    if (!data) return [];
+
+    const conflictColor = 'var(--badge-danger-text)';
+    const clearColor = 'var(--badge-success-text)';
+    const neutralColor = 'var(--text-tertiary)';
+
+    // Best conflict-detail per email (an email can appear in more than one
+    // conflicting pair — keep whichever has the larger estimated overlap).
+    const detailByEmailId = new Map();
+    for (const c of data.conflicts || []) {
+      for (const email of [c.emailA, c.emailB]) {
+        const existing = detailByEmailId.get(email.id);
+        if (!existing || (c.contactsAtRiskEstimate ?? 0) > (existing.contactsAtRiskEstimate ?? 0)) {
+          detailByEmailId.set(email.id, c);
+        }
+      }
+    }
+
+    return (data.scanned || []).map(e => {
+      if (e.status === 'conflict') {
+        const c = detailByEmailId.get(e.id);
+        const listNames = c ? c.sharedLists.map(l => l.name).join(', ') : 'Shared list';
+        const estimate = c ? c.contactsAtRiskEstimate : null;
+        return {
+          campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
+          audience: listNames + (estimate !== null ? ' (~' + estimate.toLocaleString() + ')' : ''),
+          audienceNum: estimate ?? 0,
+          overlap: c ? (c.daysApart === 0 ? 'Same day' : c.daysApart + 'd apart') : '—',
+          overlapNum: estimate ?? 0, overlapColor: conflictColor,
+          statusIcon: 'fa-triangle-exclamation alpaca-fa-solid', statusLabel: 'Conflict', statusRank: 3, statusColor: conflictColor,
+        };
+      }
+      if (e.status === 'unscoped') {
+        return {
+          campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
+          audience: 'No list target resolved', audienceNum: 0, overlap: '—', overlapNum: 0, overlapColor: neutralColor,
+          statusIcon: 'fa-circle-question alpaca-fa-regular', statusLabel: 'Unscoped', statusRank: 2, statusColor: neutralColor,
+        };
+      }
+      return {
+        campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
+        audience: 'No overlapping sends', audienceNum: 0, overlap: 'Clear', overlapNum: 0, overlapColor: clearColor,
+        statusIcon: 'fa-circle-check alpaca-fa-solid', statusLabel: 'Clear', statusRank: 1, statusColor: clearColor,
+      };
+    });
+  }
+
+  // Turns the real /api/hubspot/anomalies response into the row shape the
+  // existing Flagged Anomalies table already renders. Column header still
+  // says "Workflow" in the UI copy, but for the HubSpot-only version each
+  // row is a single send (workflow-level anomaly detection needs the
+  // Automation API, which isn't wired yet — see cause text below).
+  buildAnomalyRows() {
+    const data = this.state.anomaliesData;
+    if (!data) return [];
+    return (data.flags || []).map(f => ({
+      workflow: f.emailName,
+      metric: f.metric,
+      change: f.change,
+      changeColor: f.changeColor,
+      riskColor: f.riskColor,
+      riskLabel: f.riskLabel,
+      riskRank: f.riskRank,
+      cause: f.cause,
+    }));
+  }
 
   headerStyle() {
     return {
@@ -708,36 +843,91 @@ The Vanta Team`,
     return checks.map(c => ({ rule: c.rule, detail: c.detail, resultLabel: c.st[0], resultColor: c.st[1], resultBg: c.st[2], resultIcon: c.st[3], accent: c.st[0] === 'Fail' ? bad : c.st[0] === 'Warn' ? warn : ok }));
   }
 
-  emailCatalog() {
-    const ok = 'var(--badge-success-text)', warn = 'var(--badge-warning-text)', bad = 'var(--badge-danger-text)';
-    const okb = 'var(--badge-success-bg)', warnb = 'var(--badge-warning-bg)', badb = 'var(--badge-danger-bg)';
-    const m = (l, v, c, b) => ({ label: l, value: v, color: c, bench: b });
-    return [
-      { id: 'q3', name: 'Q3 Security Benchmark Report', date: 'Jul 18', eid: 'EM-2291',
-        metrics: [m('Bounce rate', '0.42%', ok, 'vs 0.5% norm'), m('Spam complaints', '0.03%', ok, 'vs 0.08% norm'), m('Unsub rate', '0.61%', warn, 'above 0.4% norm')],
-        note: { icon: 'fa-triangle-exclamation alpaca-fa-solid', color: warn, bg: warnb, text: 'Unsub rate 1.5× higher than similar benchmark sends. 2 rendering complaints logged (Outlook 2019 — CTA button stacked).' } },
-      { id: 'trust', name: 'Trust Center Relaunch', date: 'Jul 17', eid: 'EM-2288',
-        metrics: [m('Bounce rate', '0.28%', ok, 'vs 0.5% norm'), m('Spam complaints', '0.02%', ok, 'vs 0.08% norm'), m('Unsub rate', '0.22%', ok, 'below 0.4% norm')],
-        note: { icon: 'fa-circle-check alpaca-fa-solid', color: ok, bg: okb, text: 'Healthy across the board — outperforms similar announcement sends on deliverability. No rendering complaints logged.' } },
-      { id: 'onboard', name: 'Onboarding Drip — Step 3', date: 'Jul 15', eid: 'EM-2280',
-        metrics: [m('Bounce rate', '0.51%', warn, 'at 0.5% norm'), m('Spam complaints', '0.11%', bad, 'above 0.08% norm'), m('Unsub rate', '0.38%', ok, 'vs 0.4% norm')],
-        note: { icon: 'fa-circle-exclamation alpaca-fa-solid', color: bad, bg: badb, text: 'Broken CTA link found post-send — CTOR down 31% vs the sequence baseline. 5 rendering complaints (link not clickable in Outlook).' } },
-      { id: 'vantacon', name: 'VantaCon Save the Date', date: 'Jul 16', eid: 'EM-2285',
-        metrics: [m('Bounce rate', '0.35%', ok, 'vs 0.5% norm'), m('Spam complaints', '0.05%', ok, 'vs 0.08% norm'), m('Unsub rate', '0.29%', ok, 'below 0.4% norm')],
-        note: { icon: 'fa-circle-check alpaca-fa-solid', color: ok, bg: okb, text: 'Clean deliverability. CTA density flagged pre-send (Build tab) but performed in line with event sends.' } },
-      { id: 'nps', name: 'Customer NPS Follow-up', date: 'Jul 14', eid: 'EM-2276',
-        metrics: [m('Bounce rate', '0.19%', ok, 'vs 0.5% norm'), m('Spam complaints', '0.04%', ok, 'vs 0.08% norm'), m('Unsub rate', '0.33%', ok, 'vs 0.4% norm')],
-        note: { icon: 'fa-circle-check alpaca-fa-solid', color: ok, bg: okb, text: 'Solid engagement from an active-customer segment. No issues flagged.' } },
-      { id: 'partner', name: 'Partner Program Update', date: 'Jul 12', eid: 'EM-2271',
-        metrics: [m('Bounce rate', '0.61%', warn, 'above 0.5% norm'), m('Spam complaints', '0.06%', ok, 'vs 0.08% norm'), m('Unsub rate', '0.44%', warn, 'above 0.4% norm')],
-        note: { icon: 'fa-triangle-exclamation alpaca-fa-solid', color: warn, bg: warnb, text: 'Bounce rate elevated — partner contact list may need re-verification. Unsub slightly above norm.' } },
-      { id: 'soc2', name: 'SOC 2 Launchpad', date: 'Jul 10', eid: 'EM-2265',
-        metrics: [m('Bounce rate', '0.24%', ok, 'vs 0.5% norm'), m('Spam complaints', '0.02%', ok, 'vs 0.08% norm'), m('Unsub rate', '0.21%', ok, 'below 0.4% norm')],
-        note: { icon: 'fa-circle-check alpaca-fa-solid', color: ok, bg: okb, text: 'Top-quartile deliverability. Passed all Outlook pre-flight checks pre-send.' } },
-      { id: 'ghost', name: 'Anti-Ghost Nurture', date: 'Jul 09', eid: 'EM-2260',
-        metrics: [m('Bounce rate', '0.88%', bad, 'well above 0.5% norm'), m('Spam complaints', '0.13%', bad, 'above 0.08% norm'), m('Unsub rate', '0.52%', warn, 'above 0.4% norm')],
-        note: { icon: 'fa-circle-exclamation alpaca-fa-solid', color: bad, bg: badb, text: 'Stale re-engagement list driving high bounce + complaint rates. Workflow frozen by the Watchdog.' } },
-    ];
+  // Real HubSpot-backed lookup — replaces the old static emailCatalog() mock.
+  // Hits the same API routes used by the standalone /health-lookup page
+  // (app/api/hubspot/health-lookup, app/api/hubspot/email-stats).
+  async runLookupSearch(query) {
+    this.setState({ lookupQuery: query, lookupSelected: null, lookupMetrics: null, lookupMetricsError: null });
+
+    if (!query.trim()) {
+      this.setState({ lookupResults: [], lookupSearched: false, lookupLoading: false, lookupError: null });
+      return;
+    }
+
+    this.setState({ lookupLoading: true, lookupError: null });
+
+    try {
+      const res = await fetch('/api/hubspot/health-lookup?query=' + encodeURIComponent(query));
+      const data = await res.json();
+      if (data.status === 'error') {
+        this.setState({ lookupError: data.message, lookupResults: [] });
+      } else {
+        this.setState({ lookupResults: data.results || [] });
+      }
+    } catch (err) {
+      this.setState({ lookupError: "Couldn't reach the lookup service. Try again.", lookupResults: [] });
+    } finally {
+      this.setState({ lookupLoading: false, lookupSearched: true });
+    }
+  }
+
+  lookupDetailVals() {
+    const sel = this.state.lookupSelected;
+    const ok = 'var(--dataviz-primary)', warn = 'var(--badge-warning-text)';
+    const pct = (v) => (v === null || v === undefined || Number.isNaN(v)) ? '—' : (v * 100).toFixed(1) + '%';
+
+    if (!sel) {
+      return { lookupSelected: false, selName: '', selMeta: '', lookupMetrics: [], lookupNote: { icon: '', color: '', bg: 'transparent', text: '' } };
+    }
+
+    if (this.state.lookupMetricsLoading) {
+      return {
+        lookupSelected: true, selName: sel.name, selMeta: sel.state + ' · ' + sel.meta,
+        lookupMetrics: [], lookupNote: { icon: 'fa-circle-notch alpaca-fa-solid', color: 'var(--text-tertiary)', bg: 'var(--bg-card-alt)', text: 'Loading stats…' },
+      };
+    }
+
+    if (this.state.lookupMetricsError) {
+      return {
+        lookupSelected: true, selName: sel.name, selMeta: sel.state + ' · ' + sel.meta,
+        lookupMetrics: [], lookupNote: { icon: 'fa-circle-exclamation alpaca-fa-solid', color: 'var(--badge-danger-text)', bg: 'var(--badge-danger-bg)', text: this.state.lookupMetricsError },
+      };
+    }
+
+    const m = this.state.lookupMetrics;
+    if (!m) {
+      return { lookupSelected: true, selName: sel.name, selMeta: sel.state + ' · ' + sel.meta, lookupMetrics: [], lookupNote: { icon: '', color: '', bg: 'transparent', text: '' } };
+    }
+
+    return {
+      lookupSelected: true, selName: sel.name, selMeta: sel.state + ' · ' + sel.meta,
+      lookupMetrics: [
+        { label: 'Delivered', value: m.delivered.toLocaleString(), color: 'var(--text-primary)', bench: 'of ' + m.sent.toLocaleString() + ' sent' },
+        { label: 'Open Rate', value: pct(m.openRate), color: ok, bench: m.opens.toLocaleString() + ' opens' },
+        { label: 'Click Rate', value: pct(m.clickRate), color: ok, bench: m.clicks.toLocaleString() + ' clicks' },
+      ],
+      lookupNote: m.sent === 0
+        ? { icon: 'fa-triangle-exclamation alpaca-fa-solid', color: warn, bg: 'var(--badge-warning-bg)', text: "This email hasn't sent yet — no stats are available until it goes out." }
+        : { icon: '', color: '', bg: 'transparent', text: '' },
+    };
+  }
+
+  async selectLookupResult(result) {
+    this.setState({ lookupSelected: result, lookupMetrics: null, lookupMetricsError: null, lookupMetricsLoading: true });
+
+    try {
+      const res = await fetch('/api/hubspot/email-stats?emailId=' + encodeURIComponent(result.id));
+      const data = await res.json();
+      if (data.status === 'error') {
+        this.setState({ lookupMetricsError: data.message });
+      } else {
+        this.setState({ lookupMetrics: data.metrics });
+      }
+    } catch (err) {
+      this.setState({ lookupMetricsError: "Couldn't load stats for this email. Try again." });
+    } finally {
+      this.setState({ lookupMetricsLoading: false });
+    }
   }
 
   ctorChart() {
@@ -758,10 +948,8 @@ The Vanta Team`,
     const active = this.state.activeTab;
     const dark = this.state.dark;
     const brief = this.analyzeBrief(this.state.analyzedBriefText === undefined ? this.state.briefText : this.state.analyzedBriefText);
-    const q = (this.state.lookupQuery || '').trim().toLowerCase();
-    const catalog = this.emailCatalog();
-    const results = catalog.filter(e => !q || e.name.toLowerCase().includes(q) || e.date.toLowerCase().includes(q) || e.eid.toLowerCase().includes(q));
-    const sel = catalog.find(e => e.id === this.state.lookupSelected) || null;
+    const sendScheduleRows = this.buildSendScheduleRows();
+    const anomalyRows = this.buildAnomalyRows();
 
     const vals = {
       theme: dark ? 'dark' : 'light',
@@ -816,14 +1004,16 @@ The Vanta Team`,
         { name: 'Full Sign-off', oneLine: 'Both risks or compliance-sensitive — Legal + VP.', detail: 'Both risk factors, or compliance-sensitive content (pricing/claims). Only tier with binding Legal Agree on Copy; VP Revenue Marketing is final Decide on disputes.' },
       ],
 
-      sendSchedule: [
-        { campaign: 'Q3 Security Benchmark Report', date: 'Jul 22, 9:00am', dateNum: 22.375, audience: 'All customers (12.4k)', audienceNum: 12400, overlap: '68%', overlapNum: 68, overlapColor: 'var(--badge-danger-text)', statusIcon: 'fa-triangle-exclamation alpaca-fa-solid', statusLabel: 'Conflict', statusRank: 3, statusColor: 'var(--badge-danger-text)' },
-        { campaign: 'Trust Center Relaunch', date: 'Jul 22, 11:00am', dateNum: 22.458, audience: 'Enterprise customers (3.1k)', audienceNum: 3100, overlap: '68%', overlapNum: 68, overlapColor: 'var(--badge-danger-text)', statusIcon: 'fa-triangle-exclamation alpaca-fa-solid', statusLabel: 'Conflict', statusRank: 3, statusColor: 'var(--badge-danger-text)' },
-        { campaign: 'VantaCon Save the Date', date: 'Jul 24, 8:00am', dateNum: 24.333, audience: 'All contacts (28.9k)', audienceNum: 28900, overlap: '22%', overlapNum: 22, overlapColor: 'var(--badge-warning-text)', statusIcon: 'fa-eye alpaca-fa-regular', statusLabel: 'Watch', statusRank: 2, statusColor: 'var(--badge-warning-text)' },
-        { campaign: 'AI Agent Beta Invite', date: 'Jul 25, 10:00am', dateNum: 25.417, audience: 'Product-qualified leads (890)', audienceNum: 890, overlap: '4%', overlapNum: 4, overlapColor: 'var(--badge-success-text)', statusIcon: 'fa-circle-check alpaca-fa-solid', statusLabel: 'Clear', statusRank: 1, statusColor: 'var(--badge-success-text)' },
-        { campaign: 'Customer NPS Follow-up', date: 'Jul 28, 9:30am', dateNum: 28.396, audience: 'Active customers (9.6k)', audienceNum: 9600, overlap: '11%', overlapNum: 11, overlapColor: 'var(--badge-success-text)', statusIcon: 'fa-circle-check alpaca-fa-solid', statusLabel: 'Clear', statusRank: 1, statusColor: 'var(--badge-success-text)' },
-        { campaign: 'Partner Program Update', date: 'Jul 30, 1:00pm', dateNum: 30.542, audience: 'Partner contacts (1.2k)', audienceNum: 1200, overlap: '2%', overlapNum: 2, overlapColor: 'var(--badge-success-text)', statusIcon: 'fa-circle-check alpaca-fa-solid', statusLabel: 'Clear', statusRank: 1, statusColor: 'var(--badge-success-text)' },
-      ],
+      sendSchedule: sendScheduleRows,
+      conflictsBadgeLabel: this.state.conflictsLoading ? 'Loading · HubSpot' : (this.state.conflictsError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      conflictsBadgeBg: this.state.conflictsError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
+      conflictsBadgeColor: this.state.conflictsError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
+      conflictsCaption: this.state.conflictsLoading
+        ? 'Scanning scheduled sends…'
+        : this.state.conflictsError
+        ? this.state.conflictsError
+        : 'Next scheduled sends · same/next-day + shared list = conflict',
+      conflictsEmpty: !this.state.conflictsLoading && !this.state.conflictsError && sendScheduleRows.length === 0,
 
       briefText: this.state.briefText,
       onBriefInput: (e) => this.setState({ briefText: e.target.value }),
@@ -838,7 +1028,7 @@ The Vanta Team`,
       healthKpis: [
         { label: 'Avg CTOR (30d)', value: '18.4%', trend: '+1.2pt', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-arrow-up alpaca-fa-solid' },
         { label: 'Active workflows', value: '47', trend: '+3', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-arrow-up alpaca-fa-solid' },
-        { label: 'Anomalies flagged', value: '4', trend: '+2', trendColor: 'var(--badge-danger-text)', trendIcon: 'fa-arrow-up alpaca-fa-solid' },
+        { label: 'Anomalies flagged', value: String(anomalyRows.length), trend: this.state.anomaliesLoading ? '…' : 'live', trendColor: anomalyRows.length > 0 ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', trendIcon: anomalyRows.length > 0 ? 'fa-arrow-up alpaca-fa-solid' : 'fa-circle-check alpaca-fa-solid' },
         { label: 'Unsub rate (30d)', value: '0.31%', trend: '-0.04pt', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-arrow-down alpaca-fa-solid' },
       ],
 
@@ -853,13 +1043,16 @@ The Vanta Team`,
         { rank: 5, name: 'Customer NPS Follow-up', ctor: '13.6%' },
       ],
 
-      anomalies: [
-        { workflow: 'Onboarding Drip — Step 3', metric: 'CTOR', change: '-31%', changeNum: -31, changeColor: 'var(--badge-danger-text)', riskColor: 'var(--badge-danger-text)', riskLabel: 'Critical', riskRank: 4, cause: 'Broken CTA link detected post-send' },
-        { workflow: 'Anti-Ghost Nurture', metric: 'CTOR', change: '-19%', changeNum: -19, changeColor: 'var(--badge-danger-text)', riskColor: 'var(--badge-danger-text)', riskLabel: 'High', riskRank: 3, cause: 'Segment decay — stale re-engagement list' },
-        { workflow: 'Renewal Reminder Sequence', metric: 'Open rate', change: '-14%', changeNum: -14, changeColor: 'var(--badge-warning-text)', riskColor: 'var(--badge-warning-text)', riskLabel: 'Medium', riskRank: 2, cause: 'Subject line spam-filter match' },
-        { workflow: 'Product Update Digest', metric: 'Unsub rate', change: '+0.8pt', changeNum: 0.8, changeColor: 'var(--badge-warning-text)', riskColor: 'var(--badge-warning-text)', riskLabel: 'Medium', riskRank: 2, cause: 'Send frequency increase this month' },
-        { workflow: 'Trial Expiry Nudge', metric: 'CTOR', change: '-9%', changeNum: -9, changeColor: 'var(--text-tertiary)', riskColor: 'var(--badge-success-text)', riskLabel: 'Low', riskRank: 1, cause: 'Within normal seasonal variance' },
-      ],
+      anomalies: anomalyRows,
+      anomaliesBadgeLabel: this.state.anomaliesLoading ? 'Loading · HubSpot' : (this.state.anomaliesError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      anomaliesBadgeBg: this.state.anomaliesError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
+      anomaliesBadgeColor: this.state.anomaliesError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
+      anomaliesEmpty: !this.state.anomaliesLoading && !this.state.anomaliesError && anomalyRows.length === 0,
+      anomaliesCaption: this.state.anomaliesLoading
+        ? 'Scanning recent sends…'
+        : this.state.anomaliesError
+        ? this.state.anomaliesError
+        : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends · vs recent-batch average + known deliverability thresholds',
 
       watchdog: [
         { workflow: 'Anti-Ghost Nurture', contacts: '4,210', coverage: '38%', state: 'Frozen', stateBg: 'var(--badge-danger-bg)', stateColor: 'var(--badge-danger-text)', stateIcon: 'fa-snowflake alpaca-fa-solid' },
@@ -869,22 +1062,25 @@ The Vanta Team`,
         { workflow: 'Compliance Roadmap CS Nurture', contacts: '3,100', coverage: '88%', state: 'Active', stateBg: 'var(--badge-success-bg)', stateColor: 'var(--badge-success-text)', stateIcon: 'fa-circle-check alpaca-fa-solid' },
       ],
 
-      onLookupSearch: (e) => this.setState({ lookupQuery: e.target.value }),
+      onLookupSearch: (e) => this.runLookupSearch(e.target.value),
       lookupQuery: this.state.lookupQuery,
-      lookupResults: results.map(e => ({
-        name: e.name, meta: e.date + ' · ' + e.eid,
-        onClick: () => this.setState({ lookupSelected: e.id }),
+      lookupBadgeLabel: this.state.lookupLoading ? 'Loading · HubSpot' : (this.state.lookupError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      lookupBadgeBg: this.state.lookupError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
+      lookupBadgeColor: this.state.lookupError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
+      lookupResults: (this.state.lookupResults || []).map(r => ({
+        name: r.name, meta: r.state + ' · ' + r.meta,
+        onClick: () => this.selectLookupResult(r),
         style: {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', width: '100%',
           padding: '9px 12px', border: 'none', borderBottom: '1px solid var(--border-table)', cursor: 'pointer',
           textAlign: 'left', fontFamily: 'var(--font-base)',
-          background: this.state.lookupSelected === e.id ? 'var(--bg-card-alt)' : 'transparent',
+          background: this.state.lookupSelected && this.state.lookupSelected.id === r.id ? 'var(--bg-card-alt)' : 'transparent',
         },
       })),
-      lookupEmpty: results.length === 0,
-      lookupSelected: !!sel,
-      selName: sel ? sel.name : '', selMeta: sel ? (sel.date + ' · ' + sel.eid) : '',
-      lookupMetrics: sel ? sel.metrics : [], lookupNote: sel ? sel.note : { icon: '', color: '', bg: 'transparent', text: '' },
+      lookupLoadingState: this.state.lookupLoading,
+      lookupErrorState: this.state.lookupError,
+      lookupEmpty: !this.state.lookupLoading && !this.state.lookupError && this.state.lookupSearched && (this.state.lookupResults || []).length === 0,
+      ...this.lookupDetailVals(),
 
       ...this.ctorChart(),
     };

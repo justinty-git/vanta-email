@@ -40,9 +40,9 @@ export async function GET(request: Request) {
     const clicks = counters.click ?? counters.clicks ?? 0;
 
     const openRate =
-      ratios.open ?? (delivered > 0 ? opens / delivered : null);
+      ratios.openratio ?? (delivered > 0 ? opens / delivered : null);
     const clickRate =
-      ratios.click ?? (delivered > 0 ? clicks / delivered : null);
+      ratios.clickratio ?? (delivered > 0 ? clicks / delivered : null);
 
     return NextResponse.json({
       status: "ok",
