@@ -1361,7 +1361,7 @@ class Component extends DCLogic {
       isProspectTab: this.state.performanceSegmentTab === 'prospect',
       isRankedListTab: this.state.performanceSegmentTab !== 'prospect',
       unclassifiedNote: (performanceData && performanceData.unclassifiedCount > 0)
-        ? performanceData.unclassifiedCount + ' send' + (performanceData.unclassifiedCount === 1 ? '' : 's') + " in this window couldn't be classified by name (no \"Prospect\"/\"Customer\" in the subject) — not shown in any tab"
+        ? performanceData.unclassifiedCount + ' send' + (performanceData.unclassifiedCount === 1 ? '' : 's') + " in this window couldn't be classified by audience list (no \"Prospect\"/\"Customer\" in any targeted list's name) — not shown in any tab"
         : '',
       benchmarkNote: this.state.performanceSegmentTab === 'prospect'
         ? 'Rated against real Prospect benchmarks (n=427 historical sends) from the June 2026 report'

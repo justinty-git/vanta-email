@@ -13,9 +13,9 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 // the reference report those segments either had too few sends for a
 // meaningful cut or weren't ranked against a segment benchmark at all.
 //
-// Segment is inferred from the email name (Justin's naming convention
-// embeds it directly, e.g. "[APAC] FY27 | Webinar | Prospects | GRC
-// Engineering | RC1"); ambiguous names default to Mixed.
+// Segment is inferred from the email's REAL audience targeting (which
+// HubSpot lists it's actually sent to), not the email's own name — see
+// classifySegmentFromLists() below for why name-parsing was replaced.
 //
 // Definitions:
 // - Click rate = clicks / delivered — the ranking key.
@@ -87,7 +87,15 @@ function unsubBenchmark(
   return "Within Benchmark";
 }
 
-type EmailSummary = { id: string; name: string; publishDate: string };
+type EmailSummary = {
+  id: string;
+  name: string;
+  publishDate: string;
+  to?: {
+    contactIlsLists?: { include?: string[]; exclude?: string[] };
+    contactLists?: { include?: string[]; exclude?: string[] };
+  };
+};
 type Metrics = {
   sent: number;
   delivered: number;
@@ -96,18 +104,53 @@ type Metrics = {
   unsubscribed: number;
 };
 type Segment = "prospect" | "customer" | "mixed";
+type ListInfo = { id: string; name: string };
 
-function classifySegment(name: string): Segment | "unclassified" {
-  const n = name.toLowerCase();
-  const hasCustomer = /\bcustomer(s)?\b/.test(n);
-  const hasProspect = /\bprospect(s)?\b/.test(n);
-  // Real Mixed = name signals BOTH segments (a genuinely combined-audience
-  // send), matching the reference report's actual definition. Previously
-  // this was the else-branch default, so any send whose name mentioned
-  // NEITHER keyword (a notification, an event name, anything ambiguous)
-  // was silently mislabeled as "Mixed" — that's not mixed audience, that's
-  // just unclassifiable by name. Those now fall to "unclassified" and are
-  // excluded from all three tabs rather than misrepresented as one.
+function audienceListIds(email: EmailSummary): string[] {
+  const ils = email.to?.contactIlsLists?.include ?? [];
+  const legacy = email.to?.contactLists?.include ?? [];
+  return Array.from(new Set([...ils, ...legacy].map(String)));
+}
+
+async function resolveListInfo(listIds: string[]): Promise<Map<string, ListInfo>> {
+  const map = new Map<string, ListInfo>();
+  for (const id of listIds) {
+    try {
+      const data = await hubspotFetch(`/crm/v3/lists/${id}`);
+      const list = data.list ?? data;
+      map.set(id, { id, name: list.name || `List ${id}` });
+    } catch {
+      map.set(id, { id, name: `List ${id}` });
+    }
+  }
+  return map;
+}
+
+// Classifies by what the email ACTUALLY targets (real HubSpot list
+// names), not by parsing the email's own name. This replaced an
+// earlier name-based version after checking Justin's real June 2026
+// report: the 4 genuinely mixed-audience sends in that report are named
+// things like "Vanta Delivers Q2 | RC1" and "Trust Tour Paris | DG1" —
+// none of them say "customer" or "prospect" in the name at all, so
+// name-parsing could never have caught real Mixed sends, regardless of
+// how the keyword logic was tuned.
+//
+// Caveat: this is only as good as how the underlying HubSpot LISTS are
+// named. If a real cross-segment campaign targets a list with a generic
+// name (e.g. "Vanta Delivers Q2 Master List") rather than something that
+// says "Customers" or "Prospects", this will still miss it — same
+// fundamental limitation, just moved from email names to list names,
+// which are usually (not guaranteed) named more consistently. If Mixed
+// is still empty after this, the reliable fix is Justin telling me the
+// actual list IDs used for broad/cross-segment sends, the same way
+// he's providing segment list IDs for Audience Status.
+function classifySegmentFromLists(
+  listIds: string[],
+  listInfo: Map<string, ListInfo>
+): Segment | "unclassified" {
+  const names = listIds.map((id) => (listInfo.get(id)?.name || "").toLowerCase());
+  const hasCustomer = names.some((n) => /\bcustomer(s)?\b/.test(n));
+  const hasProspect = names.some((n) => /\bprospect(s)?\b/.test(n));
   if (hasCustomer && hasProspect) return "mixed";
   if (hasCustomer) return "customer";
   if (hasProspect) return "prospect";
@@ -162,7 +205,7 @@ export async function GET() {
         (a: any, b: any) =>
           new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
       )
-      .map((e: any) => ({ id: e.id, name: e.name, publishDate: e.publishDate }));
+      .map((e: any) => ({ id: e.id, name: e.name, publishDate: e.publishDate, to: e.to }));
 
     const inWindow = allEmails.filter(
       (e) => new Date(e.publishDate).getTime() >= windowStart
@@ -178,6 +221,15 @@ export async function GET() {
         // Skip individual failures rather than failing the whole panel.
       }
     }
+
+    // Resolve every distinct list targeted by any scanned email, once
+    // each — same dedup pattern as the conflicts route, so this is a
+    // handful of lookups total, not one per email.
+    const allListIds = new Set<string>();
+    for (const e of scanned) {
+      for (const id of audienceListIds(e)) allListIds.add(id);
+    }
+    const listInfo = await resolveListInfo(Array.from(allListIds));
 
     // --- Weekly Click Rate trend ---
     // Switched from CTOR (clicks/opens) to Click Rate (clicks/delivered)
@@ -246,7 +298,7 @@ export async function GET() {
     for (const e of scanned) {
       const m = metricsByEmail.get(e.id);
       if (!m || m.delivered < MIN_DELIVERED_FOR_CLICK_RANKING) continue;
-      const segment = classifySegment(e.name);
+      const segment = classifySegmentFromLists(audienceListIds(e), listInfo);
       if (segment === "unclassified") {
         unclassifiedCount++;
         continue;
