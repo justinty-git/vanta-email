@@ -202,7 +202,7 @@
             <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Quick Links</span>
           </div>
           <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
-            <sc-for list="{{ quickLinks }}" as="q" hint-placeholder-count="3">
+            <sc-for list="{{ quickLinks }}" as="q" hint-placeholder-count="6">
               <a href="{{ q.href }}" target="_blank" style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:var(--r-md); background:var(--bg-card-alt); text-decoration:none;">
                 <div style="width:32px; height:32px; border-radius:var(--r-sm); background:var(--bg-card); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                   <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:13px;"></i>
@@ -1272,6 +1272,9 @@ class Component extends DCLogic {
         { label: 'Performance Report', sublabel: 'June 2026 by segment', icon: 'fa-ranking-star alpaca-fa-regular', href: 'https://info.vanta.com/hubfs/mops-internal/email-metrics/fy27/june.html' },
         { label: 'Email Gallery', sublabel: 'FY27 visual inventory', icon: 'fa-images alpaca-fa-regular', href: 'https://info.vanta.com/hubfs/mops-internal/email-inventory/fy27/vanta-fy27-email-gallery.html' },
         { label: 'Component Library', sublabel: 'Figma building blocks', icon: 'fa-hammer alpaca-fa-regular', href: 'https://www.figma.com/design/MlE32aFvK37j0N86n7RYnx/Vanta-Email-Components?node-id=19-2&m=dev' },
+        { label: 'Email Brief Template', sublabel: 'Google Doc', icon: 'fa-clipboard-list alpaca-fa-regular', href: 'https://docs.google.com/document/d/1E3DaN7jVQrBs156zv-BCERYAjjtmA_d2taUEGIL51gw/edit?tab=t.0' },
+        { label: 'HubSpot Common Segments', sublabel: 'Google Sheet', icon: 'fa-grid-2 alpaca-fa-regular', href: 'https://docs.google.com/spreadsheets/d/1u-Q2vNS_JQsSluwf71-QQup2nc6VbD1fyWs6H0dEzs4/edit?gid=0#gid=0' },
+        { label: 'Best Practices & Content Standards', sublabel: 'Google Doc', icon: 'fa-book alpaca-fa-regular', href: 'https://docs.google.com/document/d/1kdDDDHkLKWbQTYlszRLotuouVbhA6knYQJkg9tCv9-4/edit?usp=sharing' },
       ],
       attentionEmpty: !this.state.conflictsLoading && !this.state.anomaliesLoading && attentionItems.length === 0,
 
