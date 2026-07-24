@@ -455,30 +455,47 @@
           </div>
 
           <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card); display:flex; flex-direction:column;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px;">
               <div style="display:flex; align-items:center; gap:8px;">
                 <i class="fa-ranking-star alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
                 <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Performance Report</span>
               </div>
               <a href="https://info.vanta.com/hubfs/mops-internal/email-metrics/fy27/june.html" target="_blank" style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; font-weight:500; color:var(--icon-accent); white-space:nowrap;">Full report <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a>
             </div>
+            <div style="display:flex; gap:6px; margin-bottom:10px;">
+              <sc-for list="{{ segmentTabs }}" as="st" hint-placeholder-count="3">
+                <button onClick="{{ st.onClick }}" style="{{ st.style }}">{{ st.label }}</button>
+              </sc-for>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ segmentCaption }}</div>
             <sc-if value="{{ performanceRankedEmpty }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:0.8125rem; color:var(--text-tertiary); padding:12px 0;">No sends in this window had enough opens (20+) to rank reliably.</div>
+              <div style="font-size:0.8125rem; color:var(--text-tertiary); padding:12px 0;">Not enough sends (50+ delivered) in this segment to rank reliably.</div>
             </sc-if>
-            <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--badge-success-text); margin-bottom:6px;">Top 5 by CTOR</div>
-            <sc-for list="{{ topEmails }}" as="t" hint-placeholder-count="5">
-              <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
-                <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.rank }}. {{ t.name }}</span>
-                <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-success-text); flex-shrink:0;">{{ t.ctor }}</span>
-              </div>
-            </sc-for>
-            <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--badge-danger-text); margin:12px 0 6px; padding-top:12px; border-top:1px solid var(--border-table);">Bottom 5 by CTOR</div>
-            <sc-for list="{{ bottomEmails }}" as="t" hint-placeholder-count="5">
-              <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
-                <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.rank }}. {{ t.name }}</span>
-                <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-danger-text); flex-shrink:0;">{{ t.ctor }}</span>
-              </div>
-            </sc-for>
+            <sc-if value="{{ segmentIsSmall }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:6px;">All sends (too few to rank)</div>
+              <sc-for list="{{ segmentAll }}" as="t" hint-placeholder-count="5">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
+                  <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.name }}</span>
+                  <span style="font-size:0.8125rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ t.clickRate }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ segmentIsRanked }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--badge-success-text); margin-bottom:6px;">Top 5 by Click Rate</div>
+              <sc-for list="{{ topEmails }}" as="t" hint-placeholder-count="5">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
+                  <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.rank }}. {{ t.name }}</span>
+                  <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-success-text); flex-shrink:0;">{{ t.clickRate }}</span>
+                </div>
+              </sc-for>
+              <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--badge-danger-text); margin:12px 0 6px; padding-top:12px; border-top:1px solid var(--border-table);">Bottom 5 by Click Rate</div>
+              <sc-for list="{{ bottomEmails }}" as="t" hint-placeholder-count="5">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
+                  <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.rank }}. {{ t.name }}</span>
+                  <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-danger-text); flex-shrink:0;">{{ t.clickRate }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
           </div>
         </div>
 
@@ -615,6 +632,7 @@ class Component extends DCLogic {
     anomaliesLoading: true, anomaliesError: null, anomaliesData: null,
     performanceLoading: true, performanceError: null, performanceData: null, performanceCheckedAt: null,
     workflowsLoading: true, workflowsError: null, workflowsData: null,
+    performanceSegmentTab: 'prospect',
     briefSubject: ``,
     briefPreheader: ``,
     briefBody: ``,
@@ -1232,9 +1250,56 @@ class Component extends DCLogic {
         { label: 'Unsub rate (30d)', value: performanceData && performanceData.unsubRate30d !== null ? (performanceData.unsubRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
       ],
 
-      topEmails: performanceData ? performanceData.top5.map((e, i) => ({ rank: i + 1, name: e.name, ctor: (e.ctor * 100).toFixed(1) + '%' })) : [],
-      bottomEmails: performanceData ? performanceData.bottom5.map((e, i) => ({ rank: i + 1, name: e.name, ctor: (e.ctor * 100).toFixed(1) + '%' })) : [],
-      performanceRankedEmpty: !this.state.performanceLoading && !this.state.performanceError && performanceData && performanceData.rankedCount === 0,
+      segmentTabs: ['prospect', 'customer', 'mixed'].map(seg => {
+        const active = this.state.performanceSegmentTab === seg;
+        const label = seg === 'prospect' ? 'Prospect' : seg === 'customer' ? 'Customer' : 'Mixed Audience';
+        return {
+          label,
+          onClick: () => this.setState({ performanceSegmentTab: seg }),
+          style: {
+            padding: '5px 12px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600,
+            border: 'none', cursor: 'pointer', fontFamily: 'var(--font-base)',
+            background: active ? 'var(--purple-900)' : 'var(--bg-card-alt)',
+            color: active ? '#fff' : 'var(--text-secondary)',
+          },
+        };
+      }),
+      segmentCaption: (() => {
+        const seg = this.state.performanceSegmentTab;
+        const data = performanceData && performanceData.segments ? performanceData.segments[seg] : null;
+        const n = data ? data.count : 0;
+        return 'Last ' + n + ' ' + (seg === 'mixed' ? 'mixed-audience' : seg) + ' send' + (n === 1 ? '' : 's') + ' in window · ranked by Click Rate (clicks ÷ delivered)';
+      })(),
+      segmentIsSmall: (() => {
+        const seg = this.state.performanceSegmentTab;
+        const data = performanceData && performanceData.segments ? performanceData.segments[seg] : null;
+        return !!(data && 'all' in data);
+      })(),
+      segmentIsRanked: (() => {
+        const seg = this.state.performanceSegmentTab;
+        const data = performanceData && performanceData.segments ? performanceData.segments[seg] : null;
+        return !!(data && 'top5' in data && data.count > 0);
+      })(),
+      segmentAll: (() => {
+        const seg = this.state.performanceSegmentTab;
+        const data = performanceData && performanceData.segments ? performanceData.segments[seg] : null;
+        return data && data.all ? data.all.map(e => ({ name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%' })) : [];
+      })(),
+      topEmails: (() => {
+        const seg = this.state.performanceSegmentTab;
+        const data = performanceData && performanceData.segments ? performanceData.segments[seg] : null;
+        return data && data.top5 ? data.top5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%' })) : [];
+      })(),
+      bottomEmails: (() => {
+        const seg = this.state.performanceSegmentTab;
+        const data = performanceData && performanceData.segments ? performanceData.segments[seg] : null;
+        return data && data.bottom5 ? data.bottom5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%' })) : [];
+      })(),
+      performanceRankedEmpty: !this.state.performanceLoading && !this.state.performanceError && performanceData && (() => {
+        const seg = this.state.performanceSegmentTab;
+        const data = performanceData.segments ? performanceData.segments[seg] : null;
+        return !data || data.count === 0;
+      })(),
 
       anomalies: anomalyRows,
       anomaliesBadgeLabel: this.state.anomaliesLoading ? 'Loading · HubSpot' : (this.state.anomaliesError ? 'Error · HubSpot' : 'Live · HubSpot'),
