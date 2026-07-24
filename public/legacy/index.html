@@ -375,15 +375,23 @@
               <div style="height:220px; display:flex; align-items:center; justify-content:center; font-size:0.8125rem; color:var(--text-tertiary);">Not enough recent send data with opens yet to chart a trend.</div>
             </sc-if>
             <sc-if value="{{ ctorHasData }}" hint-placeholder-val="{{ false }}">
-              <svg viewBox="{{ ctorViewBox }}" style="width:100%; height:220px; display:block; overflow:visible;">
+              <svg viewBox="{{ ctorViewBox }}" style="width:100%; height:190px; display:block; overflow:visible;">
                 <line x1="{{ ctorX0 }}" y1="{{ ctorFloorY }}" x2="{{ ctorX1 }}" y2="{{ ctorFloorY }}" stroke="var(--badge-danger-text)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"></line>
                 <polyline points="{{ ctorPoly }}" fill="none" stroke="var(--dataviz-primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
                 <sc-for list="{{ ctorPoints }}" as="p" hint-placeholder-count="8">
-                  <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="4.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="2"></circle>
-                  <text x="{{ p.cx }}" y="{{ p.valueY }}" text-anchor="middle" fill="{{ p.color }}" font-size="11" font-weight="600" font-family="var(--font-base)">{{ p.valueLabel }}</text>
-                  <text x="{{ p.cx }}" y="{{ p.axisY }}" text-anchor="middle" fill="var(--text-secondary)" font-size="11" font-family="var(--font-base)">{{ p.week }}</text>
+                  <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="5.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="2">
+                    <title>{{ p.tooltip }}</title>
+                  </circle>
                 </sc-for>
               </svg>
+              <div style="display:flex; justify-content:space-between; gap:4px; margin-top:8px; padding:0 4px;">
+                <sc-for list="{{ ctorPoints }}" as="p" hint-placeholder-count="8">
+                  <div style="display:flex; flex-direction:column; align-items:center; min-width:0;">
+                    <span style="font-size:0.8125rem; font-weight:700; color:{{ p.color }};">{{ p.valueLabel }}</span>
+                    <span style="font-size:0.6875rem; color:var(--text-tertiary); margin-top:1px;">{{ p.week }}</span>
+                  </div>
+                </sc-for>
+              </div>
             </sc-if>
           </div>
 
@@ -1045,17 +1053,17 @@ class Component extends DCLogic {
   ctorChart() {
     const data = this.state.performanceData;
     const floor = 15; // MOps target floor — a goal line, not derived from data
-    const X0 = 34, W = 740, Y0 = 24, H = 150;
+    const X0 = 10, W = 780, Y0 = 20, H = 140;
 
-    if (!data || !data.trend) return { ctorPoints: [], ctorPoly: '', ctorViewBox: '0 0 ' + (X0 + W + 20) + ' ' + (Y0 + H + 40), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: Y0 + H / 2, ctorEmpty: true, ctorHasData: false };
+    if (!data || !data.trend) return { ctorPoints: [], ctorPoly: '', ctorViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: Y0 + H / 2, ctorEmpty: true, ctorHasData: false };
 
     // Only plot weeks that actually had opens — a week with 0 opens has no
     // meaningful CTOR, not a CTOR of 0%.
     const raw = data.trend
       .filter(w => w.ctor !== null)
-      .map(w => ({ week: this.formatWeekLabel(w.week), v: w.ctor * 100 }));
+      .map(w => ({ week: this.formatWeekLabel(w.week), v: w.ctor * 100, opens: w.opens, clicks: w.clicks }));
 
-    if (raw.length === 0) return { ctorPoints: [], ctorPoly: '', ctorViewBox: '0 0 ' + (X0 + W + 20) + ' ' + (Y0 + H + 40), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: Y0 + H / 2, ctorEmpty: true, ctorHasData: false };
+    if (raw.length === 0) return { ctorPoints: [], ctorPoly: '', ctorViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: Y0 + H / 2, ctorEmpty: true, ctorHasData: false };
 
     // Scale the y-axis to the real data, padded a bit, but always include
     // the floor line even if every week is comfortably above/below it.
@@ -1066,8 +1074,14 @@ class Component extends DCLogic {
     const x = i => raw.length > 1 ? X0 + (i / (raw.length - 1)) * W : X0 + W / 2;
     const y = v => Y0 + ((vmax - v) / (vmax - vmin)) * H;
     const color = v => v <= floor ? 'var(--badge-danger-text)' : v <= floor + 1.6 ? 'var(--badge-warning-text)' : 'var(--dataviz-primary)';
-    const points = raw.map((d, i) => ({ week: d.week, valueLabel: d.v.toFixed(1) + '%', cx: +x(i).toFixed(1), cy: +y(d.v).toFixed(1), valueY: +(y(d.v) - 12).toFixed(1), axisY: Y0 + H + 26, color: color(d.v) }));
-    return { ctorPoints: points, ctorPoly: points.map(p => p.cx + ',' + p.cy).join(' '), ctorViewBox: '0 0 ' + (X0 + W + 20) + ' ' + (Y0 + H + 40), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: +y(floor).toFixed(1), ctorEmpty: false, ctorHasData: true };
+    const points = raw.map((d, i) => ({
+      week: d.week,
+      valueLabel: d.v.toFixed(1) + '%',
+      cx: +x(i).toFixed(1), cy: +y(d.v).toFixed(1),
+      color: color(d.v),
+      tooltip: d.week + ': ' + d.v.toFixed(1) + '% CTOR (' + d.clicks.toLocaleString() + ' clicks / ' + d.opens.toLocaleString() + ' opens)',
+    }));
+    return { ctorPoints: points, ctorPoly: points.map(p => p.cx + ',' + p.cy).join(' '), ctorViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: +y(floor).toFixed(1), ctorEmpty: false, ctorHasData: true };
   }
 
   // "2026-07-20" (Monday date key) -> "Jul 20"
