@@ -86,7 +86,7 @@
     }
     * { box-sizing: border-box; }
     body { margin:0; font-family: var(--font-base); -webkit-font-smoothing:antialiased; }
-    a { color: var(--purple-900); text-decoration: none; }
+    a { color: var(--icon-accent); text-decoration: none; }
     a:hover { color: var(--purple-1000); text-decoration: underline; }
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-thumb { background: var(--sand-500); border-radius: 4px; }
@@ -1163,7 +1163,7 @@ class Component extends DCLogic {
       toggleStyle: { display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)', color: '#e8e6e6', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-base)', whiteSpace: 'nowrap' },
 
       tabs: [
-        this.tabDef('overview', 'Overview', 'fa-grid-2 alpaca-fa-regular', 'var(--purple-900)'),
+        this.tabDef('overview', 'Overview', 'fa-grid-2 alpaca-fa-regular', 'var(--icon-accent)'),
         this.tabDef('govern', 'Govern', 'fa-shield-check alpaca-fa-regular', 'var(--badge-info-text)'),
         this.tabDef('build', 'Build', 'fa-hammer alpaca-fa-regular', 'var(--badge-warning-text)'),
         this.tabDef('health', 'Health', 'fa-heart-pulse alpaca-fa-regular', 'var(--badge-success-text)'),
