@@ -6,8 +6,11 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 // Flagged Anomalies — HubSpot-only version (no Snowflake dependency).
 // Pulls the most recently SENT marketing emails, fetches real post-send
 // stats for each, and flags any email whose deliverability/engagement
-// numbers deviate meaningfully from the recent baseline (the average
-// across the same batch) OR breach known hard deliverability thresholds.
+// numbers deviate meaningfully from the recent baseline (the MEDIAN
+// across the same batch — not the mean, since a mean lets one
+// high-performing outlier drag the baseline up and make every other
+// normal send look like an underperformer by comparison) OR breach
+// known hard deliverability thresholds.
 //
 // This intentionally does NOT try to reproduce the Snowflake-backed CTOR
 // trend / Top-5-Bottom-5 panels — those stay as-is. This is a parallel,
@@ -19,7 +22,7 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 // spamreport}, ratios.{openratio,clickratio,bounceratio,
 // unsubscribedratio,spamreportratio}.
 
-const RECENT_SEND_LIMIT = 12;
+const RECENT_SEND_LIMIT = 20;
 
 // Hard thresholds mirror HubSpot's own deliverability-suspension guidance
 // (bounce 5%, spam 0.1%, unsub 3%) as an absolute floor for "Critical",
@@ -81,10 +84,20 @@ async function fetchMetrics(emailId: string): Promise<Metrics> {
   };
 }
 
-function average(values: Array<number | null>): number | null {
-  const nums = values.filter((v): v is number => v !== null);
+// Median, not mean — a single high-performing outlier in a small batch
+// (12 sends) can drag a mean baseline up enough that every OTHER normal,
+// tightly-clustered send looks like a severe underperformer by
+// comparison, even though nothing is actually wrong with them. This was
+// confirmed as the real cause of a false-alarm pileup (nearly every send
+// flagged Critical/High with suspiciously similar-looking deviations —
+// a tell that the baseline itself was skewed, not that 8+ sends were
+// simultaneously broken). Median isn't pulled around by one outlier the
+// same way.
+function median(values: Array<number | null>): number | null {
+  const nums = values.filter((v): v is number => v !== null).sort((a, b) => a - b);
   if (!nums.length) return null;
-  return nums.reduce((a, b) => a + b, 0) / nums.length;
+  const mid = Math.floor(nums.length / 2);
+  return nums.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
 }
 
 export async function GET() {
@@ -116,11 +129,11 @@ export async function GET() {
     }
 
     const baseline = {
-      openRate: average(Array.from(metricsById.values()).map((m) => m.openRate)),
-      clickRate: average(Array.from(metricsById.values()).map((m) => m.clickRate)),
-      bounceRate: average(Array.from(metricsById.values()).map((m) => m.bounceRate)),
-      unsubRate: average(Array.from(metricsById.values()).map((m) => m.unsubRate)),
-      spamRate: average(Array.from(metricsById.values()).map((m) => m.spamRate)),
+      openRate: median(Array.from(metricsById.values()).map((m) => m.openRate)),
+      clickRate: median(Array.from(metricsById.values()).map((m) => m.clickRate)),
+      bounceRate: median(Array.from(metricsById.values()).map((m) => m.bounceRate)),
+      unsubRate: median(Array.from(metricsById.values()).map((m) => m.unsubRate)),
+      spamRate: median(Array.from(metricsById.values()).map((m) => m.spamRate)),
     };
 
     type Flag = {
@@ -222,11 +235,11 @@ export async function GET() {
         const rank = { Critical: 4, High: 3, Medium: 2 }[riskLabel];
         const changeLabel =
           c.base && c.base > 0
-            ? (relChange >= 0 ? "+" : "") + Math.round(relChange * 100) + "% vs recent avg"
+            ? (relChange >= 0 ? "+" : "") + Math.round(relChange * 100) + "% vs recent median"
             : c.format(c.rate);
         const cause =
           c.base && c.base > 0
-            ? `${c.metric} at ${c.format(c.rate)} vs ${c.format(c.base)} recent average`
+            ? `${c.metric} at ${c.format(c.rate)} vs ${c.format(c.base)} recent median`
             : `${c.metric} at ${c.format(c.rate)} — no baseline yet from this batch`;
 
         const severityColor = riskLabel === "Medium" ? warn : danger;
