@@ -237,82 +237,16 @@
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1.35fr 1fr; gap:20px; align-items:start;">
-          <!-- Known Issues Log -->
-          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:4px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <i class="fa-clipboard-list alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-                <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Known Issues Log</span>
-              </div>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-neutral-bg); color:var(--badge-neutral-text); white-space:nowrap;"><i class="fa-clipboard-list alpaca-fa-solid" style="font-size:9px;"></i>Manual log</span>
-            </div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:6px;">Nothing to auto-capture here — HubSpot has no "known issues" object. Tell me about an issue and I'll add it here.</div>
-            <div style="margin:0 -20px;">
-              <sc-for list="{{ knownIssues }}" as="k" hint-placeholder-count="4">
-                <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 20px; border-top:1px solid var(--border-table);">
-                  <span style="font-size:0.75rem; color:var(--text-tertiary); width:42px; flex-shrink:0; padding-top:1px;">{{ k.date }}</span>
-                  <div style="min-width:0; flex:1;">
-                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ k.title }}</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ k.detail }}</div>
-                    <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-                      <span style="font-size:0.6875rem; font-weight:500; padding:1px 8px; border-radius:var(--r-sm); background:var(--badge-neutral-bg); color:var(--badge-neutral-text);">{{ k.tag }}</span>
-                      <span style="font-size:0.6875rem; color:var(--text-tertiary);">logged by {{ k.loggedBy }}</span>
-                    </div>
-                  </div>
-                </div>
-              </sc-for>
-              <sc-if value="{{ knownIssuesEmpty }}" hint-placeholder-val="{{ false }}">
-                <div style="padding:14px 20px; font-size:0.8125rem; color:var(--text-tertiary); border-top:1px solid var(--border-table);">No issues logged yet.</div>
-              </sc-if>
+        <!-- Gallery link-out (Known Issues Log and Email Framework removed for now) -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:18px 20px; box-shadow:var(--shadow-card); max-width:420px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <i class="fa-images alpaca-fa-regular" style="color:var(--icon-accent); font-size:14px;"></i>
+              <span style="font-size:1rem; font-weight:600; color:var(--text-primary);">FY27 Email Gallery</span>
             </div>
           </div>
-
-          <!-- Right column: Gallery link-out, then the Email Framework reference -->
-          <div style="display:flex; flex-direction:column; gap:20px;">
-            <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:18px 20px; box-shadow:var(--shadow-card);">
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <i class="fa-images alpaca-fa-regular" style="color:var(--icon-accent); font-size:14px;"></i>
-                  <span style="font-size:1rem; font-weight:600; color:var(--text-primary);">FY27 Email Gallery</span>
-                </div>
-              </div>
-              <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px; line-height:1.5;">The executive-facing visual inventory already shared with leadership. Lives as its own artifact.</div>
-              <a href="https://info.vanta.com/hubfs/mops-internal/email-inventory/fy27/vanta-fy27-email-gallery.html" target="_blank" style="display:inline-flex; align-items:center; gap:7px; font-size:0.8125rem; font-weight:500; padding:8px 14px; border-radius:var(--r-sm); background:var(--bg-card-alt); color:var(--icon-accent);">View full gallery <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:10px;"></i></a>
-            </div>
-
-            <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:18px 20px; box-shadow:var(--shadow-card);">
-              <button onClick="{{ toggleRapid }}" style="display:flex; align-items:center; justify-content:space-between; width:100%; background:none; border:none; padding:0; cursor:pointer; font-family:var(--font-base); text-align:left; gap:8px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <i class="fa-book alpaca-fa-regular" style="color:var(--icon-accent); font-size:14px;"></i>
-                  <span style="font-size:1rem; font-weight:600; color:var(--text-primary);">Email Framework</span>
-                </div>
-                <i class="{{ rapidChevron }}" style="color:var(--text-tertiary); font-size:12px;"></i>
-              </button>
-              <div style="margin-top:12px; display:flex; flex-direction:column; gap:8px;">
-                <sc-for list="{{ rapidTiers }}" as="t" hint-placeholder-count="3">
-                  <div style="display:flex; align-items:baseline; gap:8px;">
-                    <span style="font-size:0.8125rem; font-weight:600; color:var(--text-primary); width:96px; flex-shrink:0;">{{ t.name }}</span>
-                    <span style="font-size:0.75rem; color:var(--text-secondary); line-height:1.45;">{{ t.oneLine }}</span>
-                  </div>
-                </sc-for>
-              </div>
-              <sc-if value="{{ rapidOpen }}" hint-placeholder-val="{{ false }}">
-                <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border-table); display:flex; flex-direction:column; gap:12px;">
-                  <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                    <sc-for list="{{ rapidLetters }}" as="l" hint-placeholder-count="5">
-                      <span style="font-size:0.6875rem; padding:3px 8px; border-radius:999px; background:var(--bg-card-alt); color:var(--text-secondary);"><strong style="color:var(--icon-accent);">{{ l.letter }}</strong> {{ l.word }}</span>
-                    </sc-for>
-                  </div>
-                  <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.55;">Two independent axes: <strong style="color:var(--text-primary);">Tier</strong> (governance level) vs <strong style="color:var(--text-primary);">Email type</strong> (Demand Gen, RC, Nurture…). Email type is never a substitute for tier.</div>
-                  <sc-for list="{{ rapidTiers }}" as="t" hint-placeholder-count="3">
-                    <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.55;"><strong style="color:var(--text-primary);">{{ t.name }}:</strong> {{ t.detail }}</div>
-                  </sc-for>
-                  <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.55; padding-top:10px; border-top:1px solid var(--border-table);"><strong style="color:var(--text-primary);">QC — two separate binding vetoes:</strong> a technical/accessibility gate (Marketing Ops) and a compliance judgment gate (Legal). Neither is overridable by the Decide-holder.</div>
-                </div>
-              </sc-if>
-            </div>
-          </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px; line-height:1.5;">The executive-facing visual inventory already shared with leadership. Lives as its own artifact.</div>
+          <a href="https://info.vanta.com/hubfs/mops-internal/email-inventory/fy27/vanta-fy27-email-gallery.html" target="_blank" style="display:inline-flex; align-items:center; gap:7px; font-size:0.8125rem; font-weight:500; padding:8px 14px; border-radius:var(--r-sm); background:var(--bg-card-alt); color:var(--icon-accent);">View full gallery <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:10px;"></i></a>
         </div>
 
       </div>
@@ -645,15 +579,15 @@ class Component extends DCLogic {
     this.loadPerformance();
     this.loadWorkflows();
 
-    // Auto-refresh on top of the manual Refresh buttons — re-checks every
-    // 5 minutes so the data doesn't go stale on a screen left open, without
+    // Auto-refresh on top of the manual Refresh buttons — re-checks hourly
+    // so the data doesn't go stale on a screen left open, without
     // hammering HubSpot's API on every render.
     this._refreshInterval = setInterval(() => {
       this.loadConflicts();
       this.loadAnomalies();
       this.loadPerformance();
       this.loadWorkflows();
-    }, 5 * 60 * 1000);
+    }, 60 * 60 * 1000);
   }
 
   componentWillUnmount() {
@@ -1171,7 +1105,7 @@ class Component extends DCLogic {
       isOverview: active === 'overview', isGovern: active === 'govern', isBuild: active === 'build', isHealth: active === 'health',
 
       pillars: [
-        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Known issues log, send-conflict detection, and the Email Framework reference.', metricValue: String(this.state.conflictsData ? this.state.conflictsData.conflicts.length : 0), metricLabel: 'send conflicts flagged', metricColor: (this.state.conflictsData && this.state.conflictsData.conflicts.length > 0) ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: '0 issues in the known-issues log', onClick: () => this.setState({ activeTab: 'govern' }) },
+        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Send-conflict detection across the next two weeks, plus the FY27 Email Gallery.', metricValue: String(this.state.conflictsData ? this.state.conflictsData.conflicts.length : 0), metricLabel: 'send conflicts flagged', metricColor: (this.state.conflictsData && this.state.conflictsData.conflicts.length > 0) ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'Known issues log + Email Framework temporarily hidden', onClick: () => this.setState({ activeTab: 'govern' }) },
         { icon: 'fa-hammer alpaca-fa-regular', name: 'Build', desc: 'Email Content Score for anyone submitting drafts, plus an Outlook pre-flight utility for MOps.', metricValue: '2', metricLabel: 'live tools ready to use', metricColor: 'var(--badge-success-text)', subMetric: 'Paste content or HTML to score it', onClick: () => this.setState({ activeTab: 'build' }) },
         { icon: 'fa-heart-pulse alpaca-fa-regular', name: 'Health', desc: 'CTOR trend, anomalies, workflow watchdog, and per-email post-send diagnostics.', metricValue: String(anomalyRows.filter(r => r.riskLabel === 'Critical' || r.riskLabel === 'High').length), metricLabel: 'critical/high anomalies', metricColor: anomalyRows.some(r => r.riskLabel === 'Critical' || r.riskLabel === 'High') ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'CTOR trend · lookup · watchdog', onClick: () => this.setState({ activeTab: 'health' }) },
       ],
@@ -1199,10 +1133,10 @@ class Component extends DCLogic {
       conflictsBadgeBg: this.state.conflictsError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
       conflictsBadgeColor: this.state.conflictsError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
       conflictsCaption: this.state.conflictsLoading
-        ? 'Scanning the next 7 days…'
+        ? 'Scanning the next 14 days…'
         : this.state.conflictsError
         ? this.state.conflictsError
-        : 'Next 7 days · same/next-day + shared list = conflict · auto-refreshes every 5 min' + (this.state.conflictsCheckedAt ? ' · checked ' + this.state.conflictsCheckedAt : ''),
+        : 'Next 14 days · same/next-day + shared list = conflict · auto-refreshes hourly' + (this.state.conflictsCheckedAt ? ' · checked ' + this.state.conflictsCheckedAt : ''),
       conflictsEmpty: !this.state.conflictsLoading && !this.state.conflictsError && sendScheduleRows.length === 0,
       onRefreshConflicts: () => this.loadConflicts(),
       conflictsRefreshIcon: this.state.conflictsLoading ? 'fa-clock-rotate-left alpaca-fa-solid fa-spin' : 'fa-clock-rotate-left alpaca-fa-solid',

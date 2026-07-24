@@ -23,7 +23,7 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 //   count — the UI should label it as such.
 
 const ADJACENT_DAYS = 1; // same day or the very next day counts as a conflict window
-const WINDOW_DAYS = 7; // only scan sends within the next 7 days
+const WINDOW_DAYS = 14; // scan sends within the next 14 days
 
 type RawEmail = {
   id: string;
@@ -74,7 +74,7 @@ async function resolveListInfo(listIds: string[]): Promise<Map<string, ListInfo>
 
 export async function GET() {
   try {
-    const rawEmails = await fetchMarketingEmailsPaginated(3);
+    const rawEmails = await fetchMarketingEmailsPaginated(5);
     const distinctStatesSeen = Array.from(
       new Set(rawEmails.map((e: any) => e.state).filter(Boolean))
     );
