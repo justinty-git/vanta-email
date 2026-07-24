@@ -11,11 +11,17 @@
 // real React component fed by the API routes in app/api/hubspot/*, and remove the
 // corresponding section from the legacy static export. Do this panel-by-panel
 // rather than all at once.
+//
+// CACHE-BUSTING: public/ static assets can get cached (browser or CDN edge) at
+// this exact URL. Since the URL never otherwise changes between deploys, a
+// stale cached copy can keep being served even after a real code change ships.
+// Appending a build-time version string forces a fresh fetch after every deploy.
+const BUILD_VERSION = Date.now();
 
 export default function Home() {
   return (
     <iframe
-      src="/legacy/index.html"
+      src={`/legacy/index.html?v=${BUILD_VERSION}`}
       title="Email Ready Room"
       style={{
         border: "none",

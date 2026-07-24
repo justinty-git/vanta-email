@@ -61,7 +61,7 @@ async function fetchMetrics(emailId: string): Promise<Metrics> {
   const counters = data.aggregate?.counters || {};
 
   const sent = counters.sent ?? 0;
-  const delivered = counters.delivered ?? 0;
+  const delivered = counters.delivered ?? counters.deliveries ?? sent;
   const open = counters.open ?? 0;
   const click = counters.click ?? 0;
   const bounce = counters.bounce ?? 0;

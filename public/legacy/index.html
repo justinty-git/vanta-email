@@ -335,15 +335,15 @@
             <div style="display:flex; flex-direction:column; gap:10px;">
               <div style="display:flex; flex-direction:column; gap:4px;">
                 <label style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em;">Subject line</label>
-                <input type="text" onChange="{{ onBriefSubjectInput }}" onInput="{{ onBriefSubjectInput }}" defaultValue="{{ briefSubject }}" spellcheck="false" style="width:100%; padding:9px 12px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem;">
+                <input type="text" onChange="{{ onBriefSubjectInput }}" onInput="{{ onBriefSubjectInput }}" defaultValue="{{ briefSubject }}" spellcheck="true" style="width:100%; padding:9px 12px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem;">
               </div>
               <div style="display:flex; flex-direction:column; gap:4px;">
                 <label style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em;">Preheader</label>
-                <input type="text" onChange="{{ onBriefPreheaderInput }}" onInput="{{ onBriefPreheaderInput }}" defaultValue="{{ briefPreheader }}" spellcheck="false" placeholder="The preview text shown next to the subject in most inboxes" style="width:100%; padding:9px 12px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem;">
+                <input type="text" onChange="{{ onBriefPreheaderInput }}" onInput="{{ onBriefPreheaderInput }}" defaultValue="{{ briefPreheader }}" spellcheck="true" placeholder="The preview text shown next to the subject in most inboxes" style="width:100%; padding:9px 12px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem;">
               </div>
               <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
                 <label style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em;">Body copy</label>
-                <textarea onChange="{{ onBriefBodyInput }}" onInput="{{ onBriefBodyInput }}" defaultValue="{{ briefBody }}" spellcheck="false" style="width:100%; min-height:290px; resize:vertical; padding:12px 14px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem; line-height:1.5;"></textarea>
+                <textarea onChange="{{ onBriefBodyInput }}" onInput="{{ onBriefBodyInput }}" defaultValue="{{ briefBody }}" spellcheck="true" style="width:100%; min-height:290px; resize:vertical; padding:12px 14px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem; line-height:1.5;"></textarea>
               </div>
               <button onClick="{{ onAnalyzeBrief }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-magnifying-glass-chart alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
             </div>
@@ -352,7 +352,7 @@
                 <span style="font-size:0.8125rem; color:var(--text-secondary);">Overall</span>
                 <span style="font-size:0.875rem; font-weight:600; color:{{ briefOverall.color }};">{{ briefOverall.label }}</span>
               </div>
-              <sc-for list="{{ briefMetrics }}" as="m" hint-placeholder-count="5">
+              <sc-for list="{{ briefMetrics }}" as="m" hint-placeholder-count="6">
                 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px 12px; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ m.accent }};">
                   <div style="min-width:0;">
                     <div style="font-size:0.8125rem; font-weight:500; color:var(--text-primary);">{{ m.label }}</div>
@@ -848,8 +848,32 @@ The Vanta Team`,
     else if (riskN >= 1) riskS = ['Warn', warn, warnb, riskN + ' spam-filter trigger' + (riskN > 1 ? 's' : '') + ' to review.'];
     else riskS = ['Pass', ok, okb, 'No obvious spam triggers.'];
 
+    // Content quality — catches copy-paste mistakes a spam/jargon check
+    // wouldn't: unbalanced or empty {{merge}} tokens, leftover placeholder
+    // text from drafting, repeated words, and double spaces. Browser-native
+    // spellcheck (enabled on these fields) handles actual misspellings.
+    const openBraces = (combined.match(/\{\{/g) || []).length;
+    const closeBraces = (combined.match(/\}\}/g) || []).length;
+    const emptyTokens = (combined.match(/\{\{\s*\}\}/g) || []).length;
+    const placeholderTerms = ['lorem ipsum', 'todo', 'tbd', '[insert', 'xxx', 'placeholder text', 'insert here'];
+    const foundPlaceholders = placeholderTerms.filter(w => combinedLower.includes(w));
+    const repeatedWords = combined.match(/\b(\w+)\s+\1\b/gi) || [];
+    const doubleSpaces = (combined.match(/  +/g) || []).length;
+
+    const contentIssues = [];
+    if (openBraces !== closeBraces) contentIssues.push('unbalanced {{ }} merge tokens');
+    if (emptyTokens > 0) contentIssues.push(emptyTokens + ' empty {{}} token' + (emptyTokens > 1 ? 's' : ''));
+    if (foundPlaceholders.length) contentIssues.push('leftover placeholder text (' + foundPlaceholders.slice(0, 2).join(', ') + ')');
+    if (repeatedWords.length) contentIssues.push(repeatedWords.length + ' repeated word' + (repeatedWords.length > 1 ? 's' : '') + ' (' + repeatedWords.slice(0, 2).join(', ') + ')');
+    if (doubleSpaces > 0) contentIssues.push(doubleSpaces + ' double space' + (doubleSpaces > 1 ? 's' : ''));
+
+    let contentS;
+    if (contentIssues.length === 0) contentS = ['Pass', ok, okb, 'No leftover placeholders, broken tokens, or repeated words found.'];
+    else if (openBraces !== closeBraces || emptyTokens > 0 || foundPlaceholders.length) contentS = ['Fail', bad, badb, contentIssues.join('; ') + '.'];
+    else contentS = ['Warn', warn, warnb, contentIssues.join('; ') + '.'];
+
     const mk = (label, s) => ({ label, status: s[0], statusColor: s[1], statusBg: s[2], finding: s[3], accent: s[0] === 'Fail' ? bad : s[0] === 'Warn' ? warn : ok });
-    const metrics = [mk('Subject clarity / jargon', subjS), mk('Preheader quality', preS), mk('CTA density', ctaS), mk('Mobile readability', readS), mk('Rendering / spam risk', riskS)];
+    const metrics = [mk('Subject clarity / jargon', subjS), mk('Preheader quality', preS), mk('CTA density', ctaS), mk('Mobile readability', readS), mk('Rendering / spam risk', riskS), mk('Content quality', contentS)];
     if (!subj && !pre && words === 0) return { metrics: metrics.map(m => ({ ...m, status: '—', statusColor: 'var(--text-tertiary)', statusBg: 'var(--bg-card-alt)', finding: 'Fill in a field to score it.', accent: 'var(--border-table)' })), overall: { label: 'Awaiting input', color: 'var(--text-tertiary)', bg: 'var(--bg-card-alt)' } };
     const order = { Pass: 0, Warn: 1, Fail: 2 };
     const worst = metrics.reduce((m, x) => order[x.status] > order[m] ? x.status : m, 'Pass');

@@ -34,7 +34,10 @@ export async function GET(request: Request) {
     const counters = data.aggregate?.counters || {};
 
     const sent = counters.sent ?? counters.processed ?? 0;
-    const delivered = counters.delivered ?? 0;
+    // Fall back to sent count if HubSpot doesn't return a distinct
+    // 'delivered' counter for this email (observed on some accounts/older
+    // sends) — better to show a rate against sent than show nothing.
+    const delivered = counters.delivered ?? counters.deliveries ?? sent;
     const opens = counters.open ?? counters.opens ?? 0;
     const clicks = counters.click ?? counters.clicks ?? 0;
 
