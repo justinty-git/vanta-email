@@ -127,7 +127,7 @@
   </div>
 
   <!-- Tabs -->
-  <div style="display:flex; align-items:center; gap:4px; padding:0 28px; background:var(--tab-bg); border-bottom:1px solid var(--tab-border); flex-shrink:0;">
+  <div style="display:flex; align-items:center; gap:6px; padding:10px 28px; background:var(--tab-bg); border-bottom:1px solid var(--tab-border); flex-shrink:0;">
     <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="4">
       <button onClick="{{ tab.onClick }}" style="{{ tab.style }}" style-hover="{{ tab.hoverStyle }}">
         <i class="{{ tab.icon }}" style="font-size:13px;"></i>
@@ -147,15 +147,7 @@
           <div style="font-size:0.875rem; color:var(--text-secondary); margin-top:2px;">A vision for email ops with two working tools inside it. Each panel is tagged by how real it is today.</div>
         </div>
 
-        <!-- Category legend -->
-        <div style="display:flex; flex-wrap:wrap; gap:10px;">
-          <sc-for list="{{ legend }}" as="l" hint-placeholder-count="3">
-            <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:var(--r-md); background:var(--bg-card); border:{{ l.border }};">
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ l.bg }}; color:{{ l.color }};"><i class="{{ l.icon }}" style="font-size:9px;"></i>{{ l.label }}</span>
-              <span style="font-size:0.75rem; color:var(--text-secondary);">{{ l.desc }}</span>
-            </div>
-          </sc-for>
-        </div>
+        <!-- Category legend removed per feedback — badges on each panel are self-explanatory -->
 
         <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
           <sc-for list="{{ pillars }}" as="p" hint-placeholder-count="3">
@@ -266,18 +258,26 @@
             </div>
           </div>
 
-          <!-- Right column: RAPID (concept, collapsible) + Gallery link-out (concept) -->
+          <!-- Right column: Gallery link-out, then the Email Framework reference -->
           <div style="display:flex; flex-direction:column; gap:20px;">
-            <div style="background:var(--bg-card); border:1px dashed var(--border-table-strong); border-radius:var(--r-lg); padding:18px 20px;">
+            <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:18px 20px; box-shadow:var(--shadow-card);">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <i class="fa-images alpaca-fa-regular" style="color:var(--icon-accent); font-size:14px;"></i>
+                  <span style="font-size:1rem; font-weight:600; color:var(--text-primary);">FY27 Email Gallery</span>
+                </div>
+              </div>
+              <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px; line-height:1.5;">The executive-facing visual inventory already shared with leadership. Lives as its own artifact.</div>
+              <a href="https://info.vanta.com/hubfs/mops-internal/email-inventory/fy27/vanta-fy27-email-gallery.html" target="_blank" style="display:inline-flex; align-items:center; gap:7px; font-size:0.8125rem; font-weight:500; padding:8px 14px; border-radius:var(--r-sm); background:var(--bg-card-alt); color:var(--icon-accent);">View full gallery <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:10px;"></i></a>
+            </div>
+
+            <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:18px 20px; box-shadow:var(--shadow-card);">
               <button onClick="{{ toggleRapid }}" style="display:flex; align-items:center; justify-content:space-between; width:100%; background:none; border:none; padding:0; cursor:pointer; font-family:var(--font-base); text-align:left; gap:8px;">
                 <div style="display:flex; align-items:center; gap:8px;">
                   <i class="fa-book alpaca-fa-regular" style="color:var(--icon-accent); font-size:14px;"></i>
-                  <span style="font-size:1rem; font-weight:600; color:var(--text-primary);">RAPID Framework Reference</span>
+                  <span style="font-size:1rem; font-weight:600; color:var(--text-primary);">Email Framework</span>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-neutral-bg); color:var(--badge-neutral-text); white-space:nowrap;"><i class="fa-flask alpaca-fa-solid" style="font-size:9px;"></i>Concept</span>
-                  <i class="{{ rapidChevron }}" style="color:var(--text-tertiary); font-size:12px;"></i>
-                </div>
+                <i class="{{ rapidChevron }}" style="color:var(--text-tertiary); font-size:12px;"></i>
               </button>
               <div style="margin-top:12px; display:flex; flex-direction:column; gap:8px;">
                 <sc-for list="{{ rapidTiers }}" as="t" hint-placeholder-count="3">
@@ -302,18 +302,6 @@
                 </div>
               </sc-if>
             </div>
-
-            <div style="background:var(--bg-card); border:1px dashed var(--border-table-strong); border-radius:var(--r-lg); padding:18px 20px;">
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <i class="fa-images alpaca-fa-regular" style="color:var(--icon-accent); font-size:14px;"></i>
-                  <span style="font-size:1rem; font-weight:600; color:var(--text-primary);">FY27 Email Gallery</span>
-                </div>
-                <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-neutral-bg); color:var(--badge-neutral-text); white-space:nowrap;"><i class="fa-flask alpaca-fa-solid" style="font-size:9px;"></i>Concept</span>
-              </div>
-              <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px; line-height:1.5;">The executive-facing visual inventory already shared with leadership. Lives as its own artifact.</div>
-              <a href="https://info.vanta.com/hubfs/mops-internal/email-inventory/fy27/vanta-fy27-email-gallery.html" target="_blank" style="display:inline-flex; align-items:center; gap:7px; font-size:0.8125rem; font-weight:500; padding:8px 14px; border-radius:var(--r-sm); background:var(--bg-card-alt); color:var(--icon-accent);">View full gallery <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:10px;"></i></a>
-            </div>
           </div>
         </div>
 
@@ -332,7 +320,7 @@
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Email Content Score</span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-success-bg); color:var(--badge-success-text); white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>Live tool</span>
             </div>
-            <span style="font-size:0.75rem; color:var(--text-secondary);">Paste a draft and analyze it against the FY27 rubric — for anyone submitting content</span>
+            <span style="font-size:0.75rem; color:var(--text-secondary);">Fill in subject, preheader, and body copy to score them against the FY27 rubric — for anyone submitting content</span>
           </div>
           <div style="display:flex; align-items:center; gap:7px; margin-top:8px; font-size:0.75rem; color:var(--text-tertiary);">
             <i class="fa-clock-rotate-left alpaca-fa-regular" style="font-size:11px;"></i>
@@ -340,15 +328,26 @@
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:12px; align-items:start;">
             <div style="display:flex; flex-direction:column; gap:10px;">
-              <textarea onChange="{{ onBriefInput }}" onInput="{{ onBriefInput }}" defaultValue="{{ briefText }}" spellcheck="false" style="width:100%; min-height:400px; resize:vertical; padding:12px 14px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem; line-height:1.5;"></textarea>
-              <button onClick="{{ onAnalyzeBrief }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-wand-magic-sparkles alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <label style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em;">Subject line</label>
+                <input type="text" onChange="{{ onBriefSubjectInput }}" onInput="{{ onBriefSubjectInput }}" defaultValue="{{ briefSubject }}" spellcheck="false" style="width:100%; padding:9px 12px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem;">
+              </div>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <label style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em;">Preheader</label>
+                <input type="text" onChange="{{ onBriefPreheaderInput }}" onInput="{{ onBriefPreheaderInput }}" defaultValue="{{ briefPreheader }}" spellcheck="false" placeholder="The preview text shown next to the subject in most inboxes" style="width:100%; padding:9px 12px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem;">
+              </div>
+              <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                <label style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em;">Body copy</label>
+                <textarea onChange="{{ onBriefBodyInput }}" onInput="{{ onBriefBodyInput }}" defaultValue="{{ briefBody }}" spellcheck="false" style="width:100%; min-height:290px; resize:vertical; padding:12px 14px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem; line-height:1.5;"></textarea>
+              </div>
+              <button onClick="{{ onAnalyzeBrief }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-magnifying-glass-chart alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
             </div>
             <div style="display:flex; flex-direction:column; gap:10px;">
               <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:var(--r-md); background:{{ briefOverall.bg }};">
                 <span style="font-size:0.8125rem; color:var(--text-secondary);">Overall</span>
                 <span style="font-size:0.875rem; font-weight:600; color:{{ briefOverall.color }};">{{ briefOverall.label }}</span>
               </div>
-              <sc-for list="{{ briefMetrics }}" as="m" hint-placeholder-count="4">
+              <sc-for list="{{ briefMetrics }}" as="m" hint-placeholder-count="5">
                 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px 12px; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ m.accent }};">
                   <div style="min-width:0;">
                     <div style="font-size:0.8125rem; font-weight:500; color:var(--text-primary);">{{ m.label }}</div>
@@ -375,7 +374,7 @@
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px; align-items:start;">
             <div style="display:flex; flex-direction:column; gap:8px;">
               <textarea onChange="{{ onHtmlInput }}" onInput="{{ onHtmlInput }}" defaultValue="{{ htmlText }}" spellcheck="false" style="width: 641px; min-height: 130px; resize: vertical; padding: 9px 11px; border-radius: var(--r-sm); border: 1px solid var(--border-card); background: var(--input-bg); color: var(--text-primary); font-size: 0.75rem; line-height: 1.5; font-family: var(--code-font); height: 413px"></textarea>
-              <button onClick="{{ onAnalyzeHtml }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-wand-magic-sparkles alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
+              <button onClick="{{ onAnalyzeHtml }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-magnifying-glass-chart alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
             </div>
             <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
               <sc-for list="{{ preflight }}" as="p" hint-placeholder-count="4">
@@ -519,11 +518,11 @@
             </div>
           </div>
 
-          <!-- Email Health Lookup (typeahead) -->
+          <!-- Email Performance Lookup (typeahead) -->
           <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
               <i class="fa-magnifying-glass-chart alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Email Health Lookup</span>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Email Performance Lookup</span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ lookupBadgeBg }}; color:{{ lookupBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ lookupBadgeLabel }}</span>
             </div>
             <div style="position:relative;">
@@ -572,6 +571,11 @@
     </sc-if>
 
   </div>
+
+  <!-- Footer -->
+  <div style="flex-shrink:0; padding:12px 28px; text-align:center; border-top:1px solid var(--border-card); background:var(--bg-card);">
+    <span style="font-size:0.75rem; color:var(--text-tertiary);">Built by and maintained by Justin McMillin, Marketing Operations</span>
+  </div>
 </div>
 
 </x-dc>
@@ -586,9 +590,9 @@ class Component extends DCLogic {
     lookupSelected: null, lookupMetrics: null, lookupMetricsLoading: false, lookupMetricsError: null,
     conflictsLoading: true, conflictsError: null, conflictsData: null,
     anomaliesLoading: true, anomaliesError: null, anomaliesData: null,
-    briefText: `Subject: Unlock next-level compliance — the Q3 Security Benchmark Report is here!
-
-Hi {{first_name}},
+    briefSubject: `Unlock next-level compliance — the Q3 Security Benchmark Report is here!`,
+    briefPreheader: ``,
+    briefBody: `Hi {{first_name}},
 
 We're thrilled to share our best-in-class Q3 Security Benchmark Report. It's packed with cutting-edge insights to help you leverage automation and streamline your entire security program from end to end.
 
@@ -596,7 +600,7 @@ Get started today. Read the full report. Download the summary. Book a demo with 
 
 Thanks,
 The Vanta Team`,
-    analyzedBriefText: undefined,
+    analyzedBrief: undefined,
     htmlText: `<table width="100%">
   <tr>
     <td style="border:1px solid #000; padding:20px;">
@@ -696,7 +700,7 @@ The Vanta Team`,
         return {
           campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
           audience: 'No list target resolved', audienceNum: 0, overlap: '—', overlapNum: 0, overlapColor: neutralColor,
-          statusIcon: 'fa-circle-question alpaca-fa-regular', statusLabel: 'Unscoped', statusRank: 2, statusColor: neutralColor,
+          statusIcon: 'fa-eye alpaca-fa-regular', statusLabel: 'Unscoped', statusRank: 2, statusColor: neutralColor,
         };
       }
       return {
@@ -774,46 +778,70 @@ The Vanta Team`,
     return {
       id, label, icon, onClick: () => this.setState({ activeTab: id }),
       style: {
-        display: 'flex', alignItems: 'center', gap: '8px', padding: '13px 16px', fontSize: '0.875rem', fontWeight: 500,
-        color: active ? 'var(--tab-active)' : 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer',
-        borderBottom: active ? '2px solid var(--tab-active)' : '2px solid transparent', marginBottom: '-1px', fontFamily: 'var(--font-base)',
+        display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '0.875rem', fontWeight: 500,
+        color: active ? '#fff' : 'var(--text-secondary)', background: active ? 'var(--purple-900)' : 'transparent',
+        border: 'none', borderRadius: '999px', cursor: 'pointer', fontFamily: 'var(--font-base)',
       },
-      hoverStyle: { color: 'var(--tab-active)' },
+      hoverStyle: active ? {} : { background: 'var(--bg-card-alt)', color: 'var(--text-primary)' },
     };
   }
 
-  analyzeBrief(text) {
+  analyzeBrief(subject, preheader, body) {
     const ok = 'var(--badge-success-text)', okb = 'var(--badge-success-bg)';
     const warn = 'var(--badge-warning-text)', warnb = 'var(--badge-warning-bg)';
     const bad = 'var(--badge-danger-text)', badb = 'var(--badge-danger-bg)';
-    const t = (text || '').trim(), lower = t.toLowerCase();
+    const subj = (subject || '').trim();
+    const pre = (preheader || '').trim();
+    const t = (body || '').trim(), lower = t.toLowerCase();
     const words = (t.match(/\S+/g) || []).length;
+
     const ctas = ['click here','learn more','get started','sign up','signup','book a demo','book a','download','read more','read the full','register','request a demo','contact us','start free','try free','get a demo','schedule a'];
     let cta = 0; ctas.forEach(p => { let i = lower.indexOf(p); while (i >= 0) { cta++; i = lower.indexOf(p, i + p.length); } });
     let ctaS;
     if (cta === 0) ctaS = ['Warn', warn, warnb, 'No clear call-to-action found.'];
     else if (cta <= 3) ctaS = ['Pass', ok, okb, cta + ' CTA' + (cta > 1 ? 's' : '') + ' — focused ask.'];
     else ctaS = ['Fail', bad, badb, cta + ' competing CTAs — dilutes the primary action.'];
+
     const jarg = ['unlock','leverage','synergy','cutting-edge','best-in-class','robust','seamless','revolutionary','empower','streamline','next-level','game-changing','world-class','turnkey'];
-    const found = jarg.filter(w => lower.includes(w));
-    const sm = t.match(/subject:\s*(.+)/i); const subj = sm ? sm[1].trim() : '';
+    const subjLower = subj.toLowerCase();
+    const foundSubj = jarg.filter(w => subjLower.includes(w));
     let subjS;
-    if (!subj) subjS = ['Warn', warn, warnb, 'No subject line detected.'];
-    else if (found.length >= 2 || subj.length > 60) subjS = ['Warn', warn, warnb, (subj.length > 60 ? 'Subject ' + subj.length + ' chars (aim <60). ' : '') + (found.length ? found.length + ' jargon term' + (found.length > 1 ? 's' : '') + ' (' + found.slice(0, 3).join(', ') + ').' : '')];
+    if (!subj) subjS = ['Warn', warn, warnb, 'No subject line entered.'];
+    else if (foundSubj.length >= 2 || subj.length > 60) subjS = ['Warn', warn, warnb, (subj.length > 60 ? 'Subject ' + subj.length + ' chars (aim <60). ' : '') + (foundSubj.length ? foundSubj.length + ' jargon term' + (foundSubj.length > 1 ? 's' : '') + ' (' + foundSubj.slice(0, 3).join(', ') + ').' : '')];
     else subjS = ['Pass', ok, okb, 'Clear, concise subject.'];
+
+    // Preheader quality — new check now that it's its own field. Flags the
+    // most common real mistakes: none set, duplicating the subject (wastes
+    // the preview slot), or badly sized (too short to add context, too long
+    // to avoid truncation in most inbox previews).
+    let preS;
+    const preLower = pre.toLowerCase();
+    if (!pre) preS = ['Warn', warn, warnb, 'No preheader set — wastes valuable inbox preview real estate.'];
+    else if (subj && preLower === subjLower) preS = ['Fail', bad, badb, 'Preheader duplicates the subject line exactly — no added value.'];
+    else if (subj && subjLower.length > 10 && preLower.includes(subjLower)) preS = ['Warn', warn, warnb, 'Preheader repeats most of the subject line instead of adding new context.'];
+    else if (pre.length > 100) preS = ['Warn', warn, warnb, 'Preheader is ' + pre.length + ' chars — likely truncated in most inbox previews (aim 40–100).'];
+    else if (pre.length < 20) preS = ['Warn', warn, warnb, 'Preheader is only ' + pre.length + ' chars — room to add more context (aim 40–100).'];
+    else preS = ['Pass', ok, okb, 'Preheader is ' + pre.length + ' chars — good length, distinct from the subject.'];
+
     const sents = (t.split(/[.!?]+/).filter(s => s.trim().length > 0)).length || 1;
     const avg = Math.round(words / sents);
     const readS = avg > 25 ? ['Warn', warn, warnb, 'Avg ~' + avg + ' words/sentence — long for mobile.'] : ['Pass', ok, okb, 'Avg ~' + avg + ' words/sentence — scannable.'];
-    const excl = (t.match(/!/g) || []).length, caps = (t.match(/\b[A-Z]{4,}\b/g) || []).length;
-    const spam = ['free','act now','limited time','guarantee','risk-free','buy now'].filter(w => lower.includes(w)).length;
+
+    // Spam-filter risk looks across all three fields — subject-line spam
+    // triggers matter just as much as body copy ones for deliverability.
+    const combined = subj + ' ' + pre + ' ' + t;
+    const combinedLower = combined.toLowerCase();
+    const excl = (combined.match(/!/g) || []).length, caps = (combined.match(/\b[A-Z]{4,}\b/g) || []).length;
+    const spam = ['free','act now','limited time','guarantee','risk-free','buy now'].filter(w => combinedLower.includes(w)).length;
     const riskN = excl + caps + spam;
     let riskS;
     if (riskN >= 3) riskS = ['Fail', bad, badb, riskN + ' spam-filter triggers (' + excl + ' "!", ' + caps + ' all-caps).'];
     else if (riskN >= 1) riskS = ['Warn', warn, warnb, riskN + ' spam-filter trigger' + (riskN > 1 ? 's' : '') + ' to review.'];
     else riskS = ['Pass', ok, okb, 'No obvious spam triggers.'];
+
     const mk = (label, s) => ({ label, status: s[0], statusColor: s[1], statusBg: s[2], finding: s[3], accent: s[0] === 'Fail' ? bad : s[0] === 'Warn' ? warn : ok });
-    const metrics = [mk('CTA density', ctaS), mk('Subject clarity / jargon', subjS), mk('Mobile readability', readS), mk('Rendering / spam risk', riskS)];
-    if (words === 0) return { metrics: metrics.map(m => ({ ...m, status: '—', statusColor: 'var(--text-tertiary)', statusBg: 'var(--bg-card-alt)', finding: 'Paste a brief to score it.', accent: 'var(--border-table)' })), overall: { label: 'Awaiting input', color: 'var(--text-tertiary)', bg: 'var(--bg-card-alt)' } };
+    const metrics = [mk('Subject clarity / jargon', subjS), mk('Preheader quality', preS), mk('CTA density', ctaS), mk('Mobile readability', readS), mk('Rendering / spam risk', riskS)];
+    if (!subj && !pre && words === 0) return { metrics: metrics.map(m => ({ ...m, status: '—', statusColor: 'var(--text-tertiary)', statusBg: 'var(--bg-card-alt)', finding: 'Fill in a field to score it.', accent: 'var(--border-table)' })), overall: { label: 'Awaiting input', color: 'var(--text-tertiary)', bg: 'var(--bg-card-alt)' } };
     const order = { Pass: 0, Warn: 1, Fail: 2 };
     const worst = metrics.reduce((m, x) => order[x.status] > order[m] ? x.status : m, 'Pass');
     const overall = worst === 'Fail' ? { label: 'Needs work', color: bad, bg: badb } : worst === 'Warn' ? { label: 'Review before send', color: warn, bg: warnb } : { label: 'Ready to send', color: ok, bg: okb };
@@ -826,7 +854,7 @@ The Vanta Team`,
     const bad = 'var(--badge-danger-text)', badb = 'var(--badge-danger-bg)';
     const P = ['Pass', ok, okb, 'fa-check alpaca-fa-solid'], W = ['Warn', warn, warnb, 'fa-triangle-exclamation alpaca-fa-solid'], F = ['Fail', bad, badb, 'fa-xmark alpaca-fa-solid'];
     if (html === null || html === undefined) {
-      const wait = ['—', 'var(--text-tertiary)', 'var(--bg-card-alt)', 'fa-circle alpaca-fa-regular'];
+      const wait = ['—', 'var(--text-tertiary)', 'var(--bg-card-alt)', 'fa-magnifying-glass alpaca-fa-regular'];
       return ['Fixed-width container base', 'No display:block on <span>', 'Stacked text line-height', 'CTA borders off wrapping <td>'].map(rule => ({ rule, detail: 'Click Analyze to check.', resultLabel: wait[0], resultColor: wait[1], resultBg: wait[2], resultIcon: wait[3], accent: 'transparent' }));
     }
     const h = html || '';
@@ -883,7 +911,7 @@ The Vanta Team`,
     if (this.state.lookupMetricsLoading) {
       return {
         lookupSelected: true, selName: sel.name, selMeta: sel.state + ' · ' + sel.meta,
-        lookupMetrics: [], lookupNote: { icon: 'fa-circle-notch alpaca-fa-solid', color: 'var(--text-tertiary)', bg: 'var(--bg-card-alt)', text: 'Loading stats…' },
+        lookupMetrics: [], lookupNote: { icon: 'fa-clock-rotate-left alpaca-fa-solid', color: 'var(--text-tertiary)', bg: 'var(--bg-card-alt)', text: 'Loading stats…' },
       };
     }
 
@@ -947,7 +975,10 @@ The Vanta Team`,
   renderVals() {
     const active = this.state.activeTab;
     const dark = this.state.dark;
-    const brief = this.analyzeBrief(this.state.analyzedBriefText === undefined ? this.state.briefText : this.state.analyzedBriefText);
+    const briefSnapshot = this.state.analyzedBrief === undefined
+      ? { subject: this.state.briefSubject, preheader: this.state.briefPreheader, body: this.state.briefBody }
+      : this.state.analyzedBrief;
+    const brief = this.analyzeBrief(briefSnapshot.subject, briefSnapshot.preheader, briefSnapshot.body);
     const sendScheduleRows = this.buildSendScheduleRows();
     const anomalyRows = this.buildAnomalyRows();
 
@@ -966,14 +997,8 @@ The Vanta Team`,
       ],
       isOverview: active === 'overview', isGovern: active === 'govern', isBuild: active === 'build', isHealth: active === 'health',
 
-      legend: [
-        { label: 'Live tool', icon: 'fa-bolt alpaca-fa-solid', bg: 'var(--badge-success-bg)', color: 'var(--badge-success-text)', border: '1px solid var(--border-card)', desc: 'Works today on real input' },
-        { label: 'Needs connector', icon: 'fa-plug alpaca-fa-solid', bg: 'var(--badge-info-bg)', color: 'var(--badge-info-text)', border: '1px solid var(--border-card)', desc: 'Real once HubSpot / Snowflake is wired in' },
-        { label: 'Concept', icon: 'fa-flask alpaca-fa-solid', bg: 'var(--badge-neutral-bg)', color: 'var(--badge-neutral-text)', border: '1px dashed var(--border-table-strong)', desc: 'Reference / vision only' },
-      ],
-
       pillars: [
-        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Known issues log, send-conflict detection, and the RAPID approval framework.', metricValue: '2', metricLabel: 'send conflicts flagged', metricColor: 'var(--badge-danger-text)', subMetric: '4 issues in the known-issues log', onClick: () => this.setState({ activeTab: 'govern' }) },
+        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Known issues log, send-conflict detection, and the Email Framework reference.', metricValue: '2', metricLabel: 'send conflicts flagged', metricColor: 'var(--badge-danger-text)', subMetric: '4 issues in the known-issues log', onClick: () => this.setState({ activeTab: 'govern' }) },
         { icon: 'fa-hammer alpaca-fa-regular', name: 'Build', desc: 'Email Content Score for anyone submitting drafts, plus an Outlook pre-flight utility for MOps.', metricValue: '2', metricLabel: 'live tools ready to use', metricColor: 'var(--badge-success-text)', subMetric: 'Paste content or HTML to score it', onClick: () => this.setState({ activeTab: 'build' }) },
         { icon: 'fa-heart-pulse alpaca-fa-regular', name: 'Health', desc: 'CTOR trend, anomalies, workflow watchdog, and per-email post-send diagnostics.', metricValue: '1', metricLabel: 'critical anomaly (sample)', metricColor: 'var(--badge-danger-text)', subMetric: 'CTOR trend · lookup · watchdog', onClick: () => this.setState({ activeTab: 'health' }) },
       ],
@@ -1015,9 +1040,13 @@ The Vanta Team`,
         : 'Next scheduled sends · same/next-day + shared list = conflict',
       conflictsEmpty: !this.state.conflictsLoading && !this.state.conflictsError && sendScheduleRows.length === 0,
 
-      briefText: this.state.briefText,
-      onBriefInput: (e) => this.setState({ briefText: e.target.value }),
-      onAnalyzeBrief: () => this.setState(s => ({ analyzedBriefText: s.briefText })),
+      briefSubject: this.state.briefSubject,
+      briefPreheader: this.state.briefPreheader,
+      briefBody: this.state.briefBody,
+      onBriefSubjectInput: (e) => this.setState({ briefSubject: e.target.value }),
+      onBriefPreheaderInput: (e) => this.setState({ briefPreheader: e.target.value }),
+      onBriefBodyInput: (e) => this.setState({ briefBody: e.target.value }),
+      onAnalyzeBrief: () => this.setState(s => ({ analyzedBrief: { subject: s.briefSubject, preheader: s.briefPreheader, body: s.briefBody } })),
       briefMetrics: brief.metrics, briefOverall: brief.overall,
 
       htmlText: this.state.htmlText,

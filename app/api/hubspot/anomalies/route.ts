@@ -59,7 +59,6 @@ async function fetchMetrics(emailId: string): Promise<Metrics> {
     )}&endTimestamp=${encodeURIComponent(endTimestamp)}`
   );
   const counters = data.aggregate?.counters || {};
-  const ratios = data.aggregate?.ratios || {};
 
   const sent = counters.sent ?? 0;
   const delivered = counters.delivered ?? 0;
@@ -72,13 +71,13 @@ async function fetchMetrics(emailId: string): Promise<Metrics> {
   return {
     sent,
     delivered,
-    openRate: ratios.openratio ?? (delivered > 0 ? open / delivered : null),
-    clickRate: ratios.clickratio ?? (delivered > 0 ? click / delivered : null),
-    bounceRate: ratios.bounceratio ?? (sent > 0 ? bounce / sent : null),
-    unsubRate:
-      ratios.unsubscribedratio ?? (delivered > 0 ? unsubscribed / delivered : null),
-    spamRate:
-      ratios.spamreportratio ?? (delivered > 0 ? spamreport / delivered : null),
+    // Derived from raw counters, not HubSpot's ratios.* fields — see
+    // email-stats/route.ts for why (inconsistent scale across accounts).
+    openRate: delivered > 0 ? open / delivered : null,
+    clickRate: delivered > 0 ? click / delivered : null,
+    bounceRate: sent > 0 ? bounce / sent : null,
+    unsubRate: delivered > 0 ? unsubscribed / delivered : null,
+    spamRate: delivered > 0 ? spamreport / delivered : null,
   };
 }
 

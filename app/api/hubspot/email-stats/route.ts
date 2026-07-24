@@ -32,17 +32,20 @@ export async function GET(request: Request) {
     );
 
     const counters = data.aggregate?.counters || {};
-    const ratios = data.aggregate?.ratios || {};
 
     const sent = counters.sent ?? counters.processed ?? 0;
     const delivered = counters.delivered ?? 0;
     const opens = counters.open ?? counters.opens ?? 0;
     const clicks = counters.click ?? counters.clicks ?? 0;
 
-    const openRate =
-      ratios.openratio ?? (delivered > 0 ? opens / delivered : null);
-    const clickRate =
-      ratios.clickratio ?? (delivered > 0 ? clicks / delivered : null);
+    // Deliberately NOT using ratios.openratio/clickratio here — HubSpot's
+    // ratios object has been observed returning inconsistent scale (a
+    // fraction in some accounts, an already-multiplied percentage in
+    // others), which was producing rates off by a factor of 100. Counters
+    // are raw integers with no such ambiguity, so we always derive rate
+    // locally: rate = count / delivered.
+    const openRate = delivered > 0 ? opens / delivered : null;
+    const clickRate = delivered > 0 ? clicks / delivered : null;
 
     return NextResponse.json({
       status: "ok",
