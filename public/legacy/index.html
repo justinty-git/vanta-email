@@ -440,13 +440,13 @@
           </div>
           <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ anomaliesCaption }}</div>
           <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
-            <div style="display:grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.4fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
+            <div style="display:grid; grid-template-columns: 2.6fr 0.7fr 1fr 0.7fr 1.8fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
               <sc-for list="{{ anomalyHeaders }}" as="h" hint-placeholder-count="5">
                 <button onClick="{{ h.onClick }}" style="{{ h.style }}"><span>{{ h.label }}</span><i class="{{ h.icon }}" style="font-size:9px; opacity:{{ h.iconOpacity }};"></i></button>
               </sc-for>
             </div>
             <sc-for list="{{ sortedAnomalies }}" as="a" hint-placeholder-count="4">
-              <div style="display:grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.4fr; gap:12px; padding:12px 14px; align-items:center; background:{{ a.rowBg }}; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ a.accent }};">
+              <div style="display:grid; grid-template-columns: 2.6fr 0.7fr 1fr 0.7fr 1.8fr; gap:12px; padding:12px 14px; align-items:center; background:{{ a.rowBg }}; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ a.accent }};">
                 <span style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ a.workflow }}</span>
                 <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ a.metric }}</span>
                 <span style="font-size:0.875rem; font-weight:500; color:{{ a.changeColor }};">{{ a.change }}</span>
