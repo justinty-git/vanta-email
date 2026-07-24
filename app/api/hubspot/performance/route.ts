@@ -200,9 +200,18 @@ export async function GET() {
       .filter((x): x is RankedEmail => x !== null);
 
     const rankedSorted = [...ranked].sort((a, b) => b.clickRate - a.clickRate);
+    // Top5/Bottom5 only make sense as DISTINCT lists once there are at
+    // least 10 qualifying sends — otherwise the two lists overlap (e.g.
+    // with 7 sends, ranks 3-5 would appear in both "Top 5" and "Bottom
+    // 5"), or with 5 or fewer, they'd show the exact same items twice,
+    // just reordered. Below that threshold, show one honest single list
+    // instead of a misleading split.
+    const isSmallSample = rankedSorted.length > 0 && rankedSorted.length < 10;
     const weeklyPerformers = {
-      top5: rankedSorted.slice(0, 5),
-      bottom5: [...rankedSorted].reverse().slice(0, 5),
+      top5: isSmallSample ? [] : rankedSorted.slice(0, 5),
+      bottom5: isSmallSample ? [] : [...rankedSorted].reverse().slice(0, 5),
+      all: isSmallSample ? rankedSorted : [],
+      isSmallSample,
       count: ranked.length,
       scannedInWeek: weeklyScanned.length,
       dgNuMatchedInWeek: dgNuMatched.length,
