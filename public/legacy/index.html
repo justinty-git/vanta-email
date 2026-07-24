@@ -334,6 +334,23 @@
           </div>
         </div>
 
+        <!-- Email Components Library (Figma link-out) -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:18px 20px; box-shadow:var(--shadow-card);">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <i class="fa-images alpaca-fa-regular" style="color:var(--icon-accent); font-size:14px;"></i>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Email Components Library</span>
+            </div>
+            <a href="https://www.figma.com/design/MlE32aFvK37j0N86n7RYnx/Vanta-Email-Components?node-id=19-2&m=dev" target="_blank" style="display:inline-flex; align-items:center; gap:7px; font-size:0.8125rem; font-weight:500; padding:8px 14px; border-radius:var(--r-sm); background:var(--bg-card-alt); color:var(--icon-accent); white-space:nowrap;">Open in Figma <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:10px;"></i></a>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px; line-height:1.5;">The à la carte set of approved building blocks for emails — browse by category before designing a new send from scratch.</div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <sc-for list="{{ componentCategories }}" as="c" hint-placeholder-count="5">
+              <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:500; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); color:var(--text-secondary);"><i class="{{ c.icon }}" style="font-size:10px; color:var(--icon-accent);"></i>{{ c.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+
       </div>
     </sc-if>
 
@@ -1182,6 +1199,13 @@ class Component extends DCLogic {
       onBriefBodyInput: (e) => this.setState({ briefBody: e.target.value }),
       onAnalyzeBrief: () => this.setState(s => ({ analyzedBrief: { subject: s.briefSubject, preheader: s.briefPreheader, body: s.briefBody } })),
       briefMetrics: brief.metrics, briefOverall: brief.overall,
+
+      componentCategories: [
+        { label: 'Event', icon: 'fa-bell alpaca-fa-regular' },
+        { label: 'Nurture', icon: 'fa-heart-pulse alpaca-fa-regular' },
+        { label: 'Newsletter', icon: 'fa-inbox-full alpaca-fa-regular' },
+        { label: '+ more in Figma', icon: 'fa-grid-2 alpaca-fa-regular' },
+      ],
 
       htmlText: this.state.htmlText,
       onHtmlInput: (e) => this.setState({ htmlText: e.target.value }),
