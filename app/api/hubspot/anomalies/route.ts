@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { hubspotFetch } from "@/lib/hubspot";
+import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from "@/lib/hubspot";
 
 // GET /api/hubspot/anomalies
 //
@@ -89,11 +89,18 @@ function average(values: Array<number | null>): number | null {
 
 export async function GET() {
   try {
-    const listData = await hubspotFetch(
-      `/marketing/v3/emails?limit=${RECENT_SEND_LIMIT}&state=SENT&sort=-publishDate`
+    const rawEmails = await fetchMarketingEmailsPaginated(3);
+    const distinctStatesSeen = Array.from(
+      new Set(rawEmails.map((e: any) => e.state).filter(Boolean))
     );
-    const emails: EmailSummary[] = (listData.results || [])
-      .filter((e: any) => !!e.publishDate)
+
+    const emails: EmailSummary[] = rawEmails
+      .filter((e: any) => classifyEmailState(e.state) === "sent" && !!e.publishDate)
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
+      )
+      .slice(0, RECENT_SEND_LIMIT)
       .map((e: any) => ({ id: e.id, name: e.name, publishDate: e.publishDate }));
 
     // Sequential, not parallel — same rate-limit reasoning as the conflicts
@@ -242,6 +249,8 @@ export async function GET() {
     return NextResponse.json({
       status: "ok",
       scannedCount: emails.length,
+      totalEmailsFetched: rawEmails.length,
+      distinctStatesSeen,
       baseline,
       flags,
     });

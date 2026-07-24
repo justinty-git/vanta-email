@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { hubspotFetch } from "@/lib/hubspot";
+import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from "@/lib/hubspot";
 
 // GET /api/hubspot/conflicts
 //
@@ -74,12 +74,15 @@ async function resolveListInfo(listIds: string[]): Promise<Map<string, ListInfo>
 
 export async function GET() {
   try {
-    const data = await hubspotFetch(
-      "/marketing/v3/emails?limit=100&state=SCHEDULED"
+    const rawEmails = await fetchMarketingEmailsPaginated(3);
+    const distinctStatesSeen = Array.from(
+      new Set(rawEmails.map((e: any) => e.state).filter(Boolean))
     );
+
     const now = Date.now();
     const windowEnd = now + WINDOW_DAYS * 24 * 60 * 60 * 1000;
-    const emails: RawEmail[] = (data.results || []).filter((e: RawEmail) => {
+    const emails: RawEmail[] = rawEmails.filter((e: RawEmail) => {
+      if (classifyEmailState(e.state) !== "scheduled") return false;
       if (!e.publishDate) return false;
       const t = new Date(e.publishDate).getTime();
       return t >= now && t <= windowEnd;
@@ -182,6 +185,8 @@ export async function GET() {
       status: "ok",
       windowDays: WINDOW_DAYS,
       scannedCount: emails.length,
+      totalEmailsFetched: rawEmails.length,
+      distinctStatesSeen, // debugging aid — real state values as returned by HubSpot
       scanned,
       conflicts,
       unscoped, // scheduled emails with no resolvable list target — can't be checked for overlap

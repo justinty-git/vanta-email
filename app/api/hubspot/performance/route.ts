@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { hubspotFetch } from "@/lib/hubspot";
+import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from "@/lib/hubspot";
 
 // GET /api/hubspot/performance
 //
@@ -87,11 +87,17 @@ export async function GET() {
     const now = Date.now();
     const windowStart = now - WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
-    const listData = await hubspotFetch(
-      `/marketing/v3/emails?limit=100&state=SENT&sort=-publishDate`
+    const rawEmails = await fetchMarketingEmailsPaginated(3);
+    const distinctStatesSeen = Array.from(
+      new Set(rawEmails.map((e: any) => e.state).filter(Boolean))
     );
-    const allEmails: EmailSummary[] = (listData.results || [])
-      .filter((e: any) => !!e.publishDate)
+
+    const allEmails: EmailSummary[] = rawEmails
+      .filter((e: any) => classifyEmailState(e.state) === "sent" && !!e.publishDate)
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
+      )
       .map((e: any) => ({ id: e.id, name: e.name, publishDate: e.publishDate }));
 
     const inWindow = allEmails.filter(
@@ -165,6 +171,9 @@ export async function GET() {
       status: "ok",
       windowDays: WINDOW_DAYS,
       scannedCount: scanned.length,
+      totalEmailsFetched: rawEmails.length,
+      totalSentClassified: allEmails.length,
+      distinctStatesSeen,
       truncated,
       rankedCount: ranked.length,
       minOpensForRanking: MIN_OPENS_FOR_RANKING,
