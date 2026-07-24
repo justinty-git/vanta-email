@@ -23,6 +23,7 @@ import { hubspotFetch } from "@/lib/hubspot";
 //   count — the UI should label it as such.
 
 const ADJACENT_DAYS = 1; // same day or the very next day counts as a conflict window
+const WINDOW_DAYS = 7; // only scan sends within the next 7 days
 
 type RawEmail = {
   id: string;
@@ -76,9 +77,13 @@ export async function GET() {
     const data = await hubspotFetch(
       "/marketing/v3/emails?limit=100&state=SCHEDULED"
     );
-    const emails: RawEmail[] = (data.results || []).filter(
-      (e: RawEmail) => !!e.publishDate
-    );
+    const now = Date.now();
+    const windowEnd = now + WINDOW_DAYS * 24 * 60 * 60 * 1000;
+    const emails: RawEmail[] = (data.results || []).filter((e: RawEmail) => {
+      if (!e.publishDate) return false;
+      const t = new Date(e.publishDate).getTime();
+      return t >= now && t <= windowEnd;
+    });
 
     // Collect every distinct list ID referenced so we resolve each one once.
     const allListIds = new Set<string>();
@@ -151,20 +156,31 @@ export async function GET() {
     const unscopedIds = new Set(unscoped.map((e) => e.id));
 
     // Full scanned list so the UI can render every scheduled send — not just
-    // the conflicting pairs — with a status of conflict / clear / unscoped.
-    const scanned = emails.map((e) => ({
-      id: e.id,
-      name: e.name,
-      publishDate: e.publishDate!,
-      status: conflictedIds.has(e.id)
-        ? ("conflict" as const)
-        : unscopedIds.has(e.id)
-        ? ("unscoped" as const)
-        : ("clear" as const),
-    }));
+    // the conflicting pairs — with a status of conflict / clear / unscoped,
+    // and its OWN target list names (not just the shared ones from a
+    // conflict pair) so the Audience column can populate regardless of
+    // whether that send is in a conflict.
+    const scanned = emails.map((e) => {
+      const listIds = audienceListIds(e);
+      const lists = listIds.map(
+        (id) => listInfo.get(id) || { id, name: `List ${id}`, size: null }
+      );
+      return {
+        id: e.id,
+        name: e.name,
+        publishDate: e.publishDate!,
+        lists,
+        status: conflictedIds.has(e.id)
+          ? ("conflict" as const)
+          : unscopedIds.has(e.id)
+          ? ("unscoped" as const)
+          : ("clear" as const),
+      };
+    });
 
     return NextResponse.json({
       status: "ok",
+      windowDays: WINDOW_DAYS,
       scannedCount: emails.length,
       scanned,
       conflicts,

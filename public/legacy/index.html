@@ -93,6 +93,8 @@
     [data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(159,87,255,.35); }
     textarea, input { font-family: var(--font-base); }
     textarea:focus, input:focus { outline: 2px solid var(--purple-1100); outline-offset: -2px; }
+    @keyframes fa-spin-rotation { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .fa-spin { animation: fa-spin-rotation 1s linear infinite; }
   </style>
 </helmet>
 
@@ -205,16 +207,19 @@
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Send Conflict Detector</span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ conflictsBadgeBg }}; color:{{ conflictsBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ conflictsBadgeLabel }}</span>
             </div>
-            <span style="font-size:0.75rem; color:var(--text-secondary);">{{ conflictsCaption }}</span>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:0.75rem; color:var(--text-secondary);">{{ conflictsCaption }}</span>
+              <button onClick="{{ onRefreshConflicts }}" disabled="{{ conflictsLoading }}" style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; font-weight:500; color:var(--icon-accent); background:none; border:none; cursor:pointer; padding:2px 4px; font-family:var(--font-base); opacity:{{ conflictsRefreshOpacity }};"><i class="{{ conflictsRefreshIcon }}" style="font-size:10px;"></i>Refresh</button>
+            </div>
           </div>
           <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
-            <div style="display:grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 0.9fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
+            <div style="display:grid; grid-template-columns: 2.2fr 0.9fr 1.4fr 0.9fr 0.8fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
               <sc-for list="{{ sendHeaders }}" as="h" hint-placeholder-count="5">
                 <button onClick="{{ h.onClick }}" style="{{ h.style }}"><span>{{ h.label }}</span><i class="{{ h.icon }}" style="font-size:9px; opacity:{{ h.iconOpacity }};"></i></button>
               </sc-for>
             </div>
             <sc-for list="{{ sortedSend }}" as="s" hint-placeholder-count="6">
-              <div style="display:grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 0.9fr; gap:12px; padding:12px 14px; background:{{ s.rowBg }}; align-items:center; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ s.accent }};">
+              <div style="display:grid; grid-template-columns: 2.2fr 0.9fr 1.4fr 0.9fr 0.8fr; gap:12px; padding:12px 14px; background:{{ s.rowBg }}; align-items:center; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ s.accent }};">
                 <span style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.campaign }}</span>
                 <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ s.date }}</span>
                 <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ s.audience }}</span>
@@ -588,7 +593,7 @@ class Component extends DCLogic {
     rapidOpen: false,
     lookupQuery: '', lookupResults: [], lookupLoading: false, lookupError: null, lookupSearched: false,
     lookupSelected: null, lookupMetrics: null, lookupMetricsLoading: false, lookupMetricsError: null,
-    conflictsLoading: true, conflictsError: null, conflictsData: null,
+    conflictsLoading: true, conflictsError: null, conflictsData: null, conflictsCheckedAt: null,
     anomaliesLoading: true, anomaliesError: null, anomaliesData: null,
     briefSubject: `Unlock next-level compliance — the Q3 Security Benchmark Report is here!`,
     briefPreheader: ``,
@@ -643,7 +648,9 @@ The Vanta Team`,
       if (data.status === 'error') {
         this.setState({ conflictsError: data.message, conflictsData: null });
       } else {
-        this.setState({ conflictsData: data });
+        const now = new Date();
+        const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+        this.setState({ conflictsData: data, conflictsCheckedAt: time });
       }
     } catch (err) {
       this.setState({ conflictsError: "Couldn't reach the conflict-detection service. Try again." });
@@ -683,13 +690,15 @@ The Vanta Team`,
     }
 
     return (data.scanned || []).map(e => {
+      const listNames = (e.lists || []).map(l => l.name).join(', ');
+      const audienceText = listNames || 'No list target resolved';
+
       if (e.status === 'conflict') {
         const c = detailByEmailId.get(e.id);
-        const listNames = c ? c.sharedLists.map(l => l.name).join(', ') : 'Shared list';
         const estimate = c ? c.contactsAtRiskEstimate : null;
         return {
           campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
-          audience: listNames + (estimate !== null ? ' (~' + estimate.toLocaleString() + ')' : ''),
+          audience: audienceText + (estimate !== null ? ' (~' + estimate.toLocaleString() + ' at risk)' : ''),
           audienceNum: estimate ?? 0,
           overlap: c ? (c.daysApart === 0 ? 'Same day' : c.daysApart + 'd apart') : '—',
           overlapNum: estimate ?? 0, overlapColor: conflictColor,
@@ -699,13 +708,13 @@ The Vanta Team`,
       if (e.status === 'unscoped') {
         return {
           campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
-          audience: 'No list target resolved', audienceNum: 0, overlap: '—', overlapNum: 0, overlapColor: neutralColor,
+          audience: audienceText, audienceNum: 0, overlap: '—', overlapNum: 0, overlapColor: neutralColor,
           statusIcon: 'fa-eye alpaca-fa-regular', statusLabel: 'Unscoped', statusRank: 2, statusColor: neutralColor,
         };
       }
       return {
         campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
-        audience: 'No overlapping sends', audienceNum: 0, overlap: 'Clear', overlapNum: 0, overlapColor: clearColor,
+        audience: audienceText, audienceNum: 0, overlap: 'Clear', overlapNum: 0, overlapColor: clearColor,
         statusIcon: 'fa-circle-check alpaca-fa-solid', statusLabel: 'Clear', statusRank: 1, statusColor: clearColor,
       };
     });
@@ -1034,11 +1043,14 @@ The Vanta Team`,
       conflictsBadgeBg: this.state.conflictsError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
       conflictsBadgeColor: this.state.conflictsError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
       conflictsCaption: this.state.conflictsLoading
-        ? 'Scanning scheduled sends…'
+        ? 'Scanning the next 7 days…'
         : this.state.conflictsError
         ? this.state.conflictsError
-        : 'Next scheduled sends · same/next-day + shared list = conflict',
+        : 'Next 7 days · same/next-day + shared list = conflict' + (this.state.conflictsCheckedAt ? ' · checked ' + this.state.conflictsCheckedAt : ''),
       conflictsEmpty: !this.state.conflictsLoading && !this.state.conflictsError && sendScheduleRows.length === 0,
+      onRefreshConflicts: () => this.loadConflicts(),
+      conflictsRefreshIcon: this.state.conflictsLoading ? 'fa-clock-rotate-left alpaca-fa-solid fa-spin' : 'fa-clock-rotate-left alpaca-fa-solid',
+      conflictsRefreshOpacity: this.state.conflictsLoading ? 0.5 : 1,
 
       briefSubject: this.state.briefSubject,
       briefPreheader: this.state.briefPreheader,
