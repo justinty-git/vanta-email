@@ -364,13 +364,15 @@
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:8px; flex-wrap:wrap;">
               <div style="display:flex; align-items:center; gap:8px;">
                 <i class="fa-chart-line alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-                <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Click-to-Open Rate Trend</span>
+                <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Click Rate Trend</span>
               </div>
-              <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--text-secondary);">
-                <span style="width:16px; height:0; border-top:2px dashed var(--badge-danger-text); display:inline-block;"></span>Floor 15.0%
-              </span>
+              <sc-if value="{{ ctorHasData }}" hint-placeholder-val="{{ false }}">
+                <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--text-secondary);">
+                  <span style="width:16px; height:0; border-top:2px dashed var(--badge-danger-text); display:inline-block;"></span>Trailing avg {{ ctorAvgLabel }}
+                </span>
+              </sc-if>
             </div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px;">Trailing 8 weeks · points turn red as they approach or cross the floor</div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px;">Trailing 8 weeks · points turn red when notably below the trailing average</div>
             <sc-if value="{{ ctorEmpty }}" hint-placeholder-val="{{ false }}">
               <div style="height:220px; display:flex; align-items:center; justify-content:center; font-size:0.8125rem; color:var(--text-tertiary);">Not enough recent send data with opens yet to chart a trend.</div>
             </sc-if>
@@ -1055,36 +1057,40 @@ class Component extends DCLogic {
 
   ctorChart() {
     const data = this.state.performanceData;
-    const floor = 15; // MOps target floor — a goal line, not derived from data
     const X0 = 10, W = 780, Y0 = 20, H = 140;
 
     if (!data || !data.trend) return { ctorPoints: [], ctorPoly: '', ctorViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: Y0 + H / 2, ctorEmpty: true, ctorHasData: false };
 
-    // Only plot weeks that actually had opens — a week with 0 opens has no
-    // meaningful CTOR, not a CTOR of 0%.
+    // Only plot weeks that actually had deliveries — a week with 0
+    // deliveries has no meaningful click rate, not a click rate of 0%.
     const raw = data.trend
-      .filter(w => w.ctor !== null)
-      .map(w => ({ week: this.formatWeekLabel(w.week), v: w.ctor * 100, opens: w.opens, clicks: w.clicks }));
+      .filter(w => w.clickRate !== null)
+      .map(w => ({ week: this.formatWeekLabel(w.week), v: w.clickRate * 100, opens: w.opens, clicks: w.clicks, delivered: w.delivered }));
 
     if (raw.length === 0) return { ctorPoints: [], ctorPoly: '', ctorViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: Y0 + H / 2, ctorEmpty: true, ctorHasData: false };
 
+    // Reference line is the trailing average of the plotted weeks
+    // themselves — always calibrated to what's actually happening,
+    // instead of a fixed number that was never derived from real data.
+    const avg = raw.reduce((sum, d) => sum + d.v, 0) / raw.length;
+
     // Scale the y-axis to the real data, padded a bit, but always include
-    // the floor line even if every week is comfortably above/below it.
-    const values = raw.map(d => d.v).concat([floor]);
+    // the average line even if every week is comfortably above/below it.
+    const values = raw.map(d => d.v).concat([avg]);
     const vmin = Math.max(0, Math.floor(Math.min(...values) - 2));
     const vmax = Math.ceil(Math.max(...values) + 2);
 
     const x = i => raw.length > 1 ? X0 + (i / (raw.length - 1)) * W : X0 + W / 2;
     const y = v => Y0 + ((vmax - v) / (vmax - vmin)) * H;
-    const color = v => v <= floor ? 'var(--badge-danger-text)' : v <= floor + 1.6 ? 'var(--badge-warning-text)' : 'var(--dataviz-primary)';
+    const color = v => v < avg * 0.85 ? 'var(--badge-danger-text)' : v < avg * 0.97 ? 'var(--badge-warning-text)' : 'var(--dataviz-primary)';
     const points = raw.map((d, i) => ({
       week: d.week,
-      valueLabel: d.v.toFixed(1) + '%',
+      valueLabel: d.v.toFixed(2) + '%',
       cx: +x(i).toFixed(1), cy: +y(d.v).toFixed(1),
       color: color(d.v),
-      tooltip: d.week + ': ' + d.v.toFixed(1) + '% CTOR (' + d.clicks.toLocaleString() + ' clicks / ' + d.opens.toLocaleString() + ' opens)',
+      tooltip: d.week + ': ' + d.v.toFixed(2) + '% click rate (' + d.clicks.toLocaleString() + ' clicks / ' + d.delivered.toLocaleString() + ' delivered)',
     }));
-    return { ctorPoints: points, ctorPoly: points.map(p => p.cx + ',' + p.cy).join(' '), ctorViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: +y(floor).toFixed(1), ctorEmpty: false, ctorHasData: true };
+    return { ctorPoints: points, ctorPoly: points.map(p => p.cx + ',' + p.cy).join(' '), ctorViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: +y(avg).toFixed(1), ctorAvgLabel: avg.toFixed(2) + '%', ctorEmpty: false, ctorHasData: true };
   }
 
   // "2026-07-20" (Monday date key) -> "Jul 20"
@@ -1195,7 +1201,7 @@ class Component extends DCLogic {
       performanceRefreshOpacity: this.state.performanceLoading ? 0.5 : 1,
 
       healthKpis: [
-        { label: 'Avg CTOR (30d)', value: performanceData && performanceData.avgCtor30d !== null ? (performanceData.avgCtor30d * 100).toFixed(1) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
+        { label: 'Avg Click Rate (30d)', value: performanceData && performanceData.avgClickRate30d !== null ? (performanceData.avgClickRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
         { label: 'Active nurture workflows', value: this.state.workflowsData ? this.state.workflowsData.matchedCount.toLocaleString() : '—', trend: this.state.workflowsLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
         { label: 'Anomalies flagged', value: String(anomalyRows.length), trend: this.state.anomaliesLoading ? '…' : 'live', trendColor: anomalyRows.length > 0 ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', trendIcon: anomalyRows.length > 0 ? 'fa-arrow-up alpaca-fa-solid' : 'fa-circle-check alpaca-fa-solid' },
         { label: 'Unsub rate (30d)', value: performanceData && performanceData.unsubRate30d !== null ? (performanceData.unsubRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },

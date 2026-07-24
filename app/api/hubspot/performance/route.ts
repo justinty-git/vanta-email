@@ -129,23 +129,30 @@ export async function GET() {
       }
     }
 
-    // --- Weekly CTOR trend ---
-    const weekTotals = new Map<string, { clicks: number; opens: number }>();
+    // --- Weekly Click Rate trend ---
+    // Switched from CTOR (clicks/opens) to Click Rate (clicks/delivered)
+    // for consistency — Top5/Bottom5 elsewhere in this route already rank
+    // by Click Rate to match the real reference report, so tracking a
+    // different metric here was an inconsistency, not a deliberate choice.
+    const weekTotals = new Map<string, { clicks: number; opens: number; delivered: number }>();
     for (const e of scanned) {
       const m = metricsByEmail.get(e.id);
       if (!m) continue;
       const key = weekKey(e.publishDate);
-      const cur = weekTotals.get(key) || { clicks: 0, opens: 0 };
+      const cur = weekTotals.get(key) || { clicks: 0, opens: 0, delivered: 0 };
       cur.clicks += m.clicks;
       cur.opens += m.opens;
+      cur.delivered += m.delivered;
       weekTotals.set(key, cur);
     }
     const trend = Array.from(weekTotals.entries())
       .map(([week, t]) => ({
         week,
+        clickRate: t.delivered > 0 ? t.clicks / t.delivered : null,
         ctor: t.opens > 0 ? t.clicks / t.opens : null,
         opens: t.opens,
         clicks: t.clicks,
+        delivered: t.delivered,
       }))
       .sort((a, b) => (a.week < b.week ? -1 : 1));
 
@@ -166,6 +173,7 @@ export async function GET() {
       unsub30 += m.unsubscribed;
       delivered30 += m.delivered;
     }
+    const avgClickRate30d = delivered30 > 0 ? clicks30 / delivered30 : null;
     const avgCtor30d = opens30 > 0 ? clicks30 / opens30 : null;
     const unsubRate30d = delivered30 > 0 ? unsub30 / delivered30 : null;
 
@@ -222,6 +230,7 @@ export async function GET() {
       truncated,
       minDeliveredForRanking: MIN_DELIVERED_FOR_CLICK_RANKING,
       trend,
+      avgClickRate30d,
       avgCtor30d,
       unsubRate30d,
       segments: { prospect, customer, mixed },
