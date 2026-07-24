@@ -6,23 +6,26 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 // HubSpot-only replacement for the Snowflake-labeled CTOR Trend + Top5/
 // Bottom5 Performance Report panels.
 //
-// Top 5 / Bottom 5 ranks by CLICK RATE (clicks / delivered) across all
-// sends, blended — no audience segmentation. This is intentionally a
-// quick pointer, not a parallel analysis: the "Full report" link next to
-// it is where the real depth (segment breakdowns, historical benchmark
-// bands, written interpretation) lives. Click rate matches the ranking
-// metric used in that reference report; CTOR is still computed and
-// available per email for context.
+// Segmented into Prospect / Customer / Mixed Audience, matching the
+// reference report — but per feedback, only Prospect gets a real Top 5 /
+// Bottom 5 split. Customer and Mixed sends are shown as a single ranked
+// list (by click rate, best first) with no "Bottom 5" framing, since in
+// the reference report those segments either had too few sends for a
+// meaningful cut or weren't ranked against a segment benchmark at all.
+//
+// Segment is inferred from the email name (Justin's naming convention
+// embeds it directly, e.g. "[APAC] FY27 | Webinar | Prospects | GRC
+// Engineering | RC1"); ambiguous names default to Mixed.
 //
 // Definitions:
 // - Click rate = clicks / delivered — the ranking key.
 // - CTOR (click-to-open rate) = clicks / opens — shown per email for
 //   context, not used to rank.
-// - Weekly trend buckets are calendar weeks (Mon–Sun), aggregated across
-//   every send in that week: weekCTOR = sum(clicks) / sum(opens) for all
-//   sends whose publishDate falls in that week.
+// - Weekly trend buckets (unchanged, not segmented) are calendar weeks
+//   (Mon–Sun): weekCTOR = sum(clicks) / sum(opens) for all sends whose
+//   publishDate falls in that week.
 // - Avg CTOR (30d) and Unsub rate (30d) are the same aggregate approach
-//   over the trailing 30 days.
+//   over the trailing 30 days, also not segmented.
 //
 // Scope/cost note: this pulls per-email stats for up to MAX_EMAILS_SCANNED
 // recent sends (one API call each, sequential). If your send volume is
@@ -42,6 +45,16 @@ type Metrics = {
   clicks: number;
   unsubscribed: number;
 };
+type Segment = "prospect" | "customer" | "mixed";
+
+function classifySegment(name: string): Segment {
+  const n = name.toLowerCase();
+  const hasCustomer = /\bcustomer(s)?\b/.test(n);
+  const hasProspect = /\bprospect(s)?\b/.test(n);
+  if (hasCustomer && !hasProspect) return "customer";
+  if (hasProspect && !hasCustomer) return "prospect";
+  return "mixed";
+}
 
 async function fetchMetrics(emailId: string): Promise<Metrics> {
   const startTimestamp = new Date("2021-01-01").toISOString();
@@ -148,26 +161,43 @@ export async function GET() {
     const avgCtor30d = opens30 > 0 ? clicks30 / opens30 : null;
     const unsubRate30d = delivered30 > 0 ? unsub30 / delivered30 : null;
 
-    // --- Top 5 / Bottom 5 by Click Rate, blended across all sends ---
-    const ranked = scanned
-      .map((e) => {
-        const m = metricsByEmail.get(e.id);
-        if (!m || m.delivered < MIN_DELIVERED_FOR_CLICK_RANKING) return null;
-        return {
-          id: e.id,
-          name: e.name,
-          publishDate: e.publishDate,
-          clickRate: m.clicks / m.delivered,
-          ctor: m.opens > 0 ? m.clicks / m.opens : null,
-        };
-      })
-      .filter(
-        (x): x is { id: string; name: string; publishDate: string; clickRate: number; ctor: number | null } =>
-          x !== null
-      );
+    // --- Segmented Top 5 / Bottom 5 (Prospect only) / ranked list (rest) ---
+    type RankedEmail = {
+      id: string;
+      name: string;
+      publishDate: string;
+      clickRate: number;
+      ctor: number | null;
+    };
 
-    const top5 = [...ranked].sort((a, b) => b.clickRate - a.clickRate).slice(0, 5);
-    const bottom5 = [...ranked].sort((a, b) => a.clickRate - b.clickRate).slice(0, 5);
+    const bySegment: Record<Segment, RankedEmail[]> = { prospect: [], customer: [], mixed: [] };
+    for (const e of scanned) {
+      const m = metricsByEmail.get(e.id);
+      if (!m || m.delivered < MIN_DELIVERED_FOR_CLICK_RANKING) continue;
+      const segment = classifySegment(e.name);
+      bySegment[segment].push({
+        id: e.id,
+        name: e.name,
+        publishDate: e.publishDate,
+        clickRate: m.clicks / m.delivered,
+        ctor: m.opens > 0 ? m.clicks / m.opens : null,
+      });
+    }
+
+    const prospectSorted = [...bySegment.prospect].sort((a, b) => b.clickRate - a.clickRate);
+    const prospect = {
+      top5: prospectSorted.slice(0, 5),
+      bottom5: [...prospectSorted].reverse().slice(0, 5),
+      count: bySegment.prospect.length,
+    };
+    const customer = {
+      ranked: [...bySegment.customer].sort((a, b) => b.clickRate - a.clickRate),
+      count: bySegment.customer.length,
+    };
+    const mixed = {
+      ranked: [...bySegment.mixed].sort((a, b) => b.clickRate - a.clickRate),
+      count: bySegment.mixed.length,
+    };
 
     return NextResponse.json({
       status: "ok",
@@ -177,13 +207,11 @@ export async function GET() {
       totalSentClassified: allEmails.length,
       distinctStatesSeen,
       truncated,
-      rankedCount: ranked.length,
       minDeliveredForRanking: MIN_DELIVERED_FOR_CLICK_RANKING,
       trend,
       avgCtor30d,
       unsubRate30d,
-      top5,
-      bottom5,
+      segments: { prospect, customer, mixed },
     });
   } catch (error) {
     return NextResponse.json(
