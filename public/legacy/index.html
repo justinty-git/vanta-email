@@ -101,12 +101,10 @@
 <div data-theme="{{ theme }}" style="display:flex; flex-direction:column; height:100vh; width:100%; background:var(--bg-page); font-family:var(--font-base); color:var(--text-primary); transition:background 0.15s;">
 
   <!-- Header -->
-  <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 28px; background:var(--bg-header); border-bottom:1px solid var(--header-border); flex-shrink:0;">
-    <div style="display:flex; align-items:center; gap:16px;">
-      <img src="./assets/new-vanta-wordmark-light.svg" alt="Vanta" style="height:18px; display:block;">
-      <div style="width:1px; height:24px; background:rgba(255,255,255,.16);"></div>
+  <div style="display:flex; align-items:center; justify-content:center; padding:16px 28px; background:linear-gradient(180deg, var(--purple-1300), var(--bg-header)); border-bottom:1px solid var(--header-border); flex-shrink:0;">
+    <div style="display:flex; align-items:center; justify-content:space-between; width:100%; max-width:1400px;">
       <div style="display:flex; align-items:center; gap:12px;">
-<div style="width:48px; height:48px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <div style="width:48px; height:48px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
           <img src="./assets/alpaca-mark.svg" alt="" style="width:48px; height:48px; object-fit:contain;">
         </div>
         <div style="display:flex; flex-direction:column; gap:1px;">
@@ -114,28 +112,30 @@
           <span style="font-size:0.75rem; color:#9d8fba; font-weight:500; line-height:1.3;">Vanta's Email Channel Command Center</span>
         </div>
       </div>
-    </div>
-    <div style="display:flex; align-items:center; gap:14px;">
-      <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; background:rgba(9,130,40,0.16); border:1px solid rgba(9,130,40,0.35);">
-        <span style="width:6px; height:6px; border-radius:50%; background:var(--green-900); display:block;"></span>
-        <span style="font-size:0.75rem; color:#b6f0c4; font-weight:500; white-space:nowrap;">Connected</span>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; background:rgba(9,130,40,0.16); border:1px solid rgba(9,130,40,0.35);">
+          <span style="width:6px; height:6px; border-radius:50%; background:var(--green-900); display:block;"></span>
+          <span style="font-size:0.75rem; color:#b6f0c4; font-weight:500; white-space:nowrap;">Connected</span>
+        </div>
+        <button onClick="{{ toggleTheme }}" style="{{ toggleStyle }}">
+          <i class="{{ themeIcon }}" style="font-size:12px;"></i>
+          <span>{{ themeLabel }}</span>
+        </button>
+        <div style="width:32px; height:32px; border-radius:50%; background:var(--purple-800); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem; font-weight:600;">JM</div>
       </div>
-      <button onClick="{{ toggleTheme }}" style="{{ toggleStyle }}">
-        <i class="{{ themeIcon }}" style="font-size:12px;"></i>
-        <span>{{ themeLabel }}</span>
-      </button>
-      <div style="width:32px; height:32px; border-radius:50%; background:var(--purple-800); display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem; font-weight:600;">JM</div>
     </div>
   </div>
 
   <!-- Tabs -->
-  <div style="display:flex; align-items:center; gap:4px; padding:0 28px; background:var(--tab-bg); border-bottom:1px solid var(--tab-border); flex-shrink:0;">
-    <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="4">
-      <button onClick="{{ tab.onClick }}" style="{{ tab.style }}" style-hover="{{ tab.hoverStyle }}">
-        <i class="{{ tab.icon }}" style="font-size:13px;"></i>
-        <span>{{ tab.label }}</span>
-      </button>
-    </sc-for>
+  <div style="display:flex; justify-content:center; padding:0 28px; background:var(--tab-bg); border-bottom:1px solid var(--tab-border); flex-shrink:0;">
+    <div style="display:flex; align-items:center; gap:4px; width:100%; max-width:1400px;">
+      <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="4">
+        <button onClick="{{ tab.onClick }}" style="{{ tab.style }}" style-hover="{{ tab.hoverStyle }}">
+          <i class="{{ tab.icon }}" style="font-size:13px;"></i>
+          <span>{{ tab.label }}</span>
+        </button>
+      </sc-for>
+    </div>
   </div>
 
   <!-- Content -->
@@ -190,6 +190,9 @@
                 <span style="display:flex; align-items:center; gap:5px; font-size:0.75rem; color:var(--icon-accent); flex-shrink:0;">{{ a.tabLabel }} <i class="fa-arrow-right alpaca-fa-regular" style="font-size:10px;"></i></span>
               </button>
             </sc-for>
+            <sc-if value="{{ attentionEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:14px 0; font-size:0.8125rem; color:var(--text-tertiary);">Nothing needs attention right now — no live conflicts or critical/high anomalies.</div>
+            </sc-if>
           </div>
         </div>
       </div>
@@ -213,13 +216,13 @@
             </div>
           </div>
           <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
-            <div style="display:grid; grid-template-columns: 2.2fr 0.9fr 1.4fr 0.9fr 0.8fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
+            <div style="display:grid; grid-template-columns: 3.2fr 0.8fr 1.1fr 0.7fr 0.7fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
               <sc-for list="{{ sendHeaders }}" as="h" hint-placeholder-count="5">
                 <button onClick="{{ h.onClick }}" style="{{ h.style }}"><span>{{ h.label }}</span><i class="{{ h.icon }}" style="font-size:9px; opacity:{{ h.iconOpacity }};"></i></button>
               </sc-for>
             </div>
             <sc-for list="{{ sortedSend }}" as="s" hint-placeholder-count="6">
-              <div style="display:grid; grid-template-columns: 2.2fr 0.9fr 1.4fr 0.9fr 0.8fr; gap:12px; padding:12px 14px; background:{{ s.rowBg }}; align-items:center; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ s.accent }};">
+              <div style="display:grid; grid-template-columns: 3.2fr 0.8fr 1.1fr 0.7fr 0.7fr; gap:12px; padding:12px 14px; background:{{ s.rowBg }}; align-items:center; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ s.accent }};">
                 <span style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.campaign }}</span>
                 <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ s.date }}</span>
                 <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ s.audience }}</span>
@@ -243,9 +246,9 @@
                 <i class="fa-clipboard-list alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
                 <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Known Issues Log</span>
               </div>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-info-bg); color:var(--badge-info-text); white-space:nowrap;"><i class="fa-plug alpaca-fa-solid" style="font-size:9px;"></i>Needs connector · HubSpot</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-neutral-bg); color:var(--badge-neutral-text); white-space:nowrap;"><i class="fa-clipboard-list alpaca-fa-solid" style="font-size:9px;"></i>Manual log</span>
             </div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:6px;">Manually logged today — auto-capture pending connector. Specific caught issues, not a score.</div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:6px;">Nothing to auto-capture here — HubSpot has no "known issues" object. Tell me about an issue and I'll add it here.</div>
             <div style="margin:0 -20px;">
               <sc-for list="{{ knownIssues }}" as="k" hint-placeholder-count="4">
                 <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 20px; border-top:1px solid var(--border-table);">
@@ -260,6 +263,9 @@
                   </div>
                 </div>
               </sc-for>
+              <sc-if value="{{ knownIssuesEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px 20px; font-size:0.8125rem; color:var(--text-tertiary); border-top:1px solid var(--border-table);">No issues logged yet.</div>
+              </sc-if>
             </div>
           </div>
 
@@ -335,7 +341,7 @@
             <div style="display:flex; flex-direction:column; gap:10px;">
               <div style="display:flex; flex-direction:column; gap:4px;">
                 <label style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em;">Subject line</label>
-                <input type="text" onChange="{{ onBriefSubjectInput }}" onInput="{{ onBriefSubjectInput }}" defaultValue="{{ briefSubject }}" spellcheck="true" style="width:100%; padding:9px 12px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem;">
+                <input type="text" onChange="{{ onBriefSubjectInput }}" onInput="{{ onBriefSubjectInput }}" defaultValue="{{ briefSubject }}" spellcheck="true" placeholder="Your email subject line" style="width:100%; padding:9px 12px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem;">
               </div>
               <div style="display:flex; flex-direction:column; gap:4px;">
                 <label style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em;">Preheader</label>
@@ -343,7 +349,7 @@
               </div>
               <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
                 <label style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em;">Body copy</label>
-                <textarea onChange="{{ onBriefBodyInput }}" onInput="{{ onBriefBodyInput }}" defaultValue="{{ briefBody }}" spellcheck="true" style="width:100%; min-height:290px; resize:vertical; padding:12px 14px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem; line-height:1.5;"></textarea>
+                <textarea onChange="{{ onBriefBodyInput }}" onInput="{{ onBriefBodyInput }}" defaultValue="{{ briefBody }}" spellcheck="true" placeholder="Paste or write the body copy here…" style="width:100%; min-height:290px; resize:vertical; padding:12px 14px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem; line-height:1.5;"></textarea>
               </div>
               <button onClick="{{ onAnalyzeBrief }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-magnifying-glass-chart alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
             </div>
@@ -378,7 +384,7 @@
           </div>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px; align-items:start;">
             <div style="display:flex; flex-direction:column; gap:8px;">
-              <textarea onChange="{{ onHtmlInput }}" onInput="{{ onHtmlInput }}" defaultValue="{{ htmlText }}" spellcheck="false" style="width: 641px; min-height: 130px; resize: vertical; padding: 9px 11px; border-radius: var(--r-sm); border: 1px solid var(--border-card); background: var(--input-bg); color: var(--text-primary); font-size: 0.75rem; line-height: 1.5; font-family: var(--code-font); height: 413px"></textarea>
+              <textarea onChange="{{ onHtmlInput }}" onInput="{{ onHtmlInput }}" defaultValue="{{ htmlText }}" spellcheck="false" placeholder="Paste the email's HTML here…" style="width: 641px; min-height: 130px; resize: vertical; padding: 9px 11px; border-radius: var(--r-sm); border: 1px solid var(--border-card); background: var(--input-bg); color: var(--text-primary); font-size: 0.75rem; line-height: 1.5; font-family: var(--code-font); height: 413px"></textarea>
               <button onClick="{{ onAnalyzeHtml }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-magnifying-glass-chart alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
             </div>
             <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
@@ -528,6 +534,9 @@
                   </span>
                 </div>
               </sc-for>
+              <sc-if value="{{ watchdogEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px 0; font-size:0.8125rem; color:var(--text-tertiary); border-top:1px solid var(--border-table);">Not wired yet — needs the HubSpot Workflows/Automation API to surface real frozen/paused workflow states and enrollment counts.</div>
+              </sc-if>
             </div>
           </div>
 
@@ -586,7 +595,7 @@
   </div>
 
   <!-- Footer -->
-  <div style="flex-shrink:0; padding:12px 28px; text-align:center; border-top:1px solid var(--header-border); background:var(--bg-header);">
+  <div style="flex-shrink:0; padding:12px 28px; text-align:center; border-top:1px solid var(--header-border); background:linear-gradient(0deg, var(--purple-1300), var(--bg-header));">
     <span style="font-size:0.75rem; color:#9d8fba;">Built by and maintained by Justin McMillin, Marketing Operations</span>
   </div>
 </div>
@@ -604,23 +613,11 @@ class Component extends DCLogic {
     conflictsLoading: true, conflictsError: null, conflictsData: null, conflictsCheckedAt: null,
     anomaliesLoading: true, anomaliesError: null, anomaliesData: null,
     performanceLoading: true, performanceError: null, performanceData: null, performanceCheckedAt: null,
-    briefSubject: `Unlock next-level compliance — the Q3 Security Benchmark Report is here!`,
+    briefSubject: ``,
     briefPreheader: ``,
-    briefBody: `Security and compliance leaders are under more pressure than ever to prove trust at scale.
-
-Our Q3 Security Benchmark Report is packed with cutting-edge insights from 500+ GRC teams — see how the best-in-class programs leverage automation to streamline compliance from end to end.
-
-Get started today. Read the full report. Download the summary. Book a demo with our team to learn more about what's possible.`,
+    briefBody: ``,
     analyzedBrief: undefined,
-    htmlText: `<table width="100%">
-  <tr>
-    <td style="border:1px solid #000; padding:20px;">
-      <span style="display:block;">Your compliance,</span>
-      <span style="display:block;">on autopilot</span>
-      <a href="#">Learn more</a>
-    </td>
-  </tr>
-</table>`,
+    htmlText: ``,
     analyzedHtmlText: undefined,
   };
 
@@ -628,6 +625,19 @@ Get started today. Read the full report. Download the summary. Book a demo with 
     this.loadConflicts();
     this.loadAnomalies();
     this.loadPerformance();
+
+    // Auto-refresh on top of the manual Refresh buttons — re-checks every
+    // 5 minutes so the data doesn't go stale on a screen left open, without
+    // hammering HubSpot's API on every render.
+    this._refreshInterval = setInterval(() => {
+      this.loadConflicts();
+      this.loadAnomalies();
+      this.loadPerformance();
+    }, 5 * 60 * 1000);
+  }
+
+  componentWillUnmount() {
+    if (this._refreshInterval) clearInterval(this._refreshInterval);
   }
 
   async loadPerformance() {
@@ -751,6 +761,36 @@ Get started today. Read the full report. Download the summary. Book a demo with 
   // says "Workflow" in the UI copy, but for the HubSpot-only version each
   // row is a single send (workflow-level anomaly detection needs the
   // Automation API, which isn't wired yet — see cause text below).
+  // Real "Needs attention" feed — surfaces the single worst live conflict
+  // (by estimated contacts at risk) and the single worst live anomaly
+  // (Critical/High only), instead of fixed fictional scenarios. Empty
+  // array if nothing currently qualifies — the template shows an honest
+  // empty state rather than always displaying something.
+  buildAttentionItems() {
+    const items = [];
+    const conflicts = (this.state.conflictsData && this.state.conflictsData.conflicts) || [];
+    if (conflicts.length > 0) {
+      const c = conflicts[0];
+      const when = c.daysApart === 0 ? 'the same day' : c.daysApart + 'd apart';
+      const risk = c.contactsAtRiskEstimate !== null ? ' — ~' + c.contactsAtRiskEstimate.toLocaleString() + ' contacts at risk' : ' — shared audience';
+      items.push({
+        severity: 'Conflict', severityColor: 'var(--badge-danger-text)',
+        text: c.emailA.name + ' and ' + c.emailB.name + ' ship ' + when + risk,
+        tabLabel: 'Govern', onClick: () => this.setState({ activeTab: 'govern' }),
+      });
+    }
+    const flags = ((this.state.anomaliesData && this.state.anomaliesData.flags) || []).filter(f => f.riskLabel === 'Critical' || f.riskLabel === 'High');
+    if (flags.length > 0) {
+      const f = flags[0];
+      items.push({
+        severity: f.riskLabel, severityColor: 'var(--badge-danger-text)',
+        text: f.emailName + ' — ' + f.cause,
+        tabLabel: 'Health', onClick: () => this.setState({ activeTab: 'health' }),
+      });
+    }
+    return items;
+  }
+
   buildAnomalyRows() {
     const data = this.state.anomaliesData;
     if (!data) return [];
@@ -912,7 +952,7 @@ Get started today. Read the full report. Download the summary. Book a demo with 
     const warn = 'var(--badge-warning-text)', warnb = 'var(--badge-warning-bg)';
     const bad = 'var(--badge-danger-text)', badb = 'var(--badge-danger-bg)';
     const P = ['Pass', ok, okb, 'fa-check alpaca-fa-solid'], W = ['Warn', warn, warnb, 'fa-triangle-exclamation alpaca-fa-solid'], F = ['Fail', bad, badb, 'fa-xmark alpaca-fa-solid'];
-    if (html === null || html === undefined) {
+    if (!html) {
       const wait = ['—', 'var(--text-tertiary)', 'var(--bg-card-alt)', 'fa-magnifying-glass alpaca-fa-regular'];
       return ['Fixed-width container base', 'No display:block on <span>', 'Stacked text line-height', 'CTA borders off wrapping <td>'].map(rule => ({ rule, detail: 'Click Analyze to check.', resultLabel: wait[0], resultColor: wait[1], resultBg: wait[2], resultIcon: wait[3], accent: 'transparent' }));
     }
@@ -1061,6 +1101,7 @@ Get started today. Read the full report. Download the summary. Book a demo with 
     const sendScheduleRows = this.buildSendScheduleRows();
     const anomalyRows = this.buildAnomalyRows();
     const performanceData = this.state.performanceData;
+    const attentionItems = this.buildAttentionItems();
 
     const vals = {
       theme: dark ? 'dark' : 'light',
@@ -1078,24 +1119,16 @@ Get started today. Read the full report. Download the summary. Book a demo with 
       isOverview: active === 'overview', isGovern: active === 'govern', isBuild: active === 'build', isHealth: active === 'health',
 
       pillars: [
-        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Known issues log, send-conflict detection, and the Email Framework reference.', metricValue: '2', metricLabel: 'send conflicts flagged', metricColor: 'var(--badge-danger-text)', subMetric: '4 issues in the known-issues log', onClick: () => this.setState({ activeTab: 'govern' }) },
+        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Known issues log, send-conflict detection, and the Email Framework reference.', metricValue: String(this.state.conflictsData ? this.state.conflictsData.conflicts.length : 0), metricLabel: 'send conflicts flagged', metricColor: (this.state.conflictsData && this.state.conflictsData.conflicts.length > 0) ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: '0 issues in the known-issues log', onClick: () => this.setState({ activeTab: 'govern' }) },
         { icon: 'fa-hammer alpaca-fa-regular', name: 'Build', desc: 'Email Content Score for anyone submitting drafts, plus an Outlook pre-flight utility for MOps.', metricValue: '2', metricLabel: 'live tools ready to use', metricColor: 'var(--badge-success-text)', subMetric: 'Paste content or HTML to score it', onClick: () => this.setState({ activeTab: 'build' }) },
-        { icon: 'fa-heart-pulse alpaca-fa-regular', name: 'Health', desc: 'CTOR trend, anomalies, workflow watchdog, and per-email post-send diagnostics.', metricValue: '1', metricLabel: 'critical anomaly (sample)', metricColor: 'var(--badge-danger-text)', subMetric: 'CTOR trend · lookup · watchdog', onClick: () => this.setState({ activeTab: 'health' }) },
+        { icon: 'fa-heart-pulse alpaca-fa-regular', name: 'Health', desc: 'CTOR trend, anomalies, workflow watchdog, and per-email post-send diagnostics.', metricValue: String(anomalyRows.filter(r => r.riskLabel === 'Critical' || r.riskLabel === 'High').length), metricLabel: 'critical/high anomalies', metricColor: anomalyRows.some(r => r.riskLabel === 'Critical' || r.riskLabel === 'High') ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'CTOR trend · lookup · watchdog', onClick: () => this.setState({ activeTab: 'health' }) },
       ],
 
-      attentionItems: [
-        { severity: 'Conflict', severityColor: 'var(--badge-danger-text)', text: 'Q3 Security Benchmark Report and Trust Center Relaunch ship the same day — 68% audience overlap.', tabLabel: 'Govern', onClick: () => this.setState({ activeTab: 'govern' }) },
-        { severity: 'Critical', severityColor: 'var(--badge-danger-text)', text: 'Onboarding Drip — Step 3 is down 31% CTOR from a broken CTA link.', tabLabel: 'Health', onClick: () => this.setState({ activeTab: 'health' }) },
-        { severity: 'Logged', severityColor: 'var(--badge-warning-text)', text: 'Q3 Security Blast used a deprecated CTA button style — logged Jul 18.', tabLabel: 'Govern', onClick: () => this.setState({ activeTab: 'govern' }) },
-        { severity: 'Frozen', severityColor: 'var(--badge-warning-text)', text: 'Anti-Ghost Nurture is frozen with 4,210 active contacts and 38% re-engagement coverage.', tabLabel: 'Health', onClick: () => this.setState({ activeTab: 'health' }) },
-      ],
+      attentionItems: attentionItems,
+      attentionEmpty: !this.state.conflictsLoading && !this.state.anomaliesLoading && attentionItems.length === 0,
 
-      knownIssues: [
-        { date: 'Jul 18', title: 'Q3 Security Blast used a deprecated CTA button style', detail: 'Legacy button component — should use the ButtonV2 pattern.', tag: 'Deprecated component', loggedBy: 'Justin McMillin' },
-        { date: 'Jul 17', title: 'Trust Center Launch sequence mixed sentence case and title case', detail: 'Subject lines inconsistent across steps 1–4.', tag: 'Casing', loggedBy: 'Peter Larsen' },
-        { date: 'Jul 15', title: 'AI Agent Beta Invite shipped without UTM parameters', detail: 'Links missing campaign tracking; caught post-send.', tag: 'Tracking', loggedBy: 'Lauren Kiss' },
-        { date: 'Jul 11', title: 'Partner Program Update used an unapproved footer block', detail: 'Legal footer did not match the FY27 template.', tag: 'Footer', loggedBy: 'Justin McMillin' },
-      ],
+      knownIssues: [],
+      knownIssuesEmpty: true,
 
       rapidOpen: this.state.rapidOpen,
       toggleRapid: () => this.setState(s => ({ rapidOpen: !s.rapidOpen })),
@@ -1117,7 +1150,7 @@ Get started today. Read the full report. Download the summary. Book a demo with 
         ? 'Scanning the next 7 days…'
         : this.state.conflictsError
         ? this.state.conflictsError
-        : 'Next 7 days · same/next-day + shared list = conflict' + (this.state.conflictsCheckedAt ? ' · checked ' + this.state.conflictsCheckedAt : ''),
+        : 'Next 7 days · same/next-day + shared list = conflict · auto-refreshes every 5 min' + (this.state.conflictsCheckedAt ? ' · checked ' + this.state.conflictsCheckedAt : ''),
       conflictsEmpty: !this.state.conflictsLoading && !this.state.conflictsError && sendScheduleRows.length === 0,
       onRefreshConflicts: () => this.loadConflicts(),
       conflictsRefreshIcon: this.state.conflictsLoading ? 'fa-clock-rotate-left alpaca-fa-solid fa-spin' : 'fa-clock-rotate-left alpaca-fa-solid',
@@ -1151,7 +1184,7 @@ Get started today. Read the full report. Download the summary. Book a demo with 
 
       healthKpis: [
         { label: 'Avg CTOR (30d)', value: performanceData && performanceData.avgCtor30d !== null ? (performanceData.avgCtor30d * 100).toFixed(1) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
-        { label: 'Active workflows', value: '47', trend: 'not yet live', trendColor: 'var(--text-tertiary)', trendIcon: 'fa-plug alpaca-fa-solid' },
+        { label: 'Active workflows', value: '—', trend: 'not yet live', trendColor: 'var(--text-tertiary)', trendIcon: 'fa-plug alpaca-fa-solid' },
         { label: 'Anomalies flagged', value: String(anomalyRows.length), trend: this.state.anomaliesLoading ? '…' : 'live', trendColor: anomalyRows.length > 0 ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', trendIcon: anomalyRows.length > 0 ? 'fa-arrow-up alpaca-fa-solid' : 'fa-circle-check alpaca-fa-solid' },
         { label: 'Unsub rate (30d)', value: performanceData && performanceData.unsubRate30d !== null ? (performanceData.unsubRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
       ],
@@ -1171,13 +1204,8 @@ Get started today. Read the full report. Download the summary. Book a demo with 
         ? this.state.anomaliesError
         : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends · vs recent-batch average + known deliverability thresholds',
 
-      watchdog: [
-        { workflow: 'Anti-Ghost Nurture', contacts: '4,210', coverage: '38%', state: 'Frozen', stateBg: 'var(--badge-danger-bg)', stateColor: 'var(--badge-danger-text)', stateIcon: 'fa-snowflake alpaca-fa-solid' },
-        { workflow: 'Trial Expiry Nudge', contacts: '1,890', coverage: '71%', state: 'Paused', stateBg: 'var(--badge-warning-bg)', stateColor: 'var(--badge-warning-text)', stateIcon: 'fa-pause alpaca-fa-solid' },
-        { workflow: 'Dormant Account Winback', contacts: '6,540', coverage: '22%', state: 'Frozen', stateBg: 'var(--badge-danger-bg)', stateColor: 'var(--badge-danger-text)', stateIcon: 'fa-snowflake alpaca-fa-solid' },
-        { workflow: 'Post-Webinar Follow-up', contacts: '920', coverage: '64%', state: 'Paused', stateBg: 'var(--badge-warning-bg)', stateColor: 'var(--badge-warning-text)', stateIcon: 'fa-pause alpaca-fa-solid' },
-        { workflow: 'Compliance Roadmap CS Nurture', contacts: '3,100', coverage: '88%', state: 'Active', stateBg: 'var(--badge-success-bg)', stateColor: 'var(--badge-success-text)', stateIcon: 'fa-circle-check alpaca-fa-solid' },
-      ],
+      watchdog: [],
+      watchdogEmpty: true,
 
       onLookupSearch: (e) => this.runLookupSearch(e.target.value),
       lookupQuery: this.state.lookupQuery,
