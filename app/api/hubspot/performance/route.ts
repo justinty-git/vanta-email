@@ -181,7 +181,14 @@ export async function GET() {
       publishDate: string;
       clickRate: number;
       ctor: number | null;
+      hubspotUrl: string;
     };
+
+    // Confirmed real pattern from an actual email in this portal:
+    // https://app.hubspot.com/email/8588479/details/{emailId}/performance
+    const HUBSPOT_PORTAL_ID = "8588479";
+    const emailUrl = (emailId: string) =>
+      `https://app.hubspot.com/email/${HUBSPOT_PORTAL_ID}/details/${emailId}/performance`;
 
     const weeklyScanned = scanned.filter(
       (e) => new Date(e.publishDate).getTime() >= weeklyWindowStart
@@ -198,6 +205,7 @@ export async function GET() {
           publishDate: e.publishDate,
           clickRate: m.clicks / m.delivered,
           ctor: m.opens > 0 ? m.clicks / m.opens : null,
+          hubspotUrl: emailUrl(e.id),
         };
       })
       .filter((x): x is RankedEmail => x !== null);

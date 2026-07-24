@@ -473,7 +473,7 @@
               <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:6px;">Too few DG/NU sends this week for a Top 5 / Bottom 5 split — ranked by Click Rate</div>
               <sc-for list="{{ weeklyPerformersAll }}" as="t" hint-placeholder-count="5">
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
-                  <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.name }}</span>
+                  <a href="{{ t.hubspotUrl }}" target="_blank" style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-decoration:none;">{{ t.name }}</a>
                   <span style="font-size:0.8125rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ t.clickRate }}</span>
                 </div>
               </sc-for>
@@ -482,14 +482,14 @@
               <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--badge-success-text); margin-bottom:6px;">Top 5 by Click Rate</div>
               <sc-for list="{{ topEmails }}" as="t" hint-placeholder-count="5">
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
-                  <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.rank }}. {{ t.name }}</span>
+                  <a href="{{ t.hubspotUrl }}" target="_blank" style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-decoration:none;">{{ t.rank }}. {{ t.name }}</a>
                   <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-success-text); flex-shrink:0;">{{ t.clickRate }}</span>
                 </div>
               </sc-for>
               <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--badge-danger-text); margin:12px 0 6px; padding-top:12px; border-top:1px solid var(--border-table);">Bottom 5 by Click Rate</div>
               <sc-for list="{{ bottomEmails }}" as="t" hint-placeholder-count="5">
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
-                  <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.rank }}. {{ t.name }}</span>
+                  <a href="{{ t.hubspotUrl }}" target="_blank" style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-decoration:none;">{{ t.rank }}. {{ t.name }}</a>
                   <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-danger-text); flex-shrink:0;">{{ t.clickRate }}</span>
                 </div>
               </sc-for>
@@ -1309,14 +1309,14 @@ class Component extends DCLogic {
         : '',
       weeklyPerformersIsSmall: !!(performanceData && performanceData.weeklyPerformers && performanceData.weeklyPerformers.isSmallSample),
       weeklyPerformersAll: (performanceData && performanceData.weeklyPerformers)
-        ? performanceData.weeklyPerformers.all.map(e => ({ name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%' }))
+        ? performanceData.weeklyPerformers.all.map(e => ({ name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%', hubspotUrl: e.hubspotUrl }))
         : [],
       weeklyPerformersHasData: !!(performanceData && performanceData.weeklyPerformers && performanceData.weeklyPerformers.count > 0 && !performanceData.weeklyPerformers.isSmallSample),
       topEmails: (performanceData && performanceData.weeklyPerformers)
-        ? performanceData.weeklyPerformers.top5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%' }))
+        ? performanceData.weeklyPerformers.top5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%', hubspotUrl: e.hubspotUrl }))
         : [],
       bottomEmails: (performanceData && performanceData.weeklyPerformers)
-        ? performanceData.weeklyPerformers.bottom5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%' }))
+        ? performanceData.weeklyPerformers.bottom5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%', hubspotUrl: e.hubspotUrl }))
         : [],
       performanceRankedEmpty: !this.state.performanceLoading && !this.state.performanceError && performanceData && performanceData.weeklyPerformers && performanceData.weeklyPerformers.count === 0,
 
