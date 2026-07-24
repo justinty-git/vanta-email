@@ -47,13 +47,21 @@ type Metrics = {
 };
 type Segment = "prospect" | "customer" | "mixed";
 
-function classifySegment(name: string): Segment {
+function classifySegment(name: string): Segment | "unclassified" {
   const n = name.toLowerCase();
   const hasCustomer = /\bcustomer(s)?\b/.test(n);
   const hasProspect = /\bprospect(s)?\b/.test(n);
-  if (hasCustomer && !hasProspect) return "customer";
-  if (hasProspect && !hasCustomer) return "prospect";
-  return "mixed";
+  // Real Mixed = name signals BOTH segments (a genuinely combined-audience
+  // send), matching the reference report's actual definition. Previously
+  // this was the else-branch default, so any send whose name mentioned
+  // NEITHER keyword (a notification, an event name, anything ambiguous)
+  // was silently mislabeled as "Mixed" — that's not mixed audience, that's
+  // just unclassifiable by name. Those now fall to "unclassified" and are
+  // excluded from all three tabs rather than misrepresented as one.
+  if (hasCustomer && hasProspect) return "mixed";
+  if (hasCustomer) return "customer";
+  if (hasProspect) return "prospect";
+  return "unclassified";
 }
 
 async function fetchMetrics(emailId: string): Promise<Metrics> {
@@ -171,10 +179,15 @@ export async function GET() {
     };
 
     const bySegment: Record<Segment, RankedEmail[]> = { prospect: [], customer: [], mixed: [] };
+    let unclassifiedCount = 0;
     for (const e of scanned) {
       const m = metricsByEmail.get(e.id);
       if (!m || m.delivered < MIN_DELIVERED_FOR_CLICK_RANKING) continue;
       const segment = classifySegment(e.name);
+      if (segment === "unclassified") {
+        unclassifiedCount++;
+        continue;
+      }
       bySegment[segment].push({
         id: e.id,
         name: e.name,
@@ -212,6 +225,7 @@ export async function GET() {
       avgCtor30d,
       unsubRate30d,
       segments: { prospect, customer, mixed },
+      unclassifiedCount,
     });
   } catch (error) {
     return NextResponse.json(

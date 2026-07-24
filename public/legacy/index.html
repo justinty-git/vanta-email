@@ -403,11 +403,14 @@
               </div>
               <a href="https://info.vanta.com/hubfs/mops-internal/email-metrics/fy27/june.html" target="_blank" style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; font-weight:500; color:var(--icon-accent); white-space:nowrap;">Full report <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a>
             </div>
-            <div style="display:flex; gap:6px; margin-bottom:10px;">
+            <div style="display:flex; gap:6px; margin-bottom:6px;">
               <sc-for list="{{ segmentTabs }}" as="st" hint-placeholder-count="3">
                 <button onClick="{{ st.onClick }}" style="{{ st.style }}">{{ st.label }}</button>
               </sc-for>
             </div>
+            <sc-if value="{{ unclassifiedNote }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:0.6875rem; color:var(--text-tertiary); margin-bottom:8px;">{{ unclassifiedNote }}</div>
+            </sc-if>
             <sc-if value="{{ performanceRankedEmpty }}" hint-placeholder-val="{{ false }}">
               <div style="font-size:0.8125rem; color:var(--text-tertiary); padding:12px 0;">Not enough sends (50+ delivered) in this segment to rank reliably.</div>
             </sc-if>
@@ -1214,6 +1217,9 @@ class Component extends DCLogic {
       }),
       isProspectTab: this.state.performanceSegmentTab === 'prospect',
       isRankedListTab: this.state.performanceSegmentTab !== 'prospect',
+      unclassifiedNote: (performanceData && performanceData.unclassifiedCount > 0)
+        ? performanceData.unclassifiedCount + ' send' + (performanceData.unclassifiedCount === 1 ? '' : 's') + " in this window couldn't be classified by name (no \"Prospect\"/\"Customer\" in the subject) — not shown in any tab"
+        : '',
       topEmails: (performanceData && performanceData.segments)
         ? performanceData.segments.prospect.top5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%' }))
         : [],
