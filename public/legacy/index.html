@@ -836,18 +836,11 @@ class Component extends DCLogic {
   buildWatchdogRows() {
     const data = this.state.workflowsData;
     if (!data) return [];
-    const danger = 'var(--badge-danger-text)', dangerBg = 'var(--badge-danger-bg)';
     const success = 'var(--badge-success-text)', successBg = 'var(--badge-success-bg)';
-    const neutral = 'var(--text-tertiary)', neutralBg = 'var(--bg-card-alt)';
-    return (data.rows || []).map(w => {
-      if (w.status === 'stuck') {
-        return { workflow: w.name, contacts: w.activeContacts.toLocaleString(), enrolled: w.totalEnrolled.toLocaleString(), state: 'Stuck', stateBg: dangerBg, stateColor: danger, stateIcon: 'fa-snowflake alpaca-fa-solid' };
-      }
-      if (w.status === 'active') {
-        return { workflow: w.name, contacts: w.activeContacts.toLocaleString(), enrolled: w.totalEnrolled.toLocaleString(), state: 'Active', stateBg: successBg, stateColor: success, stateIcon: 'fa-circle-check alpaca-fa-solid' };
-      }
-      return { workflow: w.name, contacts: w.activeContacts.toLocaleString(), enrolled: w.totalEnrolled.toLocaleString(), state: 'Paused', stateBg: neutralBg, stateColor: neutral, stateIcon: 'fa-pause alpaca-fa-solid' };
-    });
+    return (data.rows || []).map(w => ({
+      workflow: w.name, contacts: w.activeContacts.toLocaleString(), enrolled: w.totalEnrolled.toLocaleString(),
+      state: 'Active', stateBg: successBg, stateColor: success, stateIcon: 'fa-circle-check alpaca-fa-solid',
+    }));
   }
 
   buildAnomalyRows() {
@@ -1244,7 +1237,7 @@ class Component extends DCLogic {
 
       healthKpis: [
         { label: 'Avg CTOR (30d)', value: performanceData && performanceData.avgCtor30d !== null ? (performanceData.avgCtor30d * 100).toFixed(1) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
-        { label: 'Active workflows', value: this.state.workflowsData ? this.state.workflowsData.activeCount.toLocaleString() : '—', trend: this.state.workflowsLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
+        { label: 'Active nurture workflows', value: this.state.workflowsData ? this.state.workflowsData.matchedCount.toLocaleString() : '—', trend: this.state.workflowsLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
         { label: 'Anomalies flagged', value: String(anomalyRows.length), trend: this.state.anomaliesLoading ? '…' : 'live', trendColor: anomalyRows.length > 0 ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', trendIcon: anomalyRows.length > 0 ? 'fa-arrow-up alpaca-fa-solid' : 'fa-circle-check alpaca-fa-solid' },
         { label: 'Unsub rate (30d)', value: performanceData && performanceData.unsubRate30d !== null ? (performanceData.unsubRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
       ],
@@ -1300,9 +1293,9 @@ class Component extends DCLogic {
         ? 'Scanning workflows…'
         : this.state.workflowsError
         ? this.state.workflowsError
-        : (this.state.workflowsData ? this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned · ' + this.state.workflowsData.stuckCount + ' stuck (paused with active contacts)' : ''),
+        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' active nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · ' + this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned' : ''),
       watchdogEmpty: !this.state.workflowsLoading && !this.state.workflowsError && watchdogRows.length === 0,
-      watchdogEmptyMessage: this.state.workflowsData && this.state.workflowsData.totalWorkflows === 0 ? 'No workflows found in this account.' : 'No workflows to show.',
+      watchdogEmptyMessage: this.state.workflowsData && this.state.workflowsData.totalWorkflows === 0 ? 'No workflows found in this account.' : 'No active workflows with "nurture" in the name.',
 
       onLookupSearch: (e) => this.runLookupSearch(e.target.value),
       lookupQuery: this.state.lookupQuery,
