@@ -215,16 +215,20 @@
             </div>
           </div>
           <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
-            <div style="display:grid; grid-template-columns: 3.2fr 0.8fr 1.1fr 0.7fr 0.7fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
+            <div style="display:grid; grid-template-columns: 2.6fr 0.8fr 1.6fr 0.6fr 0.6fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
               <sc-for list="{{ sendHeaders }}" as="h" hint-placeholder-count="5">
                 <button onClick="{{ h.onClick }}" style="{{ h.style }}"><span>{{ h.label }}</span><i class="{{ h.icon }}" style="font-size:9px; opacity:{{ h.iconOpacity }};"></i></button>
               </sc-for>
             </div>
             <sc-for list="{{ sortedSend }}" as="s" hint-placeholder-count="6">
-              <div style="display:grid; grid-template-columns: 3.2fr 0.8fr 1.1fr 0.7fr 0.7fr; gap:12px; padding:12px 14px; background:{{ s.rowBg }}; align-items:center; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ s.accent }};">
+              <div style="display:grid; grid-template-columns: 2.6fr 0.8fr 1.6fr 0.6fr 0.6fr; gap:12px; padding:12px 14px; background:{{ s.rowBg }}; align-items:center; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ s.accent }};">
                 <span style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.campaign }}</span>
                 <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ s.date }}</span>
-                <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ s.audience }}</span>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                  <sc-for list="{{ s.audienceLines }}" as="al" hint-placeholder-count="2">
+                    <span style="font-size:0.8125rem; color:var(--text-tertiary); line-height:1.4;">{{ al }}</span>
+                  </sc-for>
+                </div>
                 <span style="font-size:0.875rem; font-weight:500; color:{{ s.overlapColor }};">{{ s.overlap }}</span>
                 <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:500; color:{{ s.statusColor }};">
                   <i class="{{ s.statusIcon }}" style="font-size:11px;"></i>{{ s.statusLabel }}
@@ -739,15 +743,16 @@ class Component extends DCLogic {
     }
 
     return (data.scanned || []).map(e => {
-      const listNames = (e.lists || []).map(l => l.name).join(', ');
-      const audienceText = listNames || 'No list target resolved';
+      const audienceLines = (e.lists || []).map(l => l.name);
+      if (audienceLines.length === 0) audienceLines.push('No list target resolved');
 
       if (e.status === 'conflict') {
         const c = detailByEmailId.get(e.id);
         const estimate = c ? c.contactsAtRiskEstimate : null;
+        const lines = estimate !== null ? [...audienceLines, '~' + estimate.toLocaleString() + ' at risk'] : audienceLines;
         return {
           campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
-          audience: audienceText + (estimate !== null ? ' (~' + estimate.toLocaleString() + ' at risk)' : ''),
+          audienceLines: lines,
           audienceNum: estimate ?? 0,
           overlap: c ? (c.daysApart === 0 ? 'Same day' : c.daysApart + 'd apart') : '—',
           overlapNum: estimate ?? 0, overlapColor: conflictColor,
@@ -757,13 +762,13 @@ class Component extends DCLogic {
       if (e.status === 'unscoped') {
         return {
           campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
-          audience: audienceText, audienceNum: 0, overlap: '—', overlapNum: 0, overlapColor: neutralColor,
+          audienceLines, audienceNum: 0, overlap: '—', overlapNum: 0, overlapColor: neutralColor,
           statusIcon: 'fa-eye alpaca-fa-regular', statusLabel: 'Unscoped', statusRank: 2, statusColor: neutralColor,
         };
       }
       return {
         campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
-        audience: audienceText, audienceNum: 0, overlap: 'Clear', overlapNum: 0, overlapColor: clearColor,
+        audienceLines, audienceNum: 0, overlap: 'Clear', overlapNum: 0, overlapColor: clearColor,
         statusIcon: 'fa-circle-check alpaca-fa-solid', statusLabel: 'Clear', statusRank: 1, statusColor: clearColor,
       };
     });
