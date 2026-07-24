@@ -151,6 +151,7 @@ export async function GET() {
         higherIsBad: boolean;
         hardCritical?: number;
         hardHigh?: number;
+        minFloor?: number; // absolute floor below which relative-only flags are suppressed
         format: (v: number) => string;
       }> = [
         {
@@ -160,6 +161,7 @@ export async function GET() {
           higherIsBad: true,
           hardCritical: HARD.bounceCritical,
           hardHigh: HARD.bounceHigh,
+          minFloor: 0.01, // below 1%, a relative swing isn't meaningfully "bad"
           format: (v) => (v * 100).toFixed(2) + "%",
         },
         {
@@ -168,6 +170,7 @@ export async function GET() {
           base: baseline.spamRate,
           higherIsBad: true,
           hardCritical: HARD.spamCritical,
+          minFloor: 0.0003,
           format: (v) => (v * 100).toFixed(3) + "%",
         },
         {
@@ -177,6 +180,7 @@ export async function GET() {
           higherIsBad: true,
           hardCritical: HARD.unsubCritical,
           hardHigh: HARD.unsubHigh,
+          minFloor: 0.01,
           format: (v) => (v * 100).toFixed(2) + "%",
         },
         {
@@ -202,11 +206,12 @@ export async function GET() {
         const relChange = c.base && c.base > 0 ? (c.rate - c.base) / c.base : 0;
 
         let riskLabel: Flag["riskLabel"] | null = null;
+        const meetsFloor = !c.minFloor || c.rate >= c.minFloor;
         if (c.higherIsBad) {
           if (c.hardCritical && c.rate >= c.hardCritical) riskLabel = "Critical";
           else if (c.hardHigh && c.rate >= c.hardHigh) riskLabel = "High";
-          else if (relChange >= 1.0) riskLabel = "High"; // more than double the baseline
-          else if (relChange >= 0.5) riskLabel = "Medium";
+          else if (meetsFloor && relChange >= 1.0) riskLabel = "High"; // more than double the baseline
+          else if (meetsFloor && relChange >= 0.5) riskLabel = "Medium";
         } else {
           if (relChange <= -0.4) riskLabel = "High";
           else if (relChange <= -0.25) riskLabel = "Medium";
