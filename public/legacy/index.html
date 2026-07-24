@@ -402,10 +402,10 @@
     <sc-if value="{{ isHealth }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex; flex-direction:column; gap:20px; max-width:1400px; margin:0 auto;">
 
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:0.75rem; color:var(--text-tertiary);">Performance data assumes the</span>
-          <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:var(--badge-info-bg); color:var(--badge-info-text);"><i class="fa-plug alpaca-fa-solid" style="font-size:9px;"></i>Snowflake connector</span>
-          <span style="font-size:0.75rem; color:var(--text-tertiary);">is live.</span>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ performanceBadgeBg }}; color:{{ performanceBadgeColor }};"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ performanceBadgeLabel }}</span>
+          <span style="font-size:0.75rem; color:var(--text-tertiary);">{{ performanceCaption }}</span>
+          <button onClick="{{ onRefreshPerformance }}" disabled="{{ performanceLoading }}" style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; font-weight:500; color:var(--icon-accent); background:none; border:none; cursor:pointer; padding:2px 4px; font-family:var(--font-base); opacity:{{ performanceRefreshOpacity }};"><i class="{{ performanceRefreshIcon }}" style="font-size:10px;"></i>Refresh</button>
         </div>
 
         <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
@@ -432,15 +432,20 @@
               </span>
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px;">Trailing 8 weeks · points turn red as they approach or cross the floor</div>
-            <svg viewBox="{{ ctorViewBox }}" style="width:100%; height:220px; display:block; overflow:visible;">
-              <line x1="{{ ctorX0 }}" y1="{{ ctorFloorY }}" x2="{{ ctorX1 }}" y2="{{ ctorFloorY }}" stroke="var(--badge-danger-text)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"></line>
-              <polyline points="{{ ctorPoly }}" fill="none" stroke="var(--dataviz-primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
-              <sc-for list="{{ ctorPoints }}" as="p" hint-placeholder-count="8">
-                <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="4.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="2"></circle>
-                <text x="{{ p.cx }}" y="{{ p.valueY }}" text-anchor="middle" fill="{{ p.color }}" font-size="11" font-weight="600" font-family="var(--font-base)">{{ p.valueLabel }}</text>
-                <text x="{{ p.cx }}" y="{{ p.axisY }}" text-anchor="middle" fill="var(--text-secondary)" font-size="11" font-family="var(--font-base)">{{ p.week }}</text>
-              </sc-for>
-            </svg>
+            <sc-if value="{{ ctorEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="height:220px; display:flex; align-items:center; justify-content:center; font-size:0.8125rem; color:var(--text-tertiary);">Not enough recent send data with opens yet to chart a trend.</div>
+            </sc-if>
+            <sc-if value="{{ ctorHasData }}" hint-placeholder-val="{{ false }}">
+              <svg viewBox="{{ ctorViewBox }}" style="width:100%; height:220px; display:block; overflow:visible;">
+                <line x1="{{ ctorX0 }}" y1="{{ ctorFloorY }}" x2="{{ ctorX1 }}" y2="{{ ctorFloorY }}" stroke="var(--badge-danger-text)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"></line>
+                <polyline points="{{ ctorPoly }}" fill="none" stroke="var(--dataviz-primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                <sc-for list="{{ ctorPoints }}" as="p" hint-placeholder-count="8">
+                  <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="4.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="2"></circle>
+                  <text x="{{ p.cx }}" y="{{ p.valueY }}" text-anchor="middle" fill="{{ p.color }}" font-size="11" font-weight="600" font-family="var(--font-base)">{{ p.valueLabel }}</text>
+                  <text x="{{ p.cx }}" y="{{ p.axisY }}" text-anchor="middle" fill="var(--text-secondary)" font-size="11" font-family="var(--font-base)">{{ p.week }}</text>
+                </sc-for>
+              </svg>
+            </sc-if>
           </div>
 
           <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card); display:flex; flex-direction:column;">
@@ -451,6 +456,9 @@
               </div>
               <a href="https://info.vanta.com/hubfs/mops-internal/email-metrics/fy27/june.html" target="_blank" style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; font-weight:500; color:var(--icon-accent); white-space:nowrap;">Full report <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a>
             </div>
+            <sc-if value="{{ performanceRankedEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:0.8125rem; color:var(--text-tertiary); padding:12px 0;">No sends in this window had enough opens (20+) to rank reliably.</div>
+            </sc-if>
             <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--badge-success-text); margin-bottom:6px;">Top 5 by CTOR</div>
             <sc-for list="{{ topEmails }}" as="t" hint-placeholder-count="5">
               <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
@@ -595,6 +603,7 @@ class Component extends DCLogic {
     lookupSelected: null, lookupMetrics: null, lookupMetricsLoading: false, lookupMetricsError: null,
     conflictsLoading: true, conflictsError: null, conflictsData: null, conflictsCheckedAt: null,
     anomaliesLoading: true, anomaliesError: null, anomaliesData: null,
+    performanceLoading: true, performanceError: null, performanceData: null, performanceCheckedAt: null,
     briefSubject: `Unlock next-level compliance — the Q3 Security Benchmark Report is here!`,
     briefPreheader: ``,
     briefBody: `Hi {{first_name}},
@@ -621,6 +630,26 @@ The Vanta Team`,
   componentDidMount() {
     this.loadConflicts();
     this.loadAnomalies();
+    this.loadPerformance();
+  }
+
+  async loadPerformance() {
+    this.setState({ performanceLoading: true, performanceError: null });
+    try {
+      const res = await fetch('/api/hubspot/performance');
+      const data = await res.json();
+      if (data.status === 'error') {
+        this.setState({ performanceError: data.message, performanceData: null });
+      } else {
+        const now = new Date();
+        const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+        this.setState({ performanceData: data, performanceCheckedAt: time });
+      }
+    } catch (err) {
+      this.setState({ performanceError: "Couldn't reach the performance service. Try again." });
+    } finally {
+      this.setState({ performanceLoading: false });
+    }
   }
 
   async loadAnomalies() {
@@ -992,17 +1021,37 @@ The Vanta Team`,
   }
 
   ctorChart() {
-    const raw = [
-      { week: 'W1', v: 17.1 }, { week: 'W2', v: 17.8 }, { week: 'W3', v: 18.0 },
-      { week: 'W4', v: 12.4 }, { week: 'W5', v: 16.1 }, { week: 'W6', v: 19.1 },
-      { week: 'W7', v: 19.4 }, { week: 'W8', v: 18.4 },
-    ];
-    const floor = 15, vmin = 10, vmax = 21, X0 = 34, W = 740, Y0 = 24, H = 150;
-    const x = i => X0 + (i / (raw.length - 1)) * W;
+    const data = this.state.performanceData;
+    const floor = 15; // MOps target floor — a goal line, not derived from data
+    const X0 = 34, W = 740, Y0 = 24, H = 150;
+
+    if (!data || !data.trend) return { ctorPoints: [], ctorPoly: '', ctorViewBox: '0 0 ' + (X0 + W + 20) + ' ' + (Y0 + H + 40), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: Y0 + H / 2, ctorEmpty: true, ctorHasData: false };
+
+    // Only plot weeks that actually had opens — a week with 0 opens has no
+    // meaningful CTOR, not a CTOR of 0%.
+    const raw = data.trend
+      .filter(w => w.ctor !== null)
+      .map(w => ({ week: this.formatWeekLabel(w.week), v: w.ctor * 100 }));
+
+    if (raw.length === 0) return { ctorPoints: [], ctorPoly: '', ctorViewBox: '0 0 ' + (X0 + W + 20) + ' ' + (Y0 + H + 40), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: Y0 + H / 2, ctorEmpty: true, ctorHasData: false };
+
+    // Scale the y-axis to the real data, padded a bit, but always include
+    // the floor line even if every week is comfortably above/below it.
+    const values = raw.map(d => d.v).concat([floor]);
+    const vmin = Math.max(0, Math.floor(Math.min(...values) - 2));
+    const vmax = Math.ceil(Math.max(...values) + 2);
+
+    const x = i => raw.length > 1 ? X0 + (i / (raw.length - 1)) * W : X0 + W / 2;
     const y = v => Y0 + ((vmax - v) / (vmax - vmin)) * H;
     const color = v => v <= floor ? 'var(--badge-danger-text)' : v <= floor + 1.6 ? 'var(--badge-warning-text)' : 'var(--dataviz-primary)';
     const points = raw.map((d, i) => ({ week: d.week, valueLabel: d.v.toFixed(1) + '%', cx: +x(i).toFixed(1), cy: +y(d.v).toFixed(1), valueY: +(y(d.v) - 12).toFixed(1), axisY: Y0 + H + 26, color: color(d.v) }));
-    return { ctorPoints: points, ctorPoly: points.map(p => p.cx + ',' + p.cy).join(' '), ctorViewBox: '0 0 ' + (X0 + W + 20) + ' ' + (Y0 + H + 40), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: +y(floor).toFixed(1) };
+    return { ctorPoints: points, ctorPoly: points.map(p => p.cx + ',' + p.cy).join(' '), ctorViewBox: '0 0 ' + (X0 + W + 20) + ' ' + (Y0 + H + 40), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: +y(floor).toFixed(1), ctorEmpty: false, ctorHasData: true };
+  }
+
+  // "2026-07-20" (Monday date key) -> "Jul 20"
+  formatWeekLabel(weekKey) {
+    const d = new Date(weekKey + 'T00:00:00Z');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   }
 
   renderVals() {
@@ -1014,6 +1063,7 @@ The Vanta Team`,
     const brief = this.analyzeBrief(briefSnapshot.subject, briefSnapshot.preheader, briefSnapshot.body);
     const sendScheduleRows = this.buildSendScheduleRows();
     const anomalyRows = this.buildAnomalyRows();
+    const performanceData = this.state.performanceData;
 
     const vals = {
       theme: dark ? 'dark' : 'light',
@@ -1090,23 +1140,28 @@ The Vanta Team`,
       onAnalyzeHtml: () => this.setState(s => ({ analyzedHtmlText: s.htmlText })),
       preflight: this.analyzeHtml(this.state.analyzedHtmlText === undefined ? this.state.htmlText : this.state.analyzedHtmlText),
 
+      performanceBadgeLabel: this.state.performanceLoading ? 'Loading · HubSpot' : (this.state.performanceError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      performanceBadgeBg: this.state.performanceError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
+      performanceBadgeColor: this.state.performanceError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
+      performanceCaption: this.state.performanceLoading
+        ? 'Scanning recent sends…'
+        : this.state.performanceError
+        ? this.state.performanceError
+        : 'Derived from real per-email stats' + (performanceData ? ' · ' + performanceData.scannedCount + ' sends scanned over ' + performanceData.windowDays + ' days' : '') + (this.state.performanceCheckedAt ? ' · checked ' + this.state.performanceCheckedAt : '') + '. "Active workflows" still needs the Workflows API (Watchdog build).',
+      onRefreshPerformance: () => this.loadPerformance(),
+      performanceRefreshIcon: this.state.performanceLoading ? 'fa-clock-rotate-left alpaca-fa-solid fa-spin' : 'fa-clock-rotate-left alpaca-fa-solid',
+      performanceRefreshOpacity: this.state.performanceLoading ? 0.5 : 1,
+
       healthKpis: [
-        { label: 'Avg CTOR (30d)', value: '18.4%', trend: '+1.2pt', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-arrow-up alpaca-fa-solid' },
-        { label: 'Active workflows', value: '47', trend: '+3', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-arrow-up alpaca-fa-solid' },
+        { label: 'Avg CTOR (30d)', value: performanceData && performanceData.avgCtor30d !== null ? (performanceData.avgCtor30d * 100).toFixed(1) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
+        { label: 'Active workflows', value: '47', trend: 'not yet live', trendColor: 'var(--text-tertiary)', trendIcon: 'fa-plug alpaca-fa-solid' },
         { label: 'Anomalies flagged', value: String(anomalyRows.length), trend: this.state.anomaliesLoading ? '…' : 'live', trendColor: anomalyRows.length > 0 ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', trendIcon: anomalyRows.length > 0 ? 'fa-arrow-up alpaca-fa-solid' : 'fa-circle-check alpaca-fa-solid' },
-        { label: 'Unsub rate (30d)', value: '0.31%', trend: '-0.04pt', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-arrow-down alpaca-fa-solid' },
+        { label: 'Unsub rate (30d)', value: performanceData && performanceData.unsubRate30d !== null ? (performanceData.unsubRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
       ],
 
-      topEmails: [
-        { rank: 1, name: 'Trust Center Relaunch', ctor: '27.8%' }, { rank: 2, name: 'AI Agent Beta Invite', ctor: '24.1%' },
-        { rank: 3, name: 'SOC 2 Launchpad', ctor: '22.6%' }, { rank: 4, name: 'VantaCon Save the Date', ctor: '21.0%' },
-        { rank: 5, name: 'Compliance Roadmap CS Nurture', ctor: '20.3%' },
-      ],
-      bottomEmails: [
-        { rank: 1, name: 'Onboarding Drip — Step 3', ctor: '8.7%' }, { rank: 2, name: 'Anti-Ghost Nurture', ctor: '10.2%' },
-        { rank: 3, name: 'Renewal Reminder Sequence', ctor: '11.4%' }, { rank: 4, name: 'Partner Program Update', ctor: '12.9%' },
-        { rank: 5, name: 'Customer NPS Follow-up', ctor: '13.6%' },
-      ],
+      topEmails: performanceData ? performanceData.top5.map((e, i) => ({ rank: i + 1, name: e.name, ctor: (e.ctor * 100).toFixed(1) + '%' })) : [],
+      bottomEmails: performanceData ? performanceData.bottom5.map((e, i) => ({ rank: i + 1, name: e.name, ctor: (e.ctor * 100).toFixed(1) + '%' })) : [],
+      performanceRankedEmpty: !this.state.performanceLoading && !this.state.performanceError && performanceData && performanceData.rankedCount === 0,
 
       anomalies: anomalyRows,
       anomaliesBadgeLabel: this.state.anomaliesLoading ? 'Loading · HubSpot' : (this.state.anomaliesError ? 'Error · HubSpot' : 'Live · HubSpot'),
