@@ -129,7 +129,7 @@
   </div>
 
   <!-- Tabs -->
-  <div style="display:flex; align-items:center; gap:6px; padding:10px 28px; background:var(--tab-bg); border-bottom:1px solid var(--tab-border); flex-shrink:0;">
+  <div style="display:flex; align-items:center; gap:4px; padding:0 28px; background:var(--tab-bg); border-bottom:1px solid var(--tab-border); flex-shrink:0;">
     <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="4">
       <button onClick="{{ tab.onClick }}" style="{{ tab.style }}" style-hover="{{ tab.hoverStyle }}">
         <i class="{{ tab.icon }}" style="font-size:13px;"></i>
@@ -808,16 +808,16 @@ Get started today. Read the full report. Download the summary. Book a demo with 
     return rows.map((r, i) => ({ ...r, rowBg: i % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-card-alt)', accent: accentFn ? accentFn(r) : 'transparent' }));
   }
 
-  tabDef(id, label, icon) {
+  tabDef(id, label, icon, color) {
     const active = this.state.activeTab === id;
     return {
       id, label, icon, onClick: () => this.setState({ activeTab: id }),
       style: {
-        display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '0.875rem', fontWeight: 500,
-        color: active ? '#fff' : 'var(--text-secondary)', background: active ? 'var(--purple-900)' : 'transparent',
-        border: 'none', borderRadius: '999px', cursor: 'pointer', fontFamily: 'var(--font-base)',
+        display: 'flex', alignItems: 'center', gap: '8px', padding: '13px 16px', fontSize: '0.875rem', fontWeight: 500,
+        color: active ? color : 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer',
+        borderBottom: active ? '2px solid ' + color : '2px solid transparent', marginBottom: '-1px', fontFamily: 'var(--font-base)',
       },
-      hoverStyle: active ? {} : { background: 'var(--bg-card-alt)', color: 'var(--text-primary)' },
+      hoverStyle: { color },
     };
   }
 
@@ -1070,10 +1070,10 @@ Get started today. Read the full report. Download the summary. Book a demo with 
       toggleStyle: { display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)', color: '#e8e6e6', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-base)', whiteSpace: 'nowrap' },
 
       tabs: [
-        this.tabDef('overview', 'Overview', 'fa-grid-2 alpaca-fa-regular'),
-        this.tabDef('govern', 'Govern', 'fa-shield-check alpaca-fa-regular'),
-        this.tabDef('build', 'Build', 'fa-hammer alpaca-fa-regular'),
-        this.tabDef('health', 'Health', 'fa-heart-pulse alpaca-fa-regular'),
+        this.tabDef('overview', 'Overview', 'fa-grid-2 alpaca-fa-regular', 'var(--purple-900)'),
+        this.tabDef('govern', 'Govern', 'fa-shield-check alpaca-fa-regular', 'var(--badge-info-text)'),
+        this.tabDef('build', 'Build', 'fa-hammer alpaca-fa-regular', 'var(--badge-warning-text)'),
+        this.tabDef('health', 'Health', 'fa-heart-pulse alpaca-fa-regular', 'var(--badge-success-text)'),
       ],
       isOverview: active === 'overview', isGovern: active === 'govern', isBuild: active === 'build', isHealth: active === 'health',
 
