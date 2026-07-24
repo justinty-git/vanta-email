@@ -26,8 +26,11 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 // - Click rate = clicks / delivered — the ranking key.
 // - CTOR (click-to-open rate) = clicks / opens — shown per email for
 //   context, not used to rank.
-// - "Weekly" window = trailing 7 days, separate from the 8-week trend
-//   window below (that panel is unrelated to this one).
+// - Scan window = trailing 30 days, separate from the 8-week trend
+//   window below (that panel is unrelated to this one). Widened from an
+//   initial 7 days after finding that a literal week frequently didn't
+//   have enough DG/NU sends for a meaningful Top5/Bottom5 split — 30
+//   days gives a much better shot at 10+ qualifying sends.
 // - Weekly trend buckets (unchanged) are calendar weeks (Mon–Sun):
 //   weekCTOR = sum(clicks) / sum(opens) for all sends whose publishDate
 //   falls in that week.
@@ -40,7 +43,7 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 // trend will be based on fewer sends than they should be.
 
 const WINDOW_DAYS = 56; // 8 weeks — trend chart only
-const WEEKLY_WINDOW_DAYS = 7; // Weekly Performers window
+const PERFORMERS_WINDOW_DAYS = 30; // Weekly Performers scan window
 const MAX_EMAILS_SCANNED = 60;
 const MIN_DELIVERED_FOR_CLICK_RANKING = 50; // avoid noisy ratios from tiny sends
 const TRAILING_30D_DAYS = 30;
@@ -95,7 +98,7 @@ export async function GET() {
   try {
     const now = Date.now();
     const windowStart = now - WINDOW_DAYS * 24 * 60 * 60 * 1000;
-    const weeklyWindowStart = now - WEEKLY_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+    const weeklyWindowStart = now - PERFORMERS_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
     const rawEmails = await fetchMarketingEmailsPaginated(3);
     const distinctStatesSeen = Array.from(
@@ -215,7 +218,7 @@ export async function GET() {
       count: ranked.length,
       scannedInWeek: weeklyScanned.length,
       dgNuMatchedInWeek: dgNuMatched.length,
-      windowDays: WEEKLY_WINDOW_DAYS,
+      windowDays: PERFORMERS_WINDOW_DAYS,
     };
 
     return NextResponse.json({
