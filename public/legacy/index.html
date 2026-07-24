@@ -144,8 +144,8 @@
     <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex; flex-direction:column; gap:20px; max-width:1400px; margin:0 auto;">
         <div>
-          <div style="font-size:1.5rem; font-weight:600; color:var(--text-primary);">Good afternoon, Justin</div>
-          <div style="font-size:0.875rem; color:var(--text-secondary); margin-top:2px;">A vision for email ops with two working tools inside it. Each panel is tagged by how real it is today.</div>
+          <div style="font-size:1.5rem; font-weight:600; color:var(--text-primary);">{{ greeting }}, Justin</div>
+          <div style="font-size:0.875rem; color:var(--text-secondary); margin-top:2px;">Vanta's live email operations command center — conflict detection, anomaly monitoring, performance reporting, workflow health, and content QA, all running on real HubSpot data.</div>
         </div>
 
         <!-- Category legend removed per feedback — badges on each panel are self-explanatory -->
@@ -1076,6 +1076,14 @@ class Component extends DCLogic {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   }
 
+  greeting() {
+    const hour = new Date().getHours();
+    if (hour < 5) return 'Good evening';
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   renderVals() {
     const active = this.state.activeTab;
     const dark = this.state.dark;
@@ -1090,6 +1098,7 @@ class Component extends DCLogic {
     const watchdogRows = this.buildWatchdogRows();
 
     const vals = {
+      greeting: this.greeting(),
       theme: dark ? 'dark' : 'light',
       toggleTheme: () => this.setState(s => ({ dark: !s.dark })),
       themeIcon: dark ? 'fa-sun alpaca-fa-solid' : 'fa-moon alpaca-fa-regular',
