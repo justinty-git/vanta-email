@@ -37,6 +37,56 @@ const MAX_EMAILS_SCANNED = 60;
 const MIN_DELIVERED_FOR_CLICK_RANKING = 50; // avoid noisy ratios from tiny sends
 const TRAILING_30D_DAYS = 30;
 
+// Real historical benchmark bands, sourced directly from Justin's June
+// 2026 "Email Performance by Segment" report — NOT fabricated, and not a
+// fresh historical-data pull (previously flagged as a bigger separate
+// task). That report already computed these from real percentile
+// analysis: Prospect n=427 historical sends, Customer n=185 historical
+// sends (both Feb 2025-July 2026). Mixed Audience intentionally has no
+// band here, matching that report's own conclusion — the 15 historical
+// mixed sends span too wide a range (13.9%-59.2% open) to support one
+// meaningful band.
+//
+// NOTE: these are a snapshot from that one report, not a live rolling
+// calculation — if Justin re-runs that percentile analysis later with a
+// larger or more recent sample, these numbers should be updated to match.
+const BENCHMARKS: Record<"prospect" | "customer", {
+  openRate: { below: number; above: number };
+  clickRate: { below: number; above: number };
+  unsubRate: { good: number; bad: number }; // lower is better for unsub
+}> = {
+  prospect: {
+    openRate: { below: 0.271, above: 0.369 },
+    clickRate: { below: 0.006, above: 0.0147 },
+    unsubRate: { good: 0.0074, bad: 0.0126 },
+  },
+  customer: {
+    openRate: { below: 0.364, above: 0.474 },
+    clickRate: { below: 0.0061, above: 0.0198 },
+    unsubRate: { good: 0.0038, bad: 0.007 },
+  },
+};
+
+function rateBenchmark(
+  value: number,
+  band: { below: number; above: number }
+): "Below Benchmark" | "Within Benchmark" | "Above Benchmark" {
+  if (value < band.below) return "Below Benchmark";
+  if (value > band.above) return "Above Benchmark";
+  return "Within Benchmark";
+}
+
+function unsubBenchmark(
+  value: number,
+  band: { good: number; bad: number }
+): "Above Benchmark" | "Within Benchmark" | "Below Benchmark" {
+  // Inverted framing: LOWER unsub is "Above Benchmark" (better than
+  // typical), matching the reference report's own good/bad direction.
+  if (value < band.good) return "Above Benchmark";
+  if (value > band.bad) return "Below Benchmark";
+  return "Within Benchmark";
+}
+
 type EmailSummary = { id: string; name: string; publishDate: string };
 type Metrics = {
   sent: number;
@@ -184,6 +234,11 @@ export async function GET() {
       publishDate: string;
       clickRate: number;
       ctor: number | null;
+      openRate: number | null;
+      unsubRate: number | null;
+      openRateBenchmark?: string;
+      clickRateBenchmark?: string;
+      unsubRateBenchmark?: string;
     };
 
     const bySegment: Record<Segment, RankedEmail[]> = { prospect: [], customer: [], mixed: [] };
@@ -196,13 +251,30 @@ export async function GET() {
         unclassifiedCount++;
         continue;
       }
-      bySegment[segment].push({
+      const clickRate = m.clicks / m.delivered;
+      const openRate = m.delivered > 0 ? m.opens / m.delivered : null;
+      const unsubRate = m.delivered > 0 ? m.unsubscribed / m.delivered : null;
+
+      const row: RankedEmail = {
         id: e.id,
         name: e.name,
         publishDate: e.publishDate,
-        clickRate: m.clicks / m.delivered,
+        clickRate,
         ctor: m.opens > 0 ? m.clicks / m.opens : null,
-      });
+        openRate,
+        unsubRate,
+      };
+
+      // Real benchmark ratings only apply to Prospect/Customer — Mixed has
+      // no real band to compare against (see BENCHMARKS comment above).
+      if (segment === "prospect" || segment === "customer") {
+        const band = BENCHMARKS[segment];
+        row.clickRateBenchmark = rateBenchmark(clickRate, band.clickRate);
+        if (openRate !== null) row.openRateBenchmark = rateBenchmark(openRate, band.openRate);
+        if (unsubRate !== null) row.unsubRateBenchmark = unsubBenchmark(unsubRate, band.unsubRate);
+      }
+
+      bySegment[segment].push(row);
     }
 
     const prospectSorted = [...bySegment.prospect].sort((a, b) => b.clickRate - a.clickRate);

@@ -430,6 +430,9 @@
             <sc-if value="{{ unclassifiedNote }}" hint-placeholder-val="{{ false }}">
               <div style="font-size:0.6875rem; color:var(--text-tertiary); margin-bottom:8px;">{{ unclassifiedNote }}</div>
             </sc-if>
+            <sc-if value="{{ benchmarkNote }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:0.6875rem; color:var(--text-tertiary); margin-bottom:8px;">{{ benchmarkNote }}</div>
+            </sc-if>
             <sc-if value="{{ performanceRankedEmpty }}" hint-placeholder-val="{{ false }}">
               <div style="font-size:0.8125rem; color:var(--text-tertiary); padding:12px 0;">Not enough sends (50+ delivered) in this segment to rank reliably.</div>
             </sc-if>
@@ -438,14 +441,20 @@
               <sc-for list="{{ topEmails }}" as="t" hint-placeholder-count="5">
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
                   <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.rank }}. {{ t.name }}</span>
-                  <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-success-text); flex-shrink:0;">{{ t.clickRate }}</span>
+                  <span style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                    <span style="font-size:0.6875rem; color:{{ t.benchmarkColor }};">{{ t.benchmarkLabel }}</span>
+                    <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-success-text);">{{ t.clickRate }}</span>
+                  </span>
                 </div>
               </sc-for>
               <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--badge-danger-text); margin:12px 0 6px; padding-top:12px; border-top:1px solid var(--border-table);">Bottom 5 by Click Rate</div>
               <sc-for list="{{ bottomEmails }}" as="t" hint-placeholder-count="5">
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
                   <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.rank }}. {{ t.name }}</span>
-                  <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-danger-text); flex-shrink:0;">{{ t.clickRate }}</span>
+                  <span style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                    <span style="font-size:0.6875rem; color:{{ t.benchmarkColor }};">{{ t.benchmarkLabel }}</span>
+                    <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-danger-text);">{{ t.clickRate }}</span>
+                  </span>
                 </div>
               </sc-for>
             </sc-if>
@@ -454,7 +463,10 @@
               <sc-for list="{{ segmentRanked }}" as="t" hint-placeholder-count="5">
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
                   <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.name }}</span>
-                  <span style="font-size:0.8125rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ t.clickRate }}</span>
+                  <span style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                    <span style="font-size:0.6875rem; color:{{ t.benchmarkColor }};">{{ t.benchmarkLabel }}</span>
+                    <span style="font-size:0.8125rem; font-weight:600; color:var(--text-primary);">{{ t.clickRate }}</span>
+                  </span>
                 </div>
               </sc-for>
             </sc-if>
@@ -1116,6 +1128,17 @@ class Component extends DCLogic {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   }
 
+  // Converts a real benchmark rating (from BENCHMARKS in the performance
+  // route, sourced from Justin's June 2026 report) into a small badge.
+  // Mixed Audience rows have no rating (undefined) — returns empty fields
+  // rather than fabricating one, matching the reference report's own
+  // treatment of that segment.
+  benchmarkBadge(rating) {
+    if (!rating) return { benchmarkLabel: '', benchmarkColor: '' };
+    const color = rating === 'Above Benchmark' ? 'var(--badge-success-text)' : rating === 'Below Benchmark' ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+    return { benchmarkLabel: rating.replace(' Benchmark', ''), benchmarkColor: color };
+  }
+
   greeting() {
     const hour = new Date().getHours();
     if (hour < 5) return 'Good evening';
@@ -1250,16 +1273,21 @@ class Component extends DCLogic {
       unclassifiedNote: (performanceData && performanceData.unclassifiedCount > 0)
         ? performanceData.unclassifiedCount + ' send' + (performanceData.unclassifiedCount === 1 ? '' : 's') + " in this window couldn't be classified by name (no \"Prospect\"/\"Customer\" in the subject) — not shown in any tab"
         : '',
+      benchmarkNote: this.state.performanceSegmentTab === 'prospect'
+        ? 'Rated against real Prospect benchmarks (n=427 historical sends) from the June 2026 report'
+        : this.state.performanceSegmentTab === 'customer'
+        ? 'Rated against real Customer benchmarks (n=185 historical sends) from the June 2026 report'
+        : '',
       topEmails: (performanceData && performanceData.segments)
-        ? performanceData.segments.prospect.top5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%' }))
+        ? performanceData.segments.prospect.top5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%', ...this.benchmarkBadge(e.clickRateBenchmark) }))
         : [],
       bottomEmails: (performanceData && performanceData.segments)
-        ? performanceData.segments.prospect.bottom5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%' }))
+        ? performanceData.segments.prospect.bottom5.map((e, i) => ({ rank: i + 1, name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%', ...this.benchmarkBadge(e.clickRateBenchmark) }))
         : [],
       segmentRanked: (() => {
         const seg = this.state.performanceSegmentTab;
         if (seg === 'prospect' || !performanceData || !performanceData.segments) return [];
-        return performanceData.segments[seg].ranked.map(e => ({ name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%' }));
+        return performanceData.segments[seg].ranked.map(e => ({ name: e.name, clickRate: (e.clickRate * 100).toFixed(2) + '%', ...this.benchmarkBadge(e.clickRateBenchmark) }));
       })(),
       performanceRankedEmpty: !this.state.performanceLoading && !this.state.performanceError && performanceData && performanceData.segments && (() => {
         const seg = this.state.performanceSegmentTab;
