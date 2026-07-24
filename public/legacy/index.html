@@ -606,14 +606,11 @@ class Component extends DCLogic {
     performanceLoading: true, performanceError: null, performanceData: null, performanceCheckedAt: null,
     briefSubject: `Unlock next-level compliance — the Q3 Security Benchmark Report is here!`,
     briefPreheader: ``,
-    briefBody: `Hi {{first_name}},
+    briefBody: `Security and compliance leaders are under more pressure than ever to prove trust at scale.
 
-We're thrilled to share our best-in-class Q3 Security Benchmark Report. It's packed with cutting-edge insights to help you leverage automation and streamline your entire security program from end to end.
+Our Q3 Security Benchmark Report is packed with cutting-edge insights from 500+ GRC teams — see how the best-in-class programs leverage automation to streamline compliance from end to end.
 
-Get started today. Read the full report. Download the summary. Book a demo with our team to learn more about what's possible.
-
-Thanks,
-The Vanta Team`,
+Get started today. Read the full report. Download the summary. Book a demo with our team to learn more about what's possible.`,
     analyzedBrief: undefined,
     htmlText: `<table width="100%">
   <tr>
@@ -867,7 +864,7 @@ The Vanta Team`,
 
     // Spam-filter risk looks across all three fields — subject-line spam
     // triggers matter just as much as body copy ones for deliverability.
-    const combined = subj + ' ' + pre + ' ' + t;
+    const combined = [subj, pre, t].filter(Boolean).join(' ');
     const combinedLower = combined.toLowerCase();
     const excl = (combined.match(/!/g) || []).length, caps = (combined.match(/\b[A-Z]{4,}\b/g) || []).length;
     const spam = ['free','act now','limited time','guarantee','risk-free','buy now'].filter(w => combinedLower.includes(w)).length;
