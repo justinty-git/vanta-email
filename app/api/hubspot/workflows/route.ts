@@ -26,14 +26,19 @@ import { hubspotFetch } from "@/lib/hubspot";
 // conflicts route, just reading a different property off the list.
 //
 // Scoped, per request, to active NURTURE workflows only: name contains
-// "nurture" (case-insensitive) AND enabled === true.
+// "nurture" (case-insensitive), enabled === true, AND no underscore in
+// the name. Justin confirmed his real nurtures never contain an
+// underscore and are consistently named — other teams'/legacy workflows
+// (e.g. "2024.06_Operational_...", "2025.07_Email_Nurture - VRM
+// Nurture_Customer") reliably do. This is a general rule, not a
+// name-by-name guess, so it should catch future false positives from
+// the same underscore-heavy legacy naming pattern without needing a new
+// exclusion added each time.
 //
-// Name-matching "nurture" catches some false positives that aren't
-// actually Justin's email nurtures — e.g. operational/ops workflows
-// that happen to have "Nurture" in their name but don't send email at
-// all, or aren't his. Manual exclusion list below for confirmed cases.
+// One confirmed false positive doesn't contain an underscore ("Audit
+// Readiness Phase Nurture - Campaign Assignment Workflow") and needs a
+// manual exclusion since there's no general signal to catch it.
 const EXCLUDED_WORKFLOW_NAMES = new Set([
-  "Campaign 2024.06_Operational_Customer Renewal_Nurture_Bounced",
   "Audit Readiness Phase Nurture - Campaign Assignment Workflow",
 ]);
 
@@ -70,6 +75,7 @@ export async function GET() {
       (w) =>
         w.enabled &&
         w.name.toLowerCase().includes("nurture") &&
+        !w.name.includes("_") &&
         !EXCLUDED_WORKFLOW_NAMES.has(w.name)
     );
 
