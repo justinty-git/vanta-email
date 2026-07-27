@@ -18,6 +18,17 @@ import { hubspotFetch } from "@/lib/hubspot";
 // detail endpoint, which would mean one call per workflow across
 // potentially hundreds of workflows).
 //
+// Name-matching "nurture" catches some false positives that aren't
+// actually Justin's email nurtures — e.g. operational/ops workflows
+// that happen to have "Nurture" in their name but don't send email at
+// all, or aren't his. Since there's no cheap, reliable API signal to
+// exclude these automatically (see creator-filter note above), this is
+// a manual exclusion list — add to it as more show up.
+const EXCLUDED_WORKFLOW_NAMES = new Set([
+  "Campaign 2024.06_Operational_Customer Renewal_Nurture_Bounced",
+  "Audit Readiness Phase Nurture - Campaign Assignment Workflow",
+]);
+//
 // `contactListIds.active` is the count of contacts CURRENTLY sitting in
 // the workflow (still in-progress) — used to sort so the
 // highest-volume active nurtures surface first.
@@ -38,7 +49,10 @@ export async function GET() {
     const raw: RawWorkflow[] = data.workflows || [];
 
     const nurtureActive = raw.filter(
-      (w) => w.enabled && w.name.toLowerCase().includes("nurture")
+      (w) =>
+        w.enabled &&
+        w.name.toLowerCase().includes("nurture") &&
+        !EXCLUDED_WORKFLOW_NAMES.has(w.name)
     );
 
     const rows = nurtureActive
