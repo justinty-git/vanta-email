@@ -92,14 +92,17 @@ export async function fetchMarketingEmailsPaginated(
 //
 // Config-driven: SEGMENTS is a list of { label, baseListId,
 // healthyListId } triples. Adding a new region is a config row, not new
-// code. NAMER is fully wired (base list 10077, healthy clone 31109,
-// both confirmed real HubSpot list IDs).
+// code. All regions share the SAME base list (10077) — the per-region
+// distinction lives entirely in each region's own "healthy" clone list,
+// not in a separate base per region. NAMER's healthy clone: 31109.
+// EMEA's healthy clone: 31133.
 export const SEGMENT_HEALTH_CONFIG: Array<{
   label: string;
   baseListId: number;
   healthyListId: number | null;
 }> = [
   { label: "NAMER [Region]", baseListId: 10077, healthyListId: 31109 },
+  { label: "EMEA [Region]", baseListId: 10077, healthyListId: 31133 },
 ];
 
 export async function resolveListSize(
