@@ -1387,16 +1387,16 @@ class Component extends DCLogic {
         : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends · vs recent-batch average + known deliverability thresholds',
 
       watchdog: watchdogRows,
-      watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading · HubSpot' : (this.state.workflowsError ? 'Error · HubSpot' : 'Live · HubSpot'),
-      watchdogBadgeBg: this.state.workflowsError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
-      watchdogBadgeColor: this.state.workflowsError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
+      watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading…' : (this.state.workflowsError ? 'Error' : 'Manually maintained'),
+      watchdogBadgeBg: this.state.workflowsError ? 'var(--badge-danger-bg)' : 'var(--badge-neutral-bg)',
+      watchdogBadgeColor: this.state.workflowsError ? 'var(--badge-danger-text)' : 'var(--badge-neutral-text)',
       watchdogCaption: this.state.workflowsLoading
-        ? 'Scanning workflows…'
+        ? 'Loading…'
         : this.state.workflowsError
         ? this.state.workflowsError
-        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' active nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · ' + this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned · contact counts not available, showing name/status/link only' : ''),
+        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · Justin updates this list directly, not pulled from the API' : ''),
       watchdogEmpty: !this.state.workflowsLoading && !this.state.workflowsError && watchdogRows.length === 0,
-      watchdogEmptyMessage: this.state.workflowsData && this.state.workflowsData.totalWorkflows === 0 ? 'No workflows found in this account.' : 'No active workflows with "nurture" in the name.',
+      watchdogEmptyMessage: 'No nurture workflows listed yet.',
 
       underutilizedBadgeLabel: this.state.underutilizedLoading ? 'Loading · HubSpot' : (this.state.underutilizedError ? 'Error · HubSpot' : 'Live · HubSpot'),
       underutilizedBadgeBg: this.state.underutilizedError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',

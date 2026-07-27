@@ -1,99 +1,41 @@
 import { NextResponse } from "next/server";
-import { hubspotFetch } from "@/lib/hubspot";
 
 // GET /api/hubspot/workflows
 //
-// Workflow Watchdog — real version, using HubSpot's Automation v3 API
-// (GET /automation/v3/workflows).
+// Workflow Watchdog — manually maintained, not API-derived.
 //
-// CONTACT COUNTS REMOVED — after four attempts, none produced numbers
-// that matched reality:
-// 1. Treated contactListIds.enrolled/active as literal counts (wrong —
-//    active > enrolled lifetime is logically impossible)
-// 2. Resolved them as list IDs via memberships.total (still didn't
-//    match Justin's real HubSpot numbers)
-// 3. Relabeled to HubSpot's UI terms, still didn't match
-// 4. Showed the underlying list's real NAME instead of a guessed label
-//    — still didn't match at all
+// After four failed attempts to pull real contact counts from
+// HubSpot's automation/v3/workflows API, and confirmation from
+// HubSpot's own community forum that the "flowId" needed for the
+// modern Flows-platform URL isn't exposed via that API at all, this
+// gave up on API automation entirely for this panel. Justin maintains
+// this list by hand — he tells me when a nurture is added, removed, or
+// its URL changes, and I update the array below. No HubSpot API calls,
+// no guessing, no stale/wrong data — just what Justin has directly
+// confirmed is real and current.
 //
-// Likely root cause: Signal 2 (and probably other real nurtures here)
-// are built on HubSpot's newer "Flows" platform (URL pattern
-// /platform/flow/{id}/edit). HubSpot's own community forum has explicit
-// reports that Flows-platform workflows don't reliably map to this
-// legacy automation/v3/workflows API's data the same way older
-// workflows do — which would explain why literally nothing lined up,
-// not just a label. This needs real research into whether HubSpot has
-// a Flows-specific API before attempting a fifth guess.
-//
-// What's left is only what's actually reliable: name, enabled status,
-// and a real link to the workflow's HubSpot edit page. No contact
-// counts until this is properly investigated.
-//
-// Scoped, per request, to active NURTURE workflows only: name contains
-// "nurture" (case-insensitive), enabled === true, AND no underscore in
-// the name. Justin confirmed his real nurtures never contain an
-// underscore and are consistently named — other teams'/legacy workflows
-// reliably do. This part is unaffected by the count issue above.
-//
-// Confirmed false positives without an underscore, needing manual
-// exclusion since there's no general signal to catch them:
-const EXCLUDED_WORKFLOW_NAMES = new Set([
-  "Audit Readiness Phase Nurture - Campaign Assignment Workflow",
-  "FY27 Lead scoring - Sponsored Event - Marketing Nurture",
-]);
+// To update: add/remove/edit entries in NURTURE_WORKFLOWS below.
 
-const MAX_ROWS = 30;
-
-// Confirmed real pattern from an actual workflow in this portal:
-// https://app.hubspot.com/workflows/8588479/platform/flow/1851248399/edit
-const HUBSPOT_PORTAL_ID = "8588479";
-const workflowUrl = (workflowId: string) =>
-  `https://app.hubspot.com/workflows/${HUBSPOT_PORTAL_ID}/platform/flow/${workflowId}/edit`;
-
-type RawWorkflow = {
-  id: number;
-  name: string;
-  type?: string;
-  enabled: boolean;
-};
+const NURTURE_WORKFLOWS: Array<{ name: string; url: string }> = [
+  { name: "[GLOBAL] FY27 | Prospects | Nurture | Funnel | Signal 1", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1835368082/edit" },
+  { name: "[GLOBAL] FY27 | Prospects | Nurture | Funnel | Signal 2", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1851248399/edit" },
+  { name: "[NAMER] FY27 | Prospects | Nurture | Funnel | Signal 3", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1851342624/edit" },
+  { name: "[GLOBAL] FY27 | Prospects | Nurture | Funnel | Signal 4", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1851343468/edit" },
+  { name: "[GLOBAL] FY27 | Customers | CS | Nurture | Onboarding + SOC 2 Launchpad", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1844417284/edit" },
+  { name: "[GLOBAL] FY27 | Customers | CS | Nurture | Compliance Roadmap", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1845633162/edit" },
+];
 
 export async function GET() {
-  try {
-    const data = await hubspotFetch("/automation/v3/workflows");
-    const raw: RawWorkflow[] = data.workflows || [];
+  const rows = NURTURE_WORKFLOWS.map((w, i) => ({
+    id: String(i),
+    name: w.name,
+    hubspotUrl: w.url,
+    status: "active" as const,
+  }));
 
-    const nurtureActive = raw.filter(
-      (w) =>
-        w.enabled &&
-        w.name.toLowerCase().includes("nurture") &&
-        !w.name.includes("_") &&
-        !EXCLUDED_WORKFLOW_NAMES.has(w.name)
-    );
-
-    const rows = nurtureActive
-      .map((w) => ({
-        id: String(w.id),
-        name: w.name,
-        type: w.type || null,
-        enabled: w.enabled,
-        status: "active" as const,
-        hubspotUrl: workflowUrl(String(w.id)),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    const ordered = rows.slice(0, MAX_ROWS);
-
-    return NextResponse.json({
-      status: "ok",
-      totalWorkflows: raw.length,
-      matchedCount: rows.length,
-      rows: ordered,
-      truncated: rows.length > ordered.length,
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { status: "error", message: (error as Error).message },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({
+    status: "ok",
+    matchedCount: rows.length,
+    rows,
+  });
 }
