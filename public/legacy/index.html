@@ -1114,11 +1114,11 @@ class Component extends DCLogic {
     // triggers matter just as much as body copy ones for deliverability.
     const combined = [subj, pre, t].filter(Boolean).join(' ');
     const combinedLower = combined.toLowerCase();
-    const excl = (combined.match(/!/g) || []).length, caps = (combined.match(/\b[A-Z]{4,}\b/g) || []).length;
+    const excl = (combined.match(/!/g) || []).length;
     const spam = ['free','act now','limited time','guarantee','risk-free','buy now'].filter(w => combinedLower.includes(w)).length;
-    const riskN = excl + caps + spam;
+    const riskN = excl + spam;
     let riskS;
-    if (riskN >= 3) riskS = ['Fail', bad, badb, riskN + ' spam-filter triggers (' + excl + ' "!", ' + caps + ' all-caps).'];
+    if (riskN >= 3) riskS = ['Fail', bad, badb, riskN + ' spam-filter triggers (' + excl + ' "!").'];
     else if (riskN >= 1) riskS = ['Warn', warn, warnb, riskN + ' spam-filter trigger' + (riskN > 1 ? 's' : '') + ' to review.'];
     else riskS = ['Pass', ok, okb, 'No obvious spam triggers.'];
 
