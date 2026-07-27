@@ -6,32 +6,34 @@ import { hubspotFetch } from "@/lib/hubspot";
 // Workflow Watchdog — real version, using HubSpot's Automation v3 API
 // (GET /automation/v3/workflows).
 //
-// STATUS: gave up guessing which label ("Currently Enrolled" vs
-// "Enrolled Total") belongs to which of the two contactListIds fields —
-// HubSpot's own workflow UI tracks FOUR numbers (Currently Enrolled,
-// Enrolled last 7-days, Enrolled unique, Enrolled total), but the API
-// only exposes TWO raw list IDs. There's no way to correctly guess a
-// 2-to-4 mapping, so continuing to slap a label on it and call it
-// "provisional" wasn't actually useful.
+// CONTACT COUNTS REMOVED — after four attempts, none produced numbers
+// that matched reality:
+// 1. Treated contactListIds.enrolled/active as literal counts (wrong —
+//    active > enrolled lifetime is logically impossible)
+// 2. Resolved them as list IDs via memberships.total (still didn't
+//    match Justin's real HubSpot numbers)
+// 3. Relabeled to HubSpot's UI terms, still didn't match
+// 4. Showed the underlying list's real NAME instead of a guessed label
+//    — still didn't match at all
 //
-// Instead: fetch each list's REAL NAME (not just its size) via
-// GET /crm/v3/lists/{listId}, alongside its size via
-// GET /crm/v3/lists/{listId}/memberships. The list's own name is
-// usually self-descriptive (HubSpot auto-names workflow-linked lists
-// something like "Workflow: X - Active" or similar) and lets this
-// self-document instead of guessing a label — no per-workflow manual
-// confirmation needed to understand what a number represents.
+// Likely root cause: Signal 2 (and probably other real nurtures here)
+// are built on HubSpot's newer "Flows" platform (URL pattern
+// /platform/flow/{id}/edit). HubSpot's own community forum has explicit
+// reports that Flows-platform workflows don't reliably map to this
+// legacy automation/v3/workflows API's data the same way older
+// workflows do — which would explain why literally nothing lined up,
+// not just a label. This needs real research into whether HubSpot has
+// a Flows-specific API before attempting a fifth guess.
 //
-// Both the size (memberships.total) and the name are 100% real, live
-// HubSpot data — nothing here is mock or placeholder. The two numbers
-// per workflow were never fake; only the LABEL guessing was the
-// problem, which this removes entirely.
+// What's left is only what's actually reliable: name, enabled status,
+// and a real link to the workflow's HubSpot edit page. No contact
+// counts until this is properly investigated.
 //
 // Scoped, per request, to active NURTURE workflows only: name contains
 // "nurture" (case-insensitive), enabled === true, AND no underscore in
 // the name. Justin confirmed his real nurtures never contain an
 // underscore and are consistently named — other teams'/legacy workflows
-// reliably do.
+// reliably do. This part is unaffected by the count issue above.
 //
 // Confirmed false positives without an underscore, needing manual
 // exclusion since there's no general signal to catch them:
@@ -53,28 +55,7 @@ type RawWorkflow = {
   name: string;
   type?: string;
   enabled: boolean;
-  contactListIds?: { enrolled?: number; active?: number };
 };
-
-async function resolveList(
-  listId: number | undefined
-): Promise<{ size: number; name: string | null; failed: boolean }> {
-  if (!listId) return { size: 0, name: null, failed: false };
-  try {
-    const [membershipsData, listData] = await Promise.all([
-      hubspotFetch(`/crm/v3/lists/${listId}/memberships?limit=1`),
-      hubspotFetch(`/crm/v3/lists/${listId}`),
-    ]);
-    const size = typeof membershipsData.total === "number" ? membershipsData.total : 0;
-    const list = listData.list ?? listData;
-    const name = list.name || null;
-    return { size, name, failed: false };
-  } catch {
-    // Tracked separately from a genuine 0 — masking a real failure as 0
-    // is exactly what caused past confusion on this route.
-    return { size: 0, name: null, failed: true };
-  }
-}
 
 export async function GET() {
   try {
@@ -89,37 +70,23 @@ export async function GET() {
         !EXCLUDED_WORKFLOW_NAMES.has(w.name)
     );
 
-    let resolutionErrors = 0;
+    const rows = nurtureActive
+      .map((w) => ({
+        id: String(w.id),
+        name: w.name,
+        type: w.type || null,
+        enabled: w.enabled,
+        status: "active" as const,
+        hubspotUrl: workflowUrl(String(w.id)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
-    const rows = await Promise.all(
-      nurtureActive.map(async (w) => {
-        const [activeList, enrolledList] = await Promise.all([
-          resolveList(w.contactListIds?.active),
-          resolveList(w.contactListIds?.enrolled),
-        ]);
-        if (activeList.failed) resolutionErrors++;
-        if (enrolledList.failed) resolutionErrors++;
-        return {
-          id: String(w.id),
-          name: w.name,
-          type: w.type || null,
-          enabled: w.enabled,
-          activeList: { size: activeList.size, name: activeList.name },
-          enrolledList: { size: enrolledList.size, name: enrolledList.name },
-          status: "active" as const,
-          hubspotUrl: workflowUrl(String(w.id)),
-        };
-      })
-    );
-
-    rows.sort((a, b) => b.activeList.size - a.activeList.size);
     const ordered = rows.slice(0, MAX_ROWS);
 
     return NextResponse.json({
       status: "ok",
       totalWorkflows: raw.length,
       matchedCount: rows.length,
-      resolutionErrors,
       rows: ordered,
       truncated: rows.length > ordered.length,
     });

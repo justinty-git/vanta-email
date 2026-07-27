@@ -550,7 +550,7 @@
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
                   <div style="min-width:0;">
                     <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.workflow }}</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ w.contacts }} · <a href="{{ w.hubspotUrl }}" target="_blank" style="color:var(--icon-accent); text-decoration:none;">HubSpot <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a></div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;"><a href="{{ w.hubspotUrl }}" target="_blank" style="color:var(--icon-accent); text-decoration:none;">View in HubSpot <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a></div>
                   </div>
                   <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:3px 9px; border-radius:999px; background:{{ w.stateBg }}; color:{{ w.stateColor }}; flex-shrink:0;">
                     <i class="{{ w.stateIcon }}" style="font-size:9px;"></i>{{ w.state }}
@@ -872,16 +872,11 @@ class Component extends DCLogic {
     const data = this.state.workflowsData;
     if (!data) return [];
     const success = 'var(--badge-success-text)', successBg = 'var(--badge-success-bg)';
-    return (data.rows || []).map(w => {
-      const activeLabel = w.activeList.name ? w.activeList.name : 'active list';
-      const enrolledLabel = w.enrolledList.name ? w.enrolledList.name : 'enrolled list';
-      return {
-        workflow: w.name,
-        contacts: w.activeList.size.toLocaleString() + ' — "' + activeLabel + '" · ' + w.enrolledList.size.toLocaleString() + ' — "' + enrolledLabel + '"',
-        state: 'Active', stateBg: successBg, stateColor: success, stateIcon: 'fa-circle-check alpaca-fa-solid',
-        hubspotUrl: w.hubspotUrl,
-      };
-    });
+    return (data.rows || []).map(w => ({
+      workflow: w.name,
+      state: 'Active', stateBg: successBg, stateColor: success, stateIcon: 'fa-circle-check alpaca-fa-solid',
+      hubspotUrl: w.hubspotUrl,
+    }));
   }
 
   buildAnomalyRows() {
@@ -1399,7 +1394,7 @@ class Component extends DCLogic {
         ? 'Scanning workflows…'
         : this.state.workflowsError
         ? this.state.workflowsError
-        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' active nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · ' + this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned · showing real list names + sizes' + (this.state.workflowsData.resolutionErrors > 0 ? ' · ⚠ ' + this.state.workflowsData.resolutionErrors + ' list lookup' + (this.state.workflowsData.resolutionErrors === 1 ? '' : 's') + ' failed (showing 0)' : '') : ''),
+        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' active nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · ' + this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned · contact counts not available, showing name/status/link only' : ''),
       watchdogEmpty: !this.state.workflowsLoading && !this.state.workflowsError && watchdogRows.length === 0,
       watchdogEmptyMessage: this.state.workflowsData && this.state.workflowsData.totalWorkflows === 0 ? 'No workflows found in this account.' : 'No active workflows with "nurture" in the name.',
 
