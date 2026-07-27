@@ -550,7 +550,7 @@
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
                   <div style="min-width:0;">
                     <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.workflow }}</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ w.rawIds }} · <a href="{{ w.hubspotUrl }}" target="_blank" style="color:var(--icon-accent); text-decoration:none;">HubSpot <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a></div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ w.contacts }} · <a href="{{ w.hubspotUrl }}" target="_blank" style="color:var(--icon-accent); text-decoration:none;">HubSpot <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a></div>
                   </div>
                   <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:3px 9px; border-radius:999px; background:{{ w.stateBg }}; color:{{ w.stateColor }}; flex-shrink:0;">
                     <i class="{{ w.stateIcon }}" style="font-size:9px;"></i>{{ w.state }}
@@ -874,7 +874,7 @@ class Component extends DCLogic {
     const success = 'var(--badge-success-text)', successBg = 'var(--badge-success-bg)';
     return (data.rows || []).map(w => ({
       workflow: w.name,
-      rawIds: 'raw list IDs (unverified): active=' + (w.rawActiveListId ?? '—') + ' · enrolled=' + (w.rawEnrolledListId ?? '—'),
+      contacts: w.currentlyEnrolled.toLocaleString() + ' currently enrolled · ' + w.enrolledTotal.toLocaleString() + ' enrolled total (provisional)',
       state: 'Active', stateBg: successBg, stateColor: success, stateIcon: 'fa-circle-check alpaca-fa-solid',
       hubspotUrl: w.hubspotUrl,
     }));
@@ -1388,14 +1388,14 @@ class Component extends DCLogic {
         : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends · vs recent-batch average + known deliverability thresholds',
 
       watchdog: watchdogRows,
-      watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading · HubSpot' : (this.state.workflowsError ? 'Error · HubSpot' : 'Names/links live · counts unverified'),
+      watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading · HubSpot' : (this.state.workflowsError ? 'Error · HubSpot' : 'Provisional counts · pending confirmation'),
       watchdogBadgeBg: this.state.workflowsError ? 'var(--badge-danger-bg)' : 'var(--badge-warning-bg)',
       watchdogBadgeColor: this.state.workflowsError ? 'var(--badge-danger-text)' : 'var(--badge-warning-text)',
       watchdogCaption: this.state.workflowsLoading
         ? 'Scanning workflows…'
         : this.state.workflowsError
         ? this.state.workflowsError
-        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' active nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · ' + this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned · contact counts disabled pending verification, see raw IDs below' : ''),
+        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' active nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · ' + this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned' + (this.state.workflowsData.listSizeResolutionErrors > 0 ? ' · ⚠ ' + this.state.workflowsData.listSizeResolutionErrors + ' list-size lookup' + (this.state.workflowsData.listSizeResolutionErrors === 1 ? '' : 's') + ' failed (showing 0)' : '') : ''),
       watchdogEmpty: !this.state.workflowsLoading && !this.state.workflowsError && watchdogRows.length === 0,
       watchdogEmptyMessage: this.state.workflowsData && this.state.workflowsData.totalWorkflows === 0 ? 'No workflows found in this account.' : 'No active workflows with "nurture" in the name.',
 
