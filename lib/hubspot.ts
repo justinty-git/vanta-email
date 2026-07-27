@@ -99,7 +99,7 @@ export const SEGMENT_HEALTH_CONFIG: Array<{
   baseListId: number;
   healthyListId: number | null;
 }> = [
-  { label: "NAMER Contact Location", baseListId: 10077, healthyListId: 31109 },
+  { label: "NAMER [Region]", baseListId: 10077, healthyListId: 31109 },
 ];
 
 export async function resolveListSize(

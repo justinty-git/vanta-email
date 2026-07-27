@@ -19,7 +19,7 @@ import { hubspotFetch } from "@/lib/hubspot";
 // this one is confirmed working end-to-end.
 
 const SEGMENTS: Array<{ label: string; listId: number }> = [
-  { label: "[NAMER] Contact Location | Marketable", listId: 31109 },
+  { label: "NAMER Marketing Contacts", listId: 31109 },
 ];
 
 async function resolveSegment(listId: number): Promise<{
