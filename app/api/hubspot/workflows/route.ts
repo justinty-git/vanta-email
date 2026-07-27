@@ -4,34 +4,38 @@ import { hubspotFetch } from "@/lib/hubspot";
 // GET /api/hubspot/workflows
 //
 // Workflow Watchdog — real version, using HubSpot's Automation v3 API
-// (GET /automation/v3/workflows). Confirmed against HubSpot's own docs
-// example response: { workflows: [{ id, name, type, enabled,
-// contactListIds: { enrolled, active } }] } — no per-workflow call
-// needed.
+// (GET /automation/v3/workflows).
+//
+// REAL BUG FIXED HERE: contactListIds.enrolled / contactListIds.active
+// in the list response are NOT contact counts — they are internal
+// HubSpot LIST IDs identifying which lists represent "enrolled" and
+// "active" contacts for that workflow. Confirmed directly against
+// HubSpot's own docs example response: { "enrolled": 300, "active":
+// 68737 } — those are List IDs (small sequential numbers HubSpot
+// assigns), not population sizes. Treating them as literal counts
+// produced numbers that were actually just two nearby internal IDs —
+// exactly the "active (17,011) > enrolled lifetime (17,010)" oddity
+// that got this caught, since real "currently active" can never exceed
+// real "ever enrolled."
+//
+// Fix: resolve each of those list IDs to its REAL size via
+// /crm/v3/lists/{listId} with additionalProperties=hs_list_size (the
+// documented way to get a list's real size — confirmed via HubSpot's
+// own Lists API docs and multiple community examples showing this
+// exact field). Same list-size-lookup pattern already used in the
+// conflicts route, just reading a different property off the list.
 //
 // Scoped, per request, to active NURTURE workflows only: name contains
-// "nurture" (case-insensitive) AND enabled === true. This is a name/
-// enabled filter, both already present in the list response at zero
-// extra API cost — no per-workflow detail calls needed, unlike a
-// creator filter would require (that was investigated and dropped:
-// creator isn't in the list endpoint, only on the single-workflow
-// detail endpoint, which would mean one call per workflow across
-// potentially hundreds of workflows).
+// "nurture" (case-insensitive) AND enabled === true.
 //
 // Name-matching "nurture" catches some false positives that aren't
 // actually Justin's email nurtures — e.g. operational/ops workflows
 // that happen to have "Nurture" in their name but don't send email at
-// all, or aren't his. Since there's no cheap, reliable API signal to
-// exclude these automatically (see creator-filter note above), this is
-// a manual exclusion list — add to it as more show up.
+// all, or aren't his. Manual exclusion list below for confirmed cases.
 const EXCLUDED_WORKFLOW_NAMES = new Set([
   "Campaign 2024.06_Operational_Customer Renewal_Nurture_Bounced",
   "Audit Readiness Phase Nurture - Campaign Assignment Workflow",
 ]);
-//
-// `contactListIds.active` is the count of contacts CURRENTLY sitting in
-// the workflow (still in-progress) — used to sort so the
-// highest-volume active nurtures surface first.
 
 const MAX_ROWS = 30;
 
@@ -42,6 +46,20 @@ type RawWorkflow = {
   enabled: boolean;
   contactListIds?: { enrolled?: number; active?: number };
 };
+
+async function resolveListSize(listId: number | undefined): Promise<number> {
+  if (!listId) return 0;
+  try {
+    const data = await hubspotFetch(
+      `/crm/v3/lists/${listId}?additionalProperties=hs_list_size`
+    );
+    const list = data.list ?? data;
+    const size = list.additionalProperties?.hs_list_size;
+    return size !== undefined ? parseInt(size, 10) || 0 : 0;
+  } catch {
+    return 0;
+  }
+}
 
 export async function GET() {
   try {
@@ -55,10 +73,12 @@ export async function GET() {
         !EXCLUDED_WORKFLOW_NAMES.has(w.name)
     );
 
-    const rows = nurtureActive
-      .map((w) => {
-        const active = w.contactListIds?.active ?? 0;
-        const enrolled = w.contactListIds?.enrolled ?? 0;
+    const rows = await Promise.all(
+      nurtureActive.map(async (w) => {
+        const [active, enrolled] = await Promise.all([
+          resolveListSize(w.contactListIds?.active),
+          resolveListSize(w.contactListIds?.enrolled),
+        ]);
         return {
           id: String(w.id),
           name: w.name,
@@ -69,8 +89,9 @@ export async function GET() {
           status: "active" as const,
         };
       })
-      .sort((a, b) => b.activeContacts - a.activeContacts);
+    );
 
+    rows.sort((a, b) => b.activeContacts - a.activeContacts);
     const ordered = rows.slice(0, MAX_ROWS);
 
     return NextResponse.json({
