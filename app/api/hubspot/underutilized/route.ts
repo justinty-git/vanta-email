@@ -45,7 +45,17 @@ import { hubspotFetch } from "@/lib/hubspot";
 // — the full cross-product of every OR'd condition doesn't fit in one
 // call, hence the split into multiple calls below, summed client-side
 // (safe since each call represents a mutually-exclusive slice).
+//
+// VALIDATION: Justin provided the real list ID for "[GLOBAL] Marketing
+// Contacts" (30565). Rather than trust my replicated filter logic
+// blindly, this also fetches that list's own real size directly
+// (GET /crm/v3/lists/30565/memberships — same cheap, confirmed-reliable
+// pattern used elsewhere in this app) and surfaces both numbers side by
+// side. If they're close, that validates the replication; if they
+// diverge, that's a concrete signal something in the replicated logic
+// is off — better than assuming it's right.
 
+const MARKETABLE_LIST_ID = 30565;
 const WINDOW_DAYS = 7;
 
 async function searchContactCount(filterGroups: any[]): Promise<number> {
@@ -89,10 +99,13 @@ export async function GET() {
       { filters: [...commonFilters, { propertyName: "hs_email_bounce", operator: "NOT_HAS_PROPERTY" }, { propertyName: "hs_email_last_send_date", operator: "NOT_HAS_PROPERTY" }] },
     ]);
 
-    const [totalMarketable, underutilizedA, underutilizedB] = await Promise.all([
+    const [totalMarketable, underutilizedA, underutilizedB, officialListTotal] = await Promise.all([
       totalMarketablePromise,
       underutilizedBounceUnder3Promise,
       underutilizedBounceUnsetPromise,
+      hubspotFetch(`/crm/v3/lists/${MARKETABLE_LIST_ID}/memberships?limit=1`)
+        .then((d: any) => (typeof d.total === "number" ? d.total : null))
+        .catch(() => null),
     ]);
     const underutilized = underutilizedA + underutilizedB;
 
@@ -104,6 +117,7 @@ export async function GET() {
       totalMarketable,
       underutilized,
       coveragePct,
+      officialListTotal,
       checkedAt: new Date().toISOString(),
     });
   } catch (error) {
