@@ -40,6 +40,7 @@ export async function GET(request: Request) {
     const delivered = counters.delivered ?? counters.deliveries ?? sent;
     const opens = counters.open ?? counters.opens ?? 0;
     const clicks = counters.click ?? counters.clicks ?? 0;
+    const unsubscribed = counters.unsubscribed ?? 0;
 
     // Deliberately NOT using ratios.openratio/clickratio here — HubSpot's
     // ratios object has been observed returning inconsistent scale (a
@@ -49,6 +50,7 @@ export async function GET(request: Request) {
     // locally: rate = count / delivered.
     const openRate = delivered > 0 ? opens / delivered : null;
     const clickRate = delivered > 0 ? clicks / delivered : null;
+    const unsubRate = delivered > 0 ? unsubscribed / delivered : null;
 
     return NextResponse.json({
       status: "ok",
@@ -58,8 +60,10 @@ export async function GET(request: Request) {
         delivered,
         opens,
         clicks,
+        unsubscribed,
         openRate,
         clickRate,
+        unsubRate,
       },
       raw: data,
     });

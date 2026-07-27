@@ -597,8 +597,8 @@
             <sc-if value="{{ lookupSelected }}" hint-placeholder-val="{{ true }}">
               <div style="margin-top:14px;">
                 <div style="font-size:0.8125rem; font-weight:600; color:var(--text-primary); margin-bottom:8px;">{{ selName }} <span style="font-weight:400; color:var(--text-tertiary);">· {{ selMeta }}</span></div>
-                <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
-                  <sc-for list="{{ lookupMetrics }}" as="m" hint-placeholder-count="3">
+                <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
+                  <sc-for list="{{ lookupMetrics }}" as="m" hint-placeholder-count="4">
                     <div style="background:var(--bg-card-alt); border-radius:var(--r-md); padding:12px;">
                       <div style="font-size:0.6875rem; color:var(--text-secondary); margin-bottom:4px;">{{ m.label }}</div>
                       <div style="font-size:1.125rem; font-weight:600; color:{{ m.color }};">{{ m.value }}</div>
@@ -1149,6 +1149,7 @@ class Component extends DCLogic {
         { label: 'Delivered', value: m.delivered.toLocaleString(), color: 'var(--text-primary)', bench: 'of ' + m.sent.toLocaleString() + ' sent' },
         { label: 'Open Rate', value: pct(m.openRate), color: ok, bench: m.opens.toLocaleString() + ' opens' },
         { label: 'Click Rate', value: pct(m.clickRate), color: ok, bench: m.clicks.toLocaleString() + ' clicks' },
+        { label: 'Unsub Rate', value: pct(m.unsubRate), color: (m.unsubRate !== null && m.unsubRate >= 0.02) ? warn : ok, bench: m.unsubscribed.toLocaleString() + ' unsubs' },
       ],
       lookupNote: m.sent === 0
         ? { icon: 'fa-triangle-exclamation alpaca-fa-solid', color: warn, bg: 'var(--badge-warning-bg)', text: "This email hasn't sent yet — no stats are available until it goes out." }
