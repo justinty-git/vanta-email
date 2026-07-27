@@ -874,7 +874,7 @@ class Component extends DCLogic {
     const success = 'var(--badge-success-text)', successBg = 'var(--badge-success-bg)';
     return (data.rows || []).map(w => ({
       workflow: w.name,
-      contacts: w.currentlyEnrolled.toLocaleString() + ' currently enrolled · ' + w.enrolledTotal.toLocaleString() + ' enrolled total (provisional)',
+      contacts: w.currentlyEnrolled.toLocaleString() + ' currently enrolled · ' + w.enrolledTotal.toLocaleString() + ' enrolled total (unconfirmed)',
       state: 'Active', stateBg: successBg, stateColor: success, stateIcon: 'fa-circle-check alpaca-fa-solid',
       hubspotUrl: w.hubspotUrl,
     }));
@@ -1388,7 +1388,7 @@ class Component extends DCLogic {
         : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends · vs recent-batch average + known deliverability thresholds',
 
       watchdog: watchdogRows,
-      watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading · HubSpot' : (this.state.workflowsError ? 'Error · HubSpot' : 'Provisional counts · pending confirmation'),
+      watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading · HubSpot' : (this.state.workflowsError ? 'Error · HubSpot' : 'Numbers not yet confirmed'),
       watchdogBadgeBg: this.state.workflowsError ? 'var(--badge-danger-bg)' : 'var(--badge-warning-bg)',
       watchdogBadgeColor: this.state.workflowsError ? 'var(--badge-danger-text)' : 'var(--badge-warning-text)',
       watchdogCaption: this.state.workflowsLoading
