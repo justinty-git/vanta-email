@@ -1577,7 +1577,7 @@ class Component extends DCLogic {
         ? 'Checking segment sizes…'
         : this.state.segmentHealthError
         ? this.state.segmentHealthError
-        : 'How many contacts in this region are healthy to email · checked once a day',
+        : 'Tracking whether each region is growing or shrinking · checked once a day',
       segmentHealthRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).map(s => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
         const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
@@ -1595,10 +1595,10 @@ class Component extends DCLogic {
         } else {
           const latest = trendPoints[trendPoints.length - 1];
           const prev = trendPoints[trendPoints.length - 2];
-          const healthyDelta = latest.healthyCount - prev.healthyCount;
-          const arrow = healthyDelta > 0 ? '▲' : healthyDelta < 0 ? '▼' : '—';
-          const deltaColor = healthyDelta > 0 ? 'var(--badge-success-text)' : healthyDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
-          trendStatus = arrow + ' ' + (healthyDelta > 0 ? '+' : '') + healthyDelta.toLocaleString() + ' healthy contacts since ' + prev.date + ' (' + trendPoints.length + ' days tracked)';
+          const totalDelta = latest.totalCount - prev.totalCount;
+          const arrow = totalDelta > 0 ? '▲' : totalDelta < 0 ? '▼' : '—';
+          const deltaColor = totalDelta > 0 ? 'var(--badge-success-text)' : totalDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+          trendStatus = arrow + ' ' + (totalDelta > 0 ? '+' : '') + totalDelta.toLocaleString() + ' contacts since ' + prev.date + ' (' + trendPoints.length + ' days tracked)';
           return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor: deltaColor };
         }
         return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor: 'var(--text-tertiary)' };
