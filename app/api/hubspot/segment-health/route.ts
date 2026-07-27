@@ -23,15 +23,14 @@ import { hubspotFetch } from "@/lib/hubspot";
 // Config-driven: SEGMENTS is a list of { label, baseListId,
 // healthyListId } triples. Adding a new region is a config row.
 //
-// STATUS: only NAMER's base list ID (10077) is confirmed so far. The
-// "- Healthy" clone list needs to be built in HubSpot first (per
-// Justin's Step 1: base segment's filters + Marketing contact status +
-// hard bounce reason unknown + not unsubscribed + not quarantined +
-// not invalid, ANDed together) — healthyListId below is a placeholder
-// until that exists and its real list ID is provided.
+// STATUS: NAMER is fully wired — base list 10077 ("NAMER Contact
+// Location") and its "- Healthy" clone at list 31109 ("NAMER
+// Marketable"), both real HubSpot list IDs confirmed by Justin. Next
+// regions (EMEA, APAC, etc.) just need the same two-list-ID pair added
+// as a new row below.
 
 const SEGMENTS: Array<{ label: string; baseListId: number; healthyListId: number | null }> = [
-  { label: "NAMER Contact Location", baseListId: 10077, healthyListId: null },
+  { label: "NAMER Contact Location", baseListId: 10077, healthyListId: 31109 },
 ];
 
 async function resolveListSize(listId: number | null): Promise<{ size: number | null; error: string | null }> {
