@@ -284,11 +284,11 @@
             </sc-if>
           </div>
 
-          <!-- Audience Status — testing with one real segment before scaling -->
+          <!-- Segment Sizing (formerly "Audience Status") — list of all segment totals as of that day -->
           <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
               <i class="fa-grid-2 alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Audience Status</span>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Segment Sizing</span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ audienceStatusBadgeBg }}; color:{{ audienceStatusBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ audienceStatusBadgeLabel }}</span>
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ audienceStatusCaption }}</div>
@@ -1550,14 +1550,14 @@ class Component extends DCLogic {
       underutilizedCount: this.state.underutilizedData ? this.state.underutilizedData.underutilized.toLocaleString() : '—',
       underutilizedTotal: this.state.underutilizedData ? this.state.underutilizedData.totalMarketable.toLocaleString() : '—',
 
-      audienceStatusBadgeLabel: this.state.audienceStatusLoading ? 'Loading · HubSpot' : (this.state.audienceStatusError ? 'Error · HubSpot' : 'Live · HubSpot (1 test segment)'),
+      audienceStatusBadgeLabel: this.state.audienceStatusLoading ? 'Loading · HubSpot' : (this.state.audienceStatusError ? 'Error · HubSpot' : 'Live · HubSpot'),
       audienceStatusBadgeBg: this.state.audienceStatusError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
       audienceStatusBadgeColor: this.state.audienceStatusError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
       audienceStatusCaption: this.state.audienceStatusLoading
         ? 'Checking segment size…'
         : this.state.audienceStatusError
         ? this.state.audienceStatusError
-        : 'Testing with 1 real segment before scaling to the full region × persona list',
+        : 'List of all segment totals as of today',
       audienceStatusRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).map(s => ({
         label: s.label,
         detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',

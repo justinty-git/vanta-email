@@ -3,8 +3,9 @@ import { hubspotFetch } from "@/lib/hubspot";
 
 // GET /api/hubspot/audience-status
 //
-// Segment totals by region/persona. Justin defines the segments (label
-// + HubSpot list ID) — this route resolves each to its real name and
+// "Segment Sizing" (renamed from "Audience Status") — a list of all
+// segment totals as of today. Justin defines the segments (label +
+// HubSpot list ID) — this route resolves each to its real name and
 // size. Same list-resolution pattern already proven reliable in the
 // conflicts route (list name via GET /crm/v3/lists/{listId}) and
 // confirmed for size via GET /crm/v3/lists/{listId}/memberships (the
@@ -14,9 +15,9 @@ import { hubspotFetch } from "@/lib/hubspot";
 // automation-specific API problem, not a general problem with list
 // resolution.
 //
-// Testing with ONE real segment first before scaling to the full
-// 10-12 region x persona list. Add more entries to SEGMENTS below once
-// this one is confirmed working end-to-end.
+// Currently one segment (NAMER). Add more entries to SEGMENTS below as
+// the full region x persona list gets defined — no code changes
+// needed, just new config rows.
 
 const SEGMENTS: Array<{ label: string; listId: number }> = [
   { label: "NAMER Marketing Contacts", listId: 31109 },
