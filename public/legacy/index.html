@@ -95,6 +95,12 @@
     textarea:focus, input:focus { outline: 2px solid var(--purple-1100); outline-offset: -2px; }
     @keyframes fa-spin-rotation { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .fa-spin { animation: fa-spin-rotation 1s linear infinite; }
+    /* Overview pillar grid — 4 columns gets cramped on narrower windows,
+       inline styles can't respond to viewport width, so this needs a
+       real CSS class + media query instead. */
+    .pillar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 980px) { .pillar-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .pillar-grid { grid-template-columns: 1fr; } }
   </style>
 </helmet>
 
@@ -154,7 +160,7 @@
 
         <!-- Category legend removed per feedback — badges on each panel are self-explanatory -->
 
-        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+        <div class="pillar-grid">
           <sc-for list="{{ pillars }}" as="p" hint-placeholder-count="4">
             <button onClick="{{ p.onClick }}" style="text-align:left; cursor:pointer; background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card); font-family:var(--font-base); display:flex; flex-direction:column; gap:12px;">
               <div style="display:flex; align-items:center; justify-content:space-between;">
@@ -263,68 +269,6 @@
             <sc-if value="{{ conflictsEmpty }}" hint-placeholder-val="{{ false }}">
               <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center; border-top:1px solid var(--border-table);">No scheduled sends in the next window.</div>
             </sc-if>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
-          <!-- Underutilized Audience -->
-          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-              <i class="fa-inbox-full alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Underutilized Audience</span>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ underutilizedBadgeBg }}; color:{{ underutilizedBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ underutilizedBadgeLabel }}</span>
-            </div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ underutilizedCaption }}</div>
-            <sc-if value="{{ underutilizedHasData }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
-                <span style="font-size:2rem; font-weight:700; color:var(--text-primary);">{{ underutilizedCoveragePct }}</span>
-                <span style="font-size:0.8125rem; color:var(--text-secondary);">reached in the last {{ underutilizedWindowDays }} days</span>
-              </div>
-              <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
-            </sc-if>
-          </div>
-
-          <!-- Segment Sizing (formerly "Audience Status") — list of all segment totals as of that day -->
-          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-              <i class="fa-grid-2 alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Segment Sizing</span>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ audienceStatusBadgeBg }}; color:{{ audienceStatusBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ audienceStatusBadgeLabel }}</span>
-            </div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ audienceStatusCaption }}</div>
-            <div style="display:flex; flex-direction:column;">
-              <sc-for list="{{ audienceStatusRows }}" as="a" hint-placeholder-count="1">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
-                  <div style="min-width:0;">
-                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
-                  </div>
-                  <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ a.sizeLabel }}</span>
-                </div>
-              </sc-for>
-            </div>
-          </div>
-        </div>
-
-        <!-- Region Tracking (formerly "Segment Health") -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card); max-width:600px;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-            <i class="fa-arrows-up-down alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Region Tracking</span>
-            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ segmentHealthBadgeBg }}; color:{{ segmentHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ segmentHealthBadgeLabel }}</span>
-          </div>
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ segmentHealthCaption }}</div>
-          <div style="display:flex; flex-direction:column;">
-            <sc-for list="{{ segmentHealthRows }}" as="s" hint-placeholder-count="1">
-              <div style="padding:11px 0; border-top:1px solid var(--border-table);">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
-                  <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
-                </div>
-                <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
-                <div style="font-size:0.6875rem; color:{{ s.trendColor }}; margin-top:4px; font-weight:500;">{{ s.trendStatus }}</div>
-              </div>
-            </sc-for>
           </div>
         </div>
 
@@ -471,8 +415,8 @@
           <button onClick="{{ onRefreshPerformance }}" disabled="{{ performanceLoading }}" style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; font-weight:500; color:var(--icon-accent); background:none; border:none; cursor:pointer; padding:2px 4px; font-family:var(--font-base); opacity:{{ performanceRefreshOpacity }};"><i class="{{ performanceRefreshIcon }}" style="font-size:10px;"></i>Refresh</button>
         </div>
 
-        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px;">
-          <sc-for list="{{ performanceKpis }}" as="k" hint-placeholder-count="2">
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+          <sc-for list="{{ performanceKpis }}" as="k" hint-placeholder-count="4">
             <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:16px 18px; box-shadow:var(--shadow-card);">
               <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ k.label }}</div>
               <div style="display:flex; align-items:baseline; gap:8px;">
@@ -615,25 +559,6 @@
           </div>
         </div>
 
-      </div>
-    </sc-if>
-
-    <!-- ===================== HEALTH ===================== -->
-    <sc-if value="{{ isHealth }}" hint-placeholder-val="{{ false }}">
-      <div style="display:flex; flex-direction:column; gap:20px; max-width:1400px; margin:0 auto;">
-
-        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px;">
-          <sc-for list="{{ healthKpis }}" as="k" hint-placeholder-count="2">
-            <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:16px 18px; box-shadow:var(--shadow-card);">
-              <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ k.label }}</div>
-              <div style="display:flex; align-items:baseline; gap:8px;">
-                <span style="font-size:1.5rem; font-weight:600; color:var(--text-primary);">{{ k.value }}</span>
-                <span style="font-size:0.75rem; font-weight:500; color:{{ k.trendColor }};"><i class="{{ k.trendIcon }}" style="font-size:10px; margin-right:3px;"></i>{{ k.trend }}</span>
-              </div>
-            </div>
-          </sc-for>
-        </div>
-
         <!-- Flagged Anomalies -->
         <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
@@ -663,6 +588,75 @@
             <sc-if value="{{ anomaliesEmpty }}" hint-placeholder-val="{{ false }}">
               <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center;">No anomalies in the recent send batch.</div>
             </sc-if>
+          </div>
+        </div>
+
+      </div>
+    </sc-if>
+
+    <!-- ===================== HEALTH ===================== -->
+    <sc-if value="{{ isHealth }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex; flex-direction:column; gap:20px; max-width:1400px; margin:0 auto;">
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
+          <!-- Underutilized Audience -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+              <i class="fa-inbox-full alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Underutilized Audience</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ underutilizedBadgeBg }}; color:{{ underutilizedBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ underutilizedBadgeLabel }}</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ underutilizedCaption }}</div>
+            <sc-if value="{{ underutilizedHasData }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
+                <span style="font-size:2rem; font-weight:700; color:var(--text-primary);">{{ underutilizedCoveragePct }}</span>
+                <span style="font-size:0.8125rem; color:var(--text-secondary);">reached in the last {{ underutilizedWindowDays }} days</span>
+              </div>
+              <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
+            </sc-if>
+          </div>
+
+          <!-- Segment Sizing (formerly "Audience Status") — list of all segment totals as of that day -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+              <i class="fa-grid-2 alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Segment Sizing</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ audienceStatusBadgeBg }}; color:{{ audienceStatusBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ audienceStatusBadgeLabel }}</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ audienceStatusCaption }}</div>
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ audienceStatusRows }}" as="a" hint-placeholder-count="1">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
+                  <div style="min-width:0;">
+                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
+                  </div>
+                  <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ a.sizeLabel }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- Region Tracking (formerly "Segment Health") -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card); max-width:600px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+            <i class="fa-arrows-up-down alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Region Tracking</span>
+            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ segmentHealthBadgeBg }}; color:{{ segmentHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ segmentHealthBadgeLabel }}</span>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ segmentHealthCaption }}</div>
+          <div style="display:flex; flex-direction:column;">
+            <sc-for list="{{ segmentHealthRows }}" as="s" hint-placeholder-count="1">
+              <div style="padding:11px 0; border-top:1px solid var(--border-table);">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
+                  <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
+                <div style="font-size:0.6875rem; color:{{ s.trendColor }}; margin-top:4px; font-weight:500;">{{ s.trendStatus }}</div>
+              </div>
+            </sc-for>
           </div>
         </div>
 
@@ -978,7 +972,7 @@ class Component extends DCLogic {
       items.push({
         severity: f.riskLabel, severityColor: 'var(--badge-danger-text)',
         text: f.emailName + ' — ' + f.cause,
-        tabLabel: 'Health', onClick: () => this.setState({ activeTab: 'health' }),
+        tabLabel: 'Performance', onClick: () => this.setState({ activeTab: 'performance' }),
       });
     }
     return items;
@@ -1434,10 +1428,10 @@ class Component extends DCLogic {
       isOverview: active === 'overview', isGovern: active === 'govern', isBuild: active === 'build', isPerformance: active === 'performance', isHealth: active === 'health',
 
       pillars: [
-        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Send-conflict detection, database coverage tracking, audience segment status, and Workflow Watchdog.', metricValue: String(this.state.conflictsData ? this.state.conflictsData.conflicts.length : 0), metricLabel: 'send conflicts flagged', metricColor: (this.state.conflictsData && this.state.conflictsData.conflicts.length > 0) ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'Known issues log + Email Framework temporarily hidden', onClick: () => this.setState({ activeTab: 'govern' }) },
+        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Send-conflict detection and Workflow Watchdog — governing the sending process itself.', metricValue: String(this.state.conflictsData ? this.state.conflictsData.conflicts.length : 0), metricLabel: 'send conflicts flagged', metricColor: (this.state.conflictsData && this.state.conflictsData.conflicts.length > 0) ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'Send Conflict Detector · Workflow Watchdog', onClick: () => this.setState({ activeTab: 'govern' }) },
         { icon: 'fa-hammer alpaca-fa-regular', name: 'Build', desc: 'Component library, Email Content Score, and an Outlook pre-flight utility.', metricValue: '2', metricLabel: 'live tools ready to use', metricColor: 'var(--badge-success-text)', subMetric: 'Paste content or HTML to score it', onClick: () => this.setState({ activeTab: 'build' }) },
-        { icon: 'fa-chart-line alpaca-fa-regular', name: 'Performance', desc: 'Click Rate Trend, Weekly Performers, and per-email lookup — how well sends are doing.', metricValue: performanceData && performanceData.avgClickRate30d !== null ? (performanceData.avgClickRate30d * 100).toFixed(1) + '%' : '—', metricLabel: 'avg click rate (30d)', metricColor: 'var(--badge-success-text)', subMetric: 'Click Rate Trend · Weekly Performers · lookup', onClick: () => this.setState({ activeTab: 'performance' }) },
-        { icon: 'fa-heart-pulse alpaca-fa-regular', name: 'Health', desc: 'Flagged Anomalies — is anything actually broken with a recent send.', metricValue: String(anomalyRows.filter(r => r.riskLabel === 'Critical' || r.riskLabel === 'High').length), metricLabel: 'critical/high anomalies', metricColor: anomalyRows.some(r => r.riskLabel === 'Critical' || r.riskLabel === 'High') ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'Last 7 sends scanned', onClick: () => this.setState({ activeTab: 'health' }) },
+        { icon: 'fa-chart-line alpaca-fa-regular', name: 'Performance', desc: 'Click Rate Trend, Weekly Performers, per-email lookup, and Flagged Anomalies — how sends are doing, including problems.', metricValue: performanceData && performanceData.avgClickRate30d !== null ? (performanceData.avgClickRate30d * 100).toFixed(1) + '%' : '—', metricLabel: 'avg click rate (30d)', metricColor: 'var(--badge-success-text)', subMetric: 'Click Rate Trend · Weekly Performers · Flagged Anomalies', onClick: () => this.setState({ activeTab: 'performance' }) },
+        { icon: 'fa-heart-pulse alpaca-fa-regular', name: 'Health', desc: 'Underutilized Audience, Segment Sizing, and Region Tracking — the state of the database itself.', metricValue: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(0) + '%' : '—', metricLabel: 'weekly reach (healthy contacts)', metricColor: 'var(--badge-success-text)', subMetric: 'Underutilized Audience · Segment Sizing · Region Tracking', onClick: () => this.setState({ activeTab: 'health' }) },
       ],
 
       attentionItems: attentionItems,
@@ -1515,8 +1509,6 @@ class Component extends DCLogic {
       performanceKpis: [
         { label: 'Avg Click Rate (30d)', value: performanceData && performanceData.avgClickRate30d !== null ? (performanceData.avgClickRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
         { label: 'DG/NU sends this week', value: performanceData && performanceData.weeklyPerformers ? String(performanceData.weeklyPerformers.dgNuMatchedInWeek) : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
-      ],
-      healthKpis: [
         { label: 'Anomalies flagged', value: String(anomalyRows.length), trend: this.state.anomaliesLoading ? '…' : 'live', trendColor: anomalyRows.length > 0 ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', trendIcon: anomalyRows.length > 0 ? 'fa-arrow-up alpaca-fa-solid' : 'fa-circle-check alpaca-fa-solid' },
         { label: 'Unsub rate (30d)', value: performanceData && performanceData.unsubRate30d !== null ? (performanceData.unsubRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
       ],
