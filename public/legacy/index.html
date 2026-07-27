@@ -296,6 +296,32 @@
           </div>
         </div>
 
+        <!-- Workflow Watchdog -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card); max-width:600px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+            <i class="fa-shield-halved alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Workflow Watchdog</span>
+            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ watchdogBadgeBg }}; color:{{ watchdogBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ watchdogBadgeLabel }}</span>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ watchdogCaption }}</div>
+          <div style="display:flex; flex-direction:column;">
+            <sc-for list="{{ watchdog }}" as="w" hint-placeholder-count="5">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
+                <div style="min-width:0;">
+                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.workflow }}</div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;"><a href="{{ w.hubspotUrl }}" target="_blank" style="color:var(--icon-accent); text-decoration:none;">View in HubSpot <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a></div>
+                </div>
+                <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:3px 9px; border-radius:999px; background:{{ w.stateBg }}; color:{{ w.stateColor }}; flex-shrink:0;">
+                  <i class="{{ w.stateIcon }}" style="font-size:9px;"></i>{{ w.state }}
+                </span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ watchdogEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:14px 0; font-size:0.8125rem; color:var(--text-tertiary); border-top:1px solid var(--border-table);">{{ watchdogEmptyMessage }}</div>
+            </sc-if>
+          </div>
+        </div>
+
       </div>
     </sc-if>
 
@@ -541,32 +567,6 @@
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
-          <!-- Workflow Watchdog -->
-          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-              <i class="fa-shield-halved alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Workflow Watchdog</span>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ watchdogBadgeBg }}; color:{{ watchdogBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ watchdogBadgeLabel }}</span>
-            </div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ watchdogCaption }}</div>
-            <div style="display:flex; flex-direction:column;">
-              <sc-for list="{{ watchdog }}" as="w" hint-placeholder-count="5">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
-                  <div style="min-width:0;">
-                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.workflow }}</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;"><a href="{{ w.hubspotUrl }}" target="_blank" style="color:var(--icon-accent); text-decoration:none;">View in HubSpot <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a></div>
-                  </div>
-                  <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:3px 9px; border-radius:999px; background:{{ w.stateBg }}; color:{{ w.stateColor }}; flex-shrink:0;">
-                    <i class="{{ w.stateIcon }}" style="font-size:9px;"></i>{{ w.state }}
-                  </span>
-                </div>
-              </sc-for>
-              <sc-if value="{{ watchdogEmpty }}" hint-placeholder-val="{{ false }}">
-                <div style="padding:14px 0; font-size:0.8125rem; color:var(--text-tertiary); border-top:1px solid var(--border-table);">{{ watchdogEmptyMessage }}</div>
-              </sc-if>
-            </div>
-          </div>
-
           <!-- Email Performance Lookup (typeahead) -->
           <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
@@ -1279,9 +1279,9 @@ class Component extends DCLogic {
       isOverview: active === 'overview', isGovern: active === 'govern', isBuild: active === 'build', isHealth: active === 'health',
 
       pillars: [
-        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Send-conflict detection, database coverage tracking, and audience segment status.', metricValue: String(this.state.conflictsData ? this.state.conflictsData.conflicts.length : 0), metricLabel: 'send conflicts flagged', metricColor: (this.state.conflictsData && this.state.conflictsData.conflicts.length > 0) ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'Known issues log + Email Framework temporarily hidden', onClick: () => this.setState({ activeTab: 'govern' }) },
+        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Send-conflict detection, database coverage tracking, audience segment status, and Workflow Watchdog.', metricValue: String(this.state.conflictsData ? this.state.conflictsData.conflicts.length : 0), metricLabel: 'send conflicts flagged', metricColor: (this.state.conflictsData && this.state.conflictsData.conflicts.length > 0) ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'Known issues log + Email Framework temporarily hidden', onClick: () => this.setState({ activeTab: 'govern' }) },
         { icon: 'fa-hammer alpaca-fa-regular', name: 'Build', desc: 'Component library, Email Content Score, and an Outlook pre-flight utility.', metricValue: '2', metricLabel: 'live tools ready to use', metricColor: 'var(--badge-success-text)', subMetric: 'Paste content or HTML to score it', onClick: () => this.setState({ activeTab: 'build' }) },
-        { icon: 'fa-heart-pulse alpaca-fa-regular', name: 'Health', desc: 'Click Rate Trend, Weekly Performers, anomalies, Workflow Watchdog, and per-email lookup.', metricValue: String(anomalyRows.filter(r => r.riskLabel === 'Critical' || r.riskLabel === 'High').length), metricLabel: 'critical/high anomalies', metricColor: anomalyRows.some(r => r.riskLabel === 'Critical' || r.riskLabel === 'High') ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'Click Rate · Weekly Performers · watchdog', onClick: () => this.setState({ activeTab: 'health' }) },
+        { icon: 'fa-heart-pulse alpaca-fa-regular', name: 'Health', desc: 'Click Rate Trend, Weekly Performers, anomalies, and per-email lookup.', metricValue: String(anomalyRows.filter(r => r.riskLabel === 'Critical' || r.riskLabel === 'High').length), metricLabel: 'critical/high anomalies', metricColor: anomalyRows.some(r => r.riskLabel === 'Critical' || r.riskLabel === 'High') ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'Click Rate · Weekly Performers · lookup', onClick: () => this.setState({ activeTab: 'health' }) },
       ],
 
       attentionItems: attentionItems,
