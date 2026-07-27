@@ -92,16 +92,17 @@ export async function fetchMarketingEmailsPaginated(
 //
 // Config-driven: SEGMENTS is a list of { label, baseListId,
 // healthyListId } triples. Adding a new region is a config row, not new
-// code. NAMER: base list 10077, healthy clone 31109. EMEA: base list
-// 15048, healthy clone 31133 — confirmed each region has its own base
-// list after all (not shared), corrected per Justin.
+// code. Each region has its own base + healthy list pair. Global sits
+// on top of the regional breakdown, same shape.
 export const SEGMENT_HEALTH_CONFIG: Array<{
   label: string;
   baseListId: number;
   healthyListId: number | null;
 }> = [
+  { label: "Global", baseListId: 31135, healthyListId: 30565 },
   { label: "NAMER [Region]", baseListId: 10077, healthyListId: 31109 },
   { label: "EMEA [Region]", baseListId: 15048, healthyListId: 31133 },
+  { label: "APAC [Region]", baseListId: 10193, healthyListId: 31134 },
 ];
 
 export async function resolveListSize(

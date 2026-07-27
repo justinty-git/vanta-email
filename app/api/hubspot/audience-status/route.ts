@@ -20,8 +20,10 @@ import { hubspotFetch } from "@/lib/hubspot";
 // needed, just new config rows.
 
 const SEGMENTS: Array<{ label: string; listId: number }> = [
+  { label: "Global Marketing Contacts", listId: 30565 },
   { label: "NAMER Marketing Contacts", listId: 31109 },
   { label: "EMEA Marketing Contacts", listId: 31133 },
+  { label: "APAC Marketing Contacts", listId: 31134 },
 ];
 
 async function resolveSegment(listId: number): Promise<{
