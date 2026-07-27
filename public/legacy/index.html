@@ -251,7 +251,7 @@
                 <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ s.date }}</span>
                 <div style="display:flex; flex-direction:column; gap:2px;">
                   <sc-for list="{{ s.audienceLines }}" as="al" hint-placeholder-count="2">
-                    <span style="font-size:0.6125rem; color:var(--text-tertiary); line-height:1.4;">{{ al }}</span>
+                    <span style="font-size:{{ al.fontSize }}; color:var(--text-tertiary); line-height:1.4;">{{ al.text }}</span>
                   </sc-for>
                 </div>
                 <span style="font-size:0.875rem; font-weight:500; color:{{ s.overlapColor }};">{{ s.overlap }}</span>
@@ -897,13 +897,15 @@ class Component extends DCLogic {
     }
 
     return (data.scanned || []).map(e => {
-      const audienceLines = (e.lists || []).map(l => l.name);
-      if (audienceLines.length === 0) audienceLines.push('No list target resolved');
+      const isFallbackId = (name) => /^List \d+$/.test(name);
+      const mkLine = (text) => ({ text, fontSize: isFallbackId(text) ? '0.6125rem' : '0.875rem' });
+      const audienceLines = (e.lists || []).map(l => mkLine(l.name));
+      if (audienceLines.length === 0) audienceLines.push(mkLine('No list target resolved'));
 
       if (e.status === 'conflict') {
         const c = detailByEmailId.get(e.id);
         const estimate = c ? c.contactsAtRiskEstimate : null;
-        const lines = estimate !== null ? [...audienceLines, '~' + estimate.toLocaleString() + ' at risk'] : audienceLines;
+        const lines = estimate !== null ? [...audienceLines, { text: '~' + estimate.toLocaleString() + ' at risk', fontSize: '0.6125rem' }] : audienceLines;
         return {
           campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
           audienceLines: lines,
