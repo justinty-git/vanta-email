@@ -44,6 +44,12 @@ const EXCLUDED_WORKFLOW_NAMES = new Set([
 
 const MAX_ROWS = 30;
 
+// Confirmed real pattern from an actual workflow in this portal:
+// https://app.hubspot.com/workflows/8588479/platform/flow/1851248399/edit
+const HUBSPOT_PORTAL_ID = "8588479";
+const workflowUrl = (workflowId: string) =>
+  `https://app.hubspot.com/workflows/${HUBSPOT_PORTAL_ID}/platform/flow/${workflowId}/edit`;
+
 type RawWorkflow = {
   id: number;
   name: string;
@@ -93,6 +99,7 @@ export async function GET() {
           activeContacts: active,
           totalEnrolled: enrolled,
           status: "active" as const,
+          hubspotUrl: workflowUrl(String(w.id)),
         };
       })
     );

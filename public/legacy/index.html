@@ -552,7 +552,7 @@
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
                   <div style="min-width:0;">
                     <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.workflow }}</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ w.contacts }} active now · {{ w.enrolled }} enrolled lifetime</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ w.contacts }} active now · {{ w.enrolled }} enrolled lifetime · <a href="{{ w.hubspotUrl }}" target="_blank" style="color:var(--icon-accent); text-decoration:none;">HubSpot <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a></div>
                   </div>
                   <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:3px 9px; border-radius:999px; background:{{ w.stateBg }}; color:{{ w.stateColor }}; flex-shrink:0;">
                     <i class="{{ w.stateIcon }}" style="font-size:9px;"></i>{{ w.state }}
@@ -879,6 +879,7 @@ class Component extends DCLogic {
     return (data.rows || []).map(w => ({
       workflow: w.name, contacts: w.activeContacts.toLocaleString(), enrolled: w.totalEnrolled.toLocaleString(),
       state: 'Active', stateBg: successBg, stateColor: success, stateIcon: 'fa-circle-check alpaca-fa-solid',
+      hubspotUrl: w.hubspotUrl,
     }));
   }
 
