@@ -1358,7 +1358,7 @@ class Component extends DCLogic {
 
       healthKpis: [
         { label: 'Avg Click Rate (30d)', value: performanceData && performanceData.avgClickRate30d !== null ? (performanceData.avgClickRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
-        { label: 'Active nurture workflows', value: this.state.workflowsData ? this.state.workflowsData.matchedCount.toLocaleString() : '—', trend: this.state.workflowsLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
+        { label: 'DG/NU sends this week', value: performanceData && performanceData.weeklyPerformers ? String(performanceData.weeklyPerformers.dgNuMatchedInWeek) : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
         { label: 'Anomalies flagged', value: String(anomalyRows.length), trend: this.state.anomaliesLoading ? '…' : 'live', trendColor: anomalyRows.length > 0 ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', trendIcon: anomalyRows.length > 0 ? 'fa-arrow-up alpaca-fa-solid' : 'fa-circle-check alpaca-fa-solid' },
         { label: 'Unsub rate (30d)', value: performanceData && performanceData.unsubRate30d !== null ? (performanceData.unsubRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
       ],
