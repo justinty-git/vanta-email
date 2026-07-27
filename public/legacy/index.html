@@ -278,9 +278,9 @@
             <sc-if value="{{ underutilizedHasData }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
                 <span style="font-size:2rem; font-weight:700; color:var(--text-primary);">{{ underutilizedCoveragePct }}</span>
-                <span style="font-size:0.8125rem; color:var(--text-secondary);">reached in the last 7 days</span>
+                <span style="font-size:0.8125rem; color:var(--text-secondary);">reached in the last {{ underutilizedWindowDays }} days</span>
               </div>
-              <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot this week</div>
+              <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
             </sc-if>
           </div>
 
@@ -1572,6 +1572,7 @@ class Component extends DCLogic {
       underutilizedCoveragePct: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(1) + '%' : '—',
       underutilizedCount: this.state.underutilizedData ? this.state.underutilizedData.underutilized.toLocaleString() : '—',
       underutilizedTotal: this.state.underutilizedData ? this.state.underutilizedData.totalMarketable.toLocaleString() : '—',
+      underutilizedWindowDays: this.state.underutilizedData ? this.state.underutilizedData.windowDays : 7,
 
       audienceStatusBadgeLabel: this.state.audienceStatusLoading ? 'Loading · HubSpot' : (this.state.audienceStatusError ? 'Error · HubSpot' : 'Live · HubSpot'),
       audienceStatusBadgeBg: this.state.audienceStatusError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
