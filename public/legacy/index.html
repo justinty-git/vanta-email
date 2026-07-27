@@ -1599,7 +1599,7 @@ class Component extends DCLogic {
         const trendPoints = (this.state.segmentHealthTrendData && this.state.segmentHealthTrendData.segments[s.label]) || [];
         let trendStatus;
         if (trendPoints.length === 0) {
-          trendStatus = 'Just started tracking today — check back tomorrow to see if this is growing or shrinking';
+          trendStatus = '';
         } else if (trendPoints.length === 1) {
           trendStatus = '';
         } else {
