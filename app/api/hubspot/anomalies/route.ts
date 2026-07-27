@@ -4,32 +4,34 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 // GET /api/hubspot/anomalies
 //
 // Flagged Anomalies — HubSpot-only version (no Snowflake dependency).
-// Pulls the most recently SENT marketing emails, fetches real post-send
-// stats for each, and flags any email whose deliverability/engagement
-// numbers deviate meaningfully from the recent baseline (the MEDIAN
-// across the same batch — not the mean, since a mean lets one
-// high-performing outlier drag the baseline up and make every other
-// normal send look like an underperformer by comparison) OR breach
-// known hard deliverability thresholds.
+// Pulls the most recently SENT marketing emails (last 7 max), fetches
+// real post-send stats for each, and flags any email whose
+// deliverability/engagement numbers deviate meaningfully from the
+// recent baseline (the MEDIAN across the same batch — not the mean,
+// since a mean lets one high-performing outlier drag the baseline up
+// and make every other normal send look like an underperformer by
+// comparison) OR breach known hard deliverability thresholds.
+//
+// Bounce rate deliberately excluded as a flaggable metric (removed per
+// Justin: not something actionable day-to-day, and was triggering on
+// nearly every send). Spam/unsub/open/click rate remain.
 //
 // This intentionally does NOT try to reproduce the Snowflake-backed CTOR
 // trend / Top-5-Bottom-5 panels — those stay as-is. This is a parallel,
-// HubSpot-only anomaly surface: per-send bounce/unsub/spam/open/click
-// health, not historical trend analysis.
+// HubSpot-only anomaly surface: per-send unsub/spam/open/click health,
+// not historical trend analysis.
 //
 // Field names verified against HubSpot's Marketing Email statistics
 // response: counters.{sent,delivered,open,click,bounce,unsubscribed,
 // spamreport}, ratios.{openratio,clickratio,bounceratio,
 // unsubscribedratio,spamreportratio}.
 
-const RECENT_SEND_LIMIT = 20;
+const RECENT_SEND_LIMIT = 7;
 
 // Hard thresholds mirror HubSpot's own deliverability-suspension guidance
-// (bounce 5%, spam 0.1%, unsub 3%) as an absolute floor for "Critical",
-// independent of how the rest of the recent batch is performing.
+// (spam 0.1%, unsub 3%) as an absolute floor for "Critical", independent
+// of how the rest of the recent batch is performing.
 const HARD = {
-  bounceCritical: 0.05,
-  bounceHigh: 0.02,
   spamCritical: 0.001,
   unsubCritical: 0.03,
   unsubHigh: 0.02,
@@ -131,7 +133,6 @@ export async function GET() {
     const baseline = {
       openRate: median(Array.from(metricsById.values()).map((m) => m.openRate)),
       clickRate: median(Array.from(metricsById.values()).map((m) => m.clickRate)),
-      bounceRate: median(Array.from(metricsById.values()).map((m) => m.bounceRate)),
       unsubRate: median(Array.from(metricsById.values()).map((m) => m.unsubRate)),
       spamRate: median(Array.from(metricsById.values()).map((m) => m.spamRate)),
     };
@@ -167,16 +168,6 @@ export async function GET() {
         minFloor?: number; // absolute floor below which relative-only flags are suppressed
         format: (v: number) => string;
       }> = [
-        {
-          metric: "Bounce rate",
-          rate: m.bounceRate,
-          base: baseline.bounceRate,
-          higherIsBad: true,
-          hardCritical: HARD.bounceCritical,
-          hardHigh: HARD.bounceHigh,
-          minFloor: 0.01, // below 1%, a relative swing isn't meaningfully "bad"
-          format: (v) => (v * 100).toFixed(2) + "%",
-        },
         {
           metric: "Spam complaints",
           rate: m.spamRate,
