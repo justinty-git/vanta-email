@@ -202,7 +202,7 @@
             <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Quick Links</span>
           </div>
           <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
-            <sc-for list="{{ quickLinks }}" as="q" hint-placeholder-count="5">
+            <sc-for list="{{ quickLinks }}" as="q" hint-placeholder-count="7">
               <a href="{{ q.href }}" target="_blank" style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:var(--r-md); background:var(--bg-card-alt); text-decoration:none;">
                 <div style="width:32px; height:32px; border-radius:var(--r-sm); background:var(--bg-card); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                   <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:13px;"></i>
@@ -1272,6 +1272,8 @@ class Component extends DCLogic {
         { label: 'Email Brief Template', sublabel: 'Google Doc', icon: 'fa-clipboard-list alpaca-fa-regular', href: 'https://docs.google.com/document/d/1E3DaN7jVQrBs156zv-BCERYAjjtmA_d2taUEGIL51gw/edit?tab=t.0' },
         { label: 'HubSpot Common Segments', sublabel: 'Google Sheet', icon: 'fa-grid-2 alpaca-fa-regular', href: 'https://docs.google.com/spreadsheets/d/1u-Q2vNS_JQsSluwf71-QQup2nc6VbD1fyWs6H0dEzs4/edit?gid=0#gid=0' },
         { label: 'Email Best Practices', sublabel: 'Email Standards Reference', icon: 'fa-book alpaca-fa-regular', href: 'https://info.vanta.com/hubfs/mops-internal/email-ready-room/email-standards/email-best-practices.html' },
+        { label: 'Email Calendar', sublabel: 'Jira board', icon: 'fa-clock-rotate-left alpaca-fa-regular', href: 'https://vanta.atlassian.net/jira/software/c/projects/EMAIL/boards/2551/calendar?filter=type%20%3D%20Task' },
+        { label: 'Email Intake', sublabel: 'Jira form', icon: 'fa-inbox-full alpaca-fa-regular', href: 'https://vanta.atlassian.net/jira/software/c/projects/EMAIL/form/599' },
       ],
       attentionEmpty: !this.state.conflictsLoading && !this.state.anomaliesLoading && attentionItems.length === 0,
 
