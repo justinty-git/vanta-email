@@ -309,6 +309,27 @@
           </div>
         </div>
 
+        <!-- Segment Health Tracking -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card); max-width:600px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+            <i class="fa-heart-pulse alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Segment Health</span>
+            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ segmentHealthBadgeBg }}; color:{{ segmentHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ segmentHealthBadgeLabel }}</span>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ segmentHealthCaption }}</div>
+          <div style="display:flex; flex-direction:column;">
+            <sc-for list="{{ segmentHealthRows }}" as="s" hint-placeholder-count="1">
+              <div style="padding:11px 0; border-top:1px solid var(--border-table);">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
+                  <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
         <!-- Workflow Watchdog -->
         <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card); max-width:600px;">
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
@@ -658,6 +679,7 @@ class Component extends DCLogic {
     underutilizedLoading: true, underutilizedError: null, underutilizedData: null,
     hoveredCtorIndex: null,
     audienceStatusLoading: true, audienceStatusError: null, audienceStatusData: null,
+    segmentHealthLoading: true, segmentHealthError: null, segmentHealthData: null,
     briefSubject: ``,
     briefPreheader: ``,
     briefBody: ``,
@@ -671,6 +693,7 @@ class Component extends DCLogic {
     this.loadWorkflows();
     this.loadUnderutilized();
     this.loadAudienceStatus();
+    this.loadSegmentHealth();
 
     // Auto-refresh on top of the manual Refresh buttons — re-checks hourly
     // so the data doesn't go stale on a screen left open, without
@@ -691,11 +714,19 @@ class Component extends DCLogic {
     this._underutilizedInterval = setInterval(() => {
       this.loadUnderutilized();
     }, 24 * 60 * 60 * 1000);
+
+    // Segment Health does a real per-contact batch-read evaluation (not
+    // a cheap aggregate count) — daily matches the requested cadence and
+    // avoids re-running the heavier operation on the shared hourly timer.
+    this._segmentHealthInterval = setInterval(() => {
+      this.loadSegmentHealth();
+    }, 24 * 60 * 60 * 1000);
   }
 
   componentWillUnmount() {
     if (this._refreshInterval) clearInterval(this._refreshInterval);
     if (this._underutilizedInterval) clearInterval(this._underutilizedInterval);
+    if (this._segmentHealthInterval) clearInterval(this._segmentHealthInterval);
   }
 
   async loadUnderutilized() {
@@ -729,6 +760,23 @@ class Component extends DCLogic {
       this.setState({ audienceStatusError: "Couldn't reach the audience status service. Try again." });
     } finally {
       this.setState({ audienceStatusLoading: false });
+    }
+  }
+
+  async loadSegmentHealth() {
+    this.setState({ segmentHealthLoading: true, segmentHealthError: null });
+    try {
+      const res = await fetch('/api/hubspot/segment-health');
+      const data = await res.json();
+      if (data.status === 'error') {
+        this.setState({ segmentHealthError: data.message, segmentHealthData: null });
+      } else {
+        this.setState({ segmentHealthData: data });
+      }
+    } catch (err) {
+      this.setState({ segmentHealthError: "Couldn't reach the segment health service. Try again." });
+    } finally {
+      this.setState({ segmentHealthLoading: false });
     }
   }
 
@@ -1502,6 +1550,23 @@ class Component extends DCLogic {
         detail: s.error ? 'Lookup failed: ' + s.error : (s.name && s.name !== s.label ? 'List: "' + s.name + '"' : 'List ID ' + s.listId),
         sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
       })),
+
+      segmentHealthBadgeLabel: this.state.segmentHealthLoading ? 'Loading · HubSpot' : (this.state.segmentHealthError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      segmentHealthBadgeBg: this.state.segmentHealthError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
+      segmentHealthBadgeColor: this.state.segmentHealthError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
+      segmentHealthCaption: this.state.segmentHealthLoading
+        ? 'Evaluating segment members…'
+        : this.state.segmentHealthError
+        ? this.state.segmentHealthError
+        : 'Marketable, not hard-bounced/opted-out/quarantined/invalid · auto-refreshes daily · right-now snapshot, trend pending Vercel KV',
+      segmentHealthRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).map(s => {
+        const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
+        const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
+        const detail = s.error
+          ? 'Lookup failed: ' + s.error
+          : s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' + (s.truncated ? ' (capped scan, real segment may be larger)' : '');
+        return { label: s.label, rateLabel: rate, rateColor, detail };
+      }),
 
       onLookupSearch: (e) => this.runLookupSearch(e.target.value),
       lookupQuery: this.state.lookupQuery,
