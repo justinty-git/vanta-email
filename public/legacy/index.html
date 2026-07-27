@@ -413,7 +413,7 @@
               <textarea onChange="{{ onHtmlInput }}" onInput="{{ onHtmlInput }}" defaultValue="{{ htmlText }}" spellcheck="false" placeholder="Paste the email's HTML here…" style="width: 641px; min-height: 130px; resize: vertical; padding: 9px 11px; border-radius: var(--r-sm); border: 1px solid var(--border-card); background: var(--input-bg); color: var(--text-primary); font-size: 0.75rem; line-height: 1.5; font-family: var(--code-font); height: 413px"></textarea>
             </div>
             <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
-              <sc-for list="{{ preflight }}" as="p" hint-placeholder-count="6">
+              <sc-for list="{{ preflight }}" as="p" hint-placeholder-count="7">
                 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:8px 11px; border-bottom:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ p.accent }};">
                   <div style="min-width:0;">
                     <div style="font-size:0.75rem; font-weight:500; color:var(--text-primary);">{{ p.rule }}</div>
@@ -1071,7 +1071,7 @@ class Component extends DCLogic {
     const P = ['Pass', ok, okb, 'fa-check alpaca-fa-solid'], W = ['Warn', warn, warnb, 'fa-triangle-exclamation alpaca-fa-solid'], F = ['Fail', bad, badb, 'fa-xmark alpaca-fa-solid'];
     if (!html) {
       const wait = ['—', 'var(--text-tertiary)', 'var(--bg-card-alt)', 'fa-magnifying-glass alpaca-fa-regular'];
-      return ['Fixed-width container base', 'No display:block on <span>', 'Stacked text line-height', 'CTA borders off wrapping <td>', 'MSO conditional 600px wrapper', 'bgcolor attribute on every <td>'].map(rule => ({ rule, detail: 'Paste HTML to check.', resultLabel: wait[0], resultColor: wait[1], resultBg: wait[2], resultIcon: wait[3], accent: 'transparent' }));
+      return ['Fixed-width container base', 'No display:block on <span>', 'Stacked text line-height', 'CTA borders off wrapping <td>', 'MSO conditional 600px wrapper', 'bgcolor attribute on every <td>', 'Accent rule <td>'].map(rule => ({ rule, detail: 'Paste HTML to check.', resultLabel: wait[0], resultColor: wait[1], resultBg: wait[2], resultIcon: wait[3], accent: 'transparent' }));
     }
     const h = html || '';
     const checks = [];
@@ -1105,6 +1105,44 @@ class Component extends DCLogic {
       detail: tdsWithBgColorStyle.length === 0 ? 'No <td> background-color styles found.' : tdsMissingBgcolorAttr.length === 0 ? 'Every <td> with background-color also has a bgcolor attribute.' : tdsMissingBgcolorAttr.length + ' of ' + tdsWithBgColorStyle.length + ' <td>(s) with background-color are missing the bgcolor attribute.',
       st: tdsMissingBgcolorAttr.length > 0 ? F : P,
     });
+
+    // Accent rule <td> — the previously-skipped 3rd documented
+    // constraint. Reconsidered: an accent bar has a genuinely
+    // recognizable pattern (a <td> with a deliberately tiny explicit
+    // height, used as a thin colored divider strip), so this scans for
+    // that shape specifically rather than trying to guess at ALL <td>s.
+    // Heuristic, not perfect — could miss an accent bar sized outside
+    // the ≤10px window, or flag an unrelated genuinely-small cell — but
+    // it's a real, testable signal instead of skipping the check
+    // entirely.
+    const accentTdRegex = /<td\b([^>]*)>([\s\S]*?)<\/td>/gi;
+    const accentCandidates = [];
+    let accentMatch;
+    while ((accentMatch = accentTdRegex.exec(h)) !== null) {
+      const attrs = accentMatch[1];
+      const content = accentMatch[2];
+      const heightAttr = attrs.match(/\bheight\s*=\s*["']?(\d+)/i);
+      const heightStyle = attrs.match(/height:\s*(\d+)px/i);
+      const heightVal = heightAttr ? parseInt(heightAttr[1], 10) : heightStyle ? parseInt(heightStyle[1], 10) : null;
+      if (heightVal !== null && heightVal <= 10) {
+        accentCandidates.push({ attrs, content, heightVal });
+      }
+    }
+    if (accentCandidates.length === 0) {
+      checks.push({ rule: 'Accent rule <td>', detail: 'No thin (≤10px height) accent-bar <td> found — check may not apply to this email, or verify manually.', st: W });
+    } else {
+      const badAccents = accentCandidates.filter(c => {
+        const hasWidth = /\bwidth\s*=|width\s*:/i.test(c.attrs);
+        const hasBgcolor = /\bbgcolor\s*=/i.test(c.attrs);
+        const hasNbsp = /&nbsp;/i.test(c.content);
+        return !hasWidth || !hasBgcolor || !hasNbsp;
+      });
+      checks.push({
+        rule: 'Accent rule <td>',
+        detail: badAccents.length === 0 ? accentCandidates.length + ' accent-bar <td>(s) found, all with explicit width/bgcolor + &nbsp;.' : badAccents.length + ' of ' + accentCandidates.length + ' accent-bar <td>(s) missing explicit width, bgcolor, or a &nbsp; inside.',
+        st: badAccents.length > 0 ? F : P,
+      });
+    }
 
     return checks.map(c => ({ rule: c.rule, detail: c.detail, resultLabel: c.st[0], resultColor: c.st[1], resultBg: c.st[2], resultIcon: c.st[3], accent: c.st[0] === 'Fail' ? bad : c.st[0] === 'Warn' ? warn : ok }));
   }
