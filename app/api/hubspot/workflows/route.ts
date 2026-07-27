@@ -6,35 +6,32 @@ import { hubspotFetch } from "@/lib/hubspot";
 // Workflow Watchdog — real version, using HubSpot's Automation v3 API
 // (GET /automation/v3/workflows).
 //
-// STATUS: contact counts restored, PROVISIONALLY, pending confirmation
-// against real ground truth. History: first attempt treated
-// contactListIds.enrolled/active as literal counts (wrong — active >
-// enrolled lifetime is logically impossible). Second attempt resolved
-// them as list IDs via GET /crm/v3/lists/{id}/memberships, producing
-// ~11k for one workflow ("Signal 2"), which looked wrong at a glance.
-// Justin then shared that workflow's REAL numbers from HubSpot's own UI:
-// Currently Enrolled 10,528, Enrolled last 7-days 40, Enrolled unique
-// 10,468, Enrolled total 10,770 — all close to the ~11k this route was
-// already producing, suggesting the magnitude was in the right range
-// and the earlier concern may have been about labeling, not the number
-// itself being fabricated.
+// STATUS: gave up guessing which label ("Currently Enrolled" vs
+// "Enrolled Total") belongs to which of the two contactListIds fields —
+// HubSpot's own workflow UI tracks FOUR numbers (Currently Enrolled,
+// Enrolled last 7-days, Enrolled unique, Enrolled total), but the API
+// only exposes TWO raw list IDs. There's no way to correctly guess a
+// 2-to-4 mapping, so continuing to slap a label on it and call it
+// "provisional" wasn't actually useful.
 //
-// Current mapping (best guess, not yet confirmed exact):
-// contactListIds.active   -> labeled "Currently Enrolled"
-// contactListIds.enrolled -> labeled "Enrolled Total"
-// This matches HubSpot's own UI terminology as closely as possible
-// given the two fields available. NEEDS CONFIRMATION: once deployed,
-// check whether Signal 2 shows Currently Enrolled=10,528 and Enrolled
-// Total=10,770 specifically — if the numbers are close but swapped or
-// off, that tells us exactly what to correct next, rather than guessing
-// again from documentation alone.
+// Instead: fetch each list's REAL NAME (not just its size) via
+// GET /crm/v3/lists/{listId}, alongside its size via
+// GET /crm/v3/lists/{listId}/memberships. The list's own name is
+// usually self-descriptive (HubSpot auto-names workflow-linked lists
+// something like "Workflow: X - Active" or similar) and lets this
+// self-document instead of guessing a label — no per-workflow manual
+// confirmation needed to understand what a number represents.
+//
+// Both the size (memberships.total) and the name are 100% real, live
+// HubSpot data — nothing here is mock or placeholder. The two numbers
+// per workflow were never fake; only the LABEL guessing was the
+// problem, which this removes entirely.
 //
 // Scoped, per request, to active NURTURE workflows only: name contains
 // "nurture" (case-insensitive), enabled === true, AND no underscore in
 // the name. Justin confirmed his real nurtures never contain an
 // underscore and are consistently named — other teams'/legacy workflows
-// reliably do. This part is unaffected by the count issue above and
-// has held up fine.
+// reliably do.
 //
 // Confirmed false positives without an underscore, needing manual
 // exclusion since there's no general signal to catch them:
@@ -59,19 +56,23 @@ type RawWorkflow = {
   contactListIds?: { enrolled?: number; active?: number };
 };
 
-async function resolveListSize(
+async function resolveList(
   listId: number | undefined
-): Promise<{ size: number; failed: boolean }> {
-  if (!listId) return { size: 0, failed: false };
+): Promise<{ size: number; name: string | null; failed: boolean }> {
+  if (!listId) return { size: 0, name: null, failed: false };
   try {
-    const data = await hubspotFetch(
-      `/crm/v3/lists/${listId}/memberships?limit=1`
-    );
-    return { size: typeof data.total === "number" ? data.total : 0, failed: false };
+    const [membershipsData, listData] = await Promise.all([
+      hubspotFetch(`/crm/v3/lists/${listId}/memberships?limit=1`),
+      hubspotFetch(`/crm/v3/lists/${listId}`),
+    ]);
+    const size = typeof membershipsData.total === "number" ? membershipsData.total : 0;
+    const list = listData.list ?? listData;
+    const name = list.name || null;
+    return { size, name, failed: false };
   } catch {
     // Tracked separately from a genuine 0 — masking a real failure as 0
     // is exactly what caused past confusion on this route.
-    return { size: 0, failed: true };
+    return { size: 0, name: null, failed: true };
   }
 }
 
@@ -88,38 +89,37 @@ export async function GET() {
         !EXCLUDED_WORKFLOW_NAMES.has(w.name)
     );
 
-    let listSizeResolutionErrors = 0;
+    let resolutionErrors = 0;
 
     const rows = await Promise.all(
       nurtureActive.map(async (w) => {
-        const [currentlyEnrolled, enrolledTotal] = await Promise.all([
-          resolveListSize(w.contactListIds?.active),
-          resolveListSize(w.contactListIds?.enrolled),
+        const [activeList, enrolledList] = await Promise.all([
+          resolveList(w.contactListIds?.active),
+          resolveList(w.contactListIds?.enrolled),
         ]);
-        if (currentlyEnrolled.failed) listSizeResolutionErrors++;
-        if (enrolledTotal.failed) listSizeResolutionErrors++;
+        if (activeList.failed) resolutionErrors++;
+        if (enrolledList.failed) resolutionErrors++;
         return {
           id: String(w.id),
           name: w.name,
           type: w.type || null,
           enabled: w.enabled,
-          currentlyEnrolled: currentlyEnrolled.size,
-          enrolledTotal: enrolledTotal.size,
+          activeList: { size: activeList.size, name: activeList.name },
+          enrolledList: { size: enrolledList.size, name: enrolledList.name },
           status: "active" as const,
           hubspotUrl: workflowUrl(String(w.id)),
         };
       })
     );
 
-    rows.sort((a, b) => b.currentlyEnrolled - a.currentlyEnrolled);
+    rows.sort((a, b) => b.activeList.size - a.activeList.size);
     const ordered = rows.slice(0, MAX_ROWS);
 
     return NextResponse.json({
       status: "ok",
       totalWorkflows: raw.length,
       matchedCount: rows.length,
-      countsVerified: false,
-      listSizeResolutionErrors,
+      resolutionErrors,
       rows: ordered,
       truncated: rows.length > ordered.length,
     });

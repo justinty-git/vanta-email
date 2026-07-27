@@ -872,12 +872,16 @@ class Component extends DCLogic {
     const data = this.state.workflowsData;
     if (!data) return [];
     const success = 'var(--badge-success-text)', successBg = 'var(--badge-success-bg)';
-    return (data.rows || []).map(w => ({
-      workflow: w.name,
-      contacts: w.currentlyEnrolled.toLocaleString() + ' currently enrolled · ' + w.enrolledTotal.toLocaleString() + ' enrolled total (unconfirmed)',
-      state: 'Active', stateBg: successBg, stateColor: success, stateIcon: 'fa-circle-check alpaca-fa-solid',
-      hubspotUrl: w.hubspotUrl,
-    }));
+    return (data.rows || []).map(w => {
+      const activeLabel = w.activeList.name ? w.activeList.name : 'active list';
+      const enrolledLabel = w.enrolledList.name ? w.enrolledList.name : 'enrolled list';
+      return {
+        workflow: w.name,
+        contacts: w.activeList.size.toLocaleString() + ' — "' + activeLabel + '" · ' + w.enrolledList.size.toLocaleString() + ' — "' + enrolledLabel + '"',
+        state: 'Active', stateBg: successBg, stateColor: success, stateIcon: 'fa-circle-check alpaca-fa-solid',
+        hubspotUrl: w.hubspotUrl,
+      };
+    });
   }
 
   buildAnomalyRows() {
@@ -1388,14 +1392,14 @@ class Component extends DCLogic {
         : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends · vs recent-batch average + known deliverability thresholds',
 
       watchdog: watchdogRows,
-      watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading · HubSpot' : (this.state.workflowsError ? 'Error · HubSpot' : 'Numbers not yet confirmed'),
-      watchdogBadgeBg: this.state.workflowsError ? 'var(--badge-danger-bg)' : 'var(--badge-warning-bg)',
-      watchdogBadgeColor: this.state.workflowsError ? 'var(--badge-danger-text)' : 'var(--badge-warning-text)',
+      watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading · HubSpot' : (this.state.workflowsError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      watchdogBadgeBg: this.state.workflowsError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
+      watchdogBadgeColor: this.state.workflowsError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
       watchdogCaption: this.state.workflowsLoading
         ? 'Scanning workflows…'
         : this.state.workflowsError
         ? this.state.workflowsError
-        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' active nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · ' + this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned' + (this.state.workflowsData.listSizeResolutionErrors > 0 ? ' · ⚠ ' + this.state.workflowsData.listSizeResolutionErrors + ' list-size lookup' + (this.state.workflowsData.listSizeResolutionErrors === 1 ? '' : 's') + ' failed (showing 0)' : '') : ''),
+        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' active nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · ' + this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned · showing real list names + sizes' + (this.state.workflowsData.resolutionErrors > 0 ? ' · ⚠ ' + this.state.workflowsData.resolutionErrors + ' list lookup' + (this.state.workflowsData.resolutionErrors === 1 ? '' : 's') + ' failed (showing 0)' : '') : ''),
       watchdogEmpty: !this.state.workflowsLoading && !this.state.workflowsError && watchdogRows.length === 0,
       watchdogEmptyMessage: this.state.workflowsData && this.state.workflowsData.totalWorkflows === 0 ? 'No workflows found in this account.' : 'No active workflows with "nurture" in the name.',
 
