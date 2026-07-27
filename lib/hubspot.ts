@@ -84,3 +84,67 @@ export async function fetchMarketingEmailsPaginated(
 
   return all;
 }
+
+// --- Segment Health Tracking ---
+// Shared between the live "/api/hubspot/segment-health" route and the
+// daily snapshot cron job, so both use identical logic — no risk of the
+// live view and the stored history silently drifting apart.
+//
+// Config-driven: SEGMENTS is a list of { label, baseListId,
+// healthyListId } triples. Adding a new region is a config row, not new
+// code. NAMER is fully wired (base list 10077, healthy clone 31109,
+// both confirmed real HubSpot list IDs).
+export const SEGMENT_HEALTH_CONFIG: Array<{
+  label: string;
+  baseListId: number;
+  healthyListId: number | null;
+}> = [
+  { label: "NAMER Contact Location", baseListId: 10077, healthyListId: 31109 },
+];
+
+export async function resolveListSize(
+  listId: number | null
+): Promise<{ size: number | null; error: string | null }> {
+  if (listId === null) return { size: null, error: "List not created yet" };
+  try {
+    const data = await hubspotFetch(`/crm/v3/lists/${listId}/memberships?limit=1`);
+    return { size: typeof data.total === "number" ? data.total : null, error: null };
+  } catch (error) {
+    return { size: null, error: (error as Error).message };
+  }
+}
+
+export type SegmentHealthResult = {
+  label: string;
+  baseListId: number;
+  healthyListId: number | null;
+  totalCount: number | null;
+  healthyCount: number | null;
+  healthRate: number | null;
+  error: string | null;
+};
+
+export async function computeSegmentHealth(): Promise<SegmentHealthResult[]> {
+  return Promise.all(
+    SEGMENT_HEALTH_CONFIG.map(async (s) => {
+      const [base, healthy] = await Promise.all([
+        resolveListSize(s.baseListId),
+        resolveListSize(s.healthyListId),
+      ]);
+      const healthRate =
+        base.size !== null && base.size > 0 && healthy.size !== null
+          ? healthy.size / base.size
+          : null;
+      return {
+        label: s.label,
+        baseListId: s.baseListId,
+        healthyListId: s.healthyListId,
+        totalCount: base.size,
+        healthyCount: healthy.size,
+        healthRate,
+        error: base.error || healthy.error,
+      };
+    })
+  );
+}
+

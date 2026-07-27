@@ -325,6 +325,7 @@
                   <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
                 </div>
                 <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
+                <div style="font-size:0.6875rem; color:var(--text-tertiary); margin-top:4px;">{{ s.trendStatus }}</div>
               </div>
             </sc-for>
           </div>
@@ -680,6 +681,7 @@ class Component extends DCLogic {
     hoveredCtorIndex: null,
     audienceStatusLoading: true, audienceStatusError: null, audienceStatusData: null,
     segmentHealthLoading: true, segmentHealthError: null, segmentHealthData: null,
+    segmentHealthTrendData: null,
     briefSubject: ``,
     briefPreheader: ``,
     briefBody: ``,
@@ -694,6 +696,7 @@ class Component extends DCLogic {
     this.loadUnderutilized();
     this.loadAudienceStatus();
     this.loadSegmentHealth();
+    this.loadSegmentHealthTrend();
 
     // Auto-refresh on top of the manual Refresh buttons — re-checks hourly
     // so the data doesn't go stale on a screen left open, without
@@ -715,11 +718,14 @@ class Component extends DCLogic {
       this.loadUnderutilized();
     }, 24 * 60 * 60 * 1000);
 
-    // Segment Health does a real per-contact batch-read evaluation (not
-    // a cheap aggregate count) — daily matches the requested cadence and
-    // avoids re-running the heavier operation on the shared hourly timer.
+    // Segment Health's underlying metric (region health rate) doesn't
+    // meaningfully shift within a day — daily matches how fast this
+    // actually changes. Trend data is a read from Postgres, refreshed
+    // on the same cadence since it only updates once the daily cron
+    // snapshot runs anyway.
     this._segmentHealthInterval = setInterval(() => {
       this.loadSegmentHealth();
+      this.loadSegmentHealthTrend();
     }, 24 * 60 * 60 * 1000);
   }
 
@@ -777,6 +783,19 @@ class Component extends DCLogic {
       this.setState({ segmentHealthError: "Couldn't reach the segment health service. Try again." });
     } finally {
       this.setState({ segmentHealthLoading: false });
+    }
+  }
+
+  async loadSegmentHealthTrend() {
+    try {
+      const res = await fetch('/api/segment-health-trend');
+      const data = await res.json();
+      if (data.status !== 'error') {
+        this.setState({ segmentHealthTrendData: data });
+      }
+    } catch (err) {
+      // Silent — trend is supplementary context on the same panel, not
+      // worth its own error state on top of the main segmentHealthError.
     }
   }
 
@@ -1567,7 +1586,13 @@ class Component extends DCLogic {
           : s.error
           ? 'Lookup failed: ' + s.error
           : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
-        return { label: s.label, rateLabel: rate, rateColor, detail };
+        const trendPoints = (this.state.segmentHealthTrendData && this.state.segmentHealthTrendData.segments[s.label]) || [];
+        const trendStatus = trendPoints.length === 0
+          ? 'Trend: no snapshots yet — daily cron hasn\'t run yet, or this is its first day'
+          : trendPoints.length === 1
+          ? 'Trend: 1 day collected so far — need at least 2 to show a line'
+          : 'Trend: ' + trendPoints.length + ' days collected (' + trendPoints[0].date + ' to ' + trendPoints[trendPoints.length - 1].date + ')';
+        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus };
       }),
 
       onLookupSearch: (e) => this.runLookupSearch(e.target.value),
