@@ -568,11 +568,12 @@
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Email Performance Lookup</span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ lookupBadgeBg }}; color:{{ lookupBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ lookupBadgeLabel }}</span>
             </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">Searches the ~500 most recently touched emails, not a fixed date window — an old send untouched since could fall outside that</div>
             <div style="position:relative;">
               <i class="fa-magnifying-glass alpaca-fa-regular" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-tertiary); font-size:12px;"></i>
               <input type="text" onInput="{{ onLookupSearch }}" onChange="{{ onLookupSearch }}" defaultValue="{{ lookupQuery }}" placeholder="Search sent emails by name…" style="width:100%; padding:9px 12px 9px 32px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.875rem;">
             </div>
-            <div style="margin-top:8px; max-height:118px; overflow-y:auto; border:1px solid var(--border-table); border-radius:var(--r-sm);">
+            <div style="margin-top:8px; max-height:220px; overflow-y:auto; border:1px solid var(--border-table); border-radius:var(--r-sm);">
               <sc-if value="{{ lookupLoadingState }}" hint-placeholder-val="{{ false }}">
                 <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center;">Searching…</div>
               </sc-if>
