@@ -348,7 +348,6 @@
                 <label style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em;">Body copy</label>
                 <textarea onChange="{{ onBriefBodyInput }}" onInput="{{ onBriefBodyInput }}" defaultValue="{{ briefBody }}" spellcheck="true" placeholder="Paste or write the body copy here…" style="width:100%; min-height:290px; resize:vertical; padding:12px 14px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.8125rem; line-height:1.5;"></textarea>
               </div>
-              <button onClick="{{ onAnalyzeBrief }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-magnifying-glass-chart alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
             </div>
             <div style="display:flex; flex-direction:column; gap:10px;">
               <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:var(--r-md); background:{{ briefOverall.bg }};">
@@ -382,10 +381,9 @@
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:8px; align-items:start;">
             <div style="display:flex; flex-direction:column; gap:8px;">
               <textarea onChange="{{ onHtmlInput }}" onInput="{{ onHtmlInput }}" defaultValue="{{ htmlText }}" spellcheck="false" placeholder="Paste the email's HTML here…" style="width: 641px; min-height: 130px; resize: vertical; padding: 9px 11px; border-radius: var(--r-sm); border: 1px solid var(--border-card); background: var(--input-bg); color: var(--text-primary); font-size: 0.75rem; line-height: 1.5; font-family: var(--code-font); height: 413px"></textarea>
-              <button onClick="{{ onAnalyzeHtml }}" style="align-self:flex-start; display:inline-flex; align-items:center; gap:7px; padding:8px 16px; border-radius:var(--r-sm); background:var(--purple-900); color:#fff; border:none; font-size:0.8125rem; font-weight:500; cursor:pointer; font-family:var(--font-base);"><i class="fa-magnifying-glass-chart alpaca-fa-solid" style="font-size:11px;"></i>Analyze</button>
             </div>
             <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
-              <sc-for list="{{ preflight }}" as="p" hint-placeholder-count="4">
+              <sc-for list="{{ preflight }}" as="p" hint-placeholder-count="6">
                 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:8px 11px; border-bottom:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ p.accent }};">
                   <div style="min-width:0;">
                     <div style="font-size:0.75rem; font-weight:500; color:var(--text-primary);">{{ p.rule }}</div>
@@ -645,9 +643,7 @@ class Component extends DCLogic {
     briefSubject: ``,
     briefPreheader: ``,
     briefBody: ``,
-    analyzedBrief: undefined,
     htmlText: ``,
-    analyzedHtmlText: undefined,
   };
 
   componentDidMount() {
@@ -1071,7 +1067,7 @@ class Component extends DCLogic {
     const P = ['Pass', ok, okb, 'fa-check alpaca-fa-solid'], W = ['Warn', warn, warnb, 'fa-triangle-exclamation alpaca-fa-solid'], F = ['Fail', bad, badb, 'fa-xmark alpaca-fa-solid'];
     if (!html) {
       const wait = ['—', 'var(--text-tertiary)', 'var(--bg-card-alt)', 'fa-magnifying-glass alpaca-fa-regular'];
-      return ['Fixed-width container base', 'No display:block on <span>', 'Stacked text line-height', 'CTA borders off wrapping <td>'].map(rule => ({ rule, detail: 'Click Analyze to check.', resultLabel: wait[0], resultColor: wait[1], resultBg: wait[2], resultIcon: wait[3], accent: 'transparent' }));
+      return ['Fixed-width container base', 'No display:block on <span>', 'Stacked text line-height', 'CTA borders off wrapping <td>', 'MSO conditional 600px wrapper', 'bgcolor attribute on every <td>'].map(rule => ({ rule, detail: 'Paste HTML to check.', resultLabel: wait[0], resultColor: wait[1], resultBg: wait[2], resultIcon: wait[3], accent: 'transparent' }));
     }
     const h = html || '';
     const checks = [];
@@ -1084,6 +1080,28 @@ class Component extends DCLogic {
     checks.push({ rule: 'Stacked text line-height', detail: lh && !mso ? 'line-height set without mso-line-height-rule:exactly.' : lh ? 'line-height paired with mso-line-height-rule:exactly.' : 'No stacked line-height rules detected.', st: lh && !mso ? W : P });
     const tdb = /<td[^>]*style=["'][^"']*border/i.test(h);
     checks.push({ rule: 'CTA borders off wrapping <td>', detail: tdb ? 'Border on a wrapping <td> — move to VML stroke / inline <a>.' : 'No borders on wrapping <td> cells.', st: tdb ? W : P });
+
+    // Two more checks added, both from the documented Outlook hard
+    // constraints that weren't being checked at all before — not
+    // exhaustive of every possible Outlook rendering issue in general,
+    // but exhaustive of the specific hard constraints on file.
+    const msoMatch = h.match(/<!--\[if mso\]>[\s\S]*?<!\[endif\]-->/i);
+    const msoHas600 = !!msoMatch && /width\s*=\s*["']?600["']?/i.test(msoMatch[0]);
+    checks.push({
+      rule: 'MSO conditional 600px wrapper',
+      detail: !msoMatch ? 'No <!--[if mso]> conditional wrapper found around the white card.' : msoHas600 ? 'MSO conditional wrapper found with a 600px table.' : 'MSO conditional wrapper found, but no width="600" table inside it.',
+      st: !msoMatch ? F : msoHas600 ? P : W,
+    });
+
+    const tdTags = h.match(/<td\b[^>]*>/gi) || [];
+    const tdsWithBgColorStyle = tdTags.filter(t => /background-color\s*:/i.test(t));
+    const tdsMissingBgcolorAttr = tdsWithBgColorStyle.filter(t => !/\bbgcolor\s*=/i.test(t));
+    checks.push({
+      rule: 'bgcolor attribute on every <td>',
+      detail: tdsWithBgColorStyle.length === 0 ? 'No <td> background-color styles found.' : tdsMissingBgcolorAttr.length === 0 ? 'Every <td> with background-color also has a bgcolor attribute.' : tdsMissingBgcolorAttr.length + ' of ' + tdsWithBgColorStyle.length + ' <td>(s) with background-color are missing the bgcolor attribute.',
+      st: tdsMissingBgcolorAttr.length > 0 ? F : P,
+    });
+
     return checks.map(c => ({ rule: c.rule, detail: c.detail, resultLabel: c.st[0], resultColor: c.st[1], resultBg: c.st[2], resultIcon: c.st[3], accent: c.st[0] === 'Fail' ? bad : c.st[0] === 'Warn' ? warn : ok }));
   }
 
@@ -1232,10 +1250,7 @@ class Component extends DCLogic {
   renderVals() {
     const active = this.state.activeTab;
     const dark = this.state.dark;
-    const briefSnapshot = this.state.analyzedBrief === undefined
-      ? { subject: this.state.briefSubject, preheader: this.state.briefPreheader, body: this.state.briefBody }
-      : this.state.analyzedBrief;
-    const brief = this.analyzeBrief(briefSnapshot.subject, briefSnapshot.preheader, briefSnapshot.body);
+    const brief = this.analyzeBrief(this.state.briefSubject, this.state.briefPreheader, this.state.briefBody);
     const sendScheduleRows = this.buildSendScheduleRows();
     const anomalyRows = this.buildAnomalyRows();
     const performanceData = this.state.performanceData;
@@ -1312,7 +1327,6 @@ class Component extends DCLogic {
       onBriefSubjectInput: (e) => this.setState({ briefSubject: e.target.value }),
       onBriefPreheaderInput: (e) => this.setState({ briefPreheader: e.target.value }),
       onBriefBodyInput: (e) => this.setState({ briefBody: e.target.value }),
-      onAnalyzeBrief: () => this.setState(s => ({ analyzedBrief: { subject: s.briefSubject, preheader: s.briefPreheader, body: s.briefBody } })),
       briefMetrics: brief.metrics, briefOverall: brief.overall,
 
       componentCategories: [
@@ -1324,8 +1338,7 @@ class Component extends DCLogic {
 
       htmlText: this.state.htmlText,
       onHtmlInput: (e) => this.setState({ htmlText: e.target.value }),
-      onAnalyzeHtml: () => this.setState(s => ({ analyzedHtmlText: s.htmlText })),
-      preflight: this.analyzeHtml(this.state.analyzedHtmlText === undefined ? this.state.htmlText : this.state.analyzedHtmlText),
+      preflight: this.analyzeHtml(this.state.htmlText),
 
       performanceBadgeLabel: this.state.performanceLoading ? 'Loading · HubSpot' : (this.state.performanceError ? 'Error · HubSpot' : 'Live · HubSpot'),
       performanceBadgeBg: this.state.performanceError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
