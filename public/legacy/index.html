@@ -1379,7 +1379,7 @@ class Component extends DCLogic {
         ? 'Scanning workflows…'
         : this.state.workflowsError
         ? this.state.workflowsError
-        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' active nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · ' + this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned' : ''),
+        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' active nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · ' + this.state.workflowsData.totalWorkflows.toLocaleString() + ' workflows scanned' + (this.state.workflowsData.listSizeResolutionErrors > 0 ? ' · ⚠ ' + this.state.workflowsData.listSizeResolutionErrors + ' list-size lookup' + (this.state.workflowsData.listSizeResolutionErrors === 1 ? '' : 's') + ' failed (showing 0)' : '') : ''),
       watchdogEmpty: !this.state.workflowsLoading && !this.state.workflowsError && watchdogRows.length === 0,
       watchdogEmptyMessage: this.state.workflowsData && this.state.workflowsData.totalWorkflows === 0 ? 'No workflows found in this account.' : 'No active workflows with "nurture" in the name.',
 

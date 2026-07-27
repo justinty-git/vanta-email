@@ -58,17 +58,34 @@ type RawWorkflow = {
   contactListIds?: { enrolled?: number; active?: number };
 };
 
-async function resolveListSize(listId: number | undefined): Promise<number> {
-  if (!listId) return 0;
+async function resolveListSize(
+  listId: number | undefined
+): Promise<{ size: number; failed: boolean }> {
+  if (!listId) return { size: 0, failed: false };
   try {
+    // Switched from GET /crm/v3/lists/{listId}?additionalProperties=hs_list_size
+    // after finding that HubSpot's own migration docs never mention
+    // additionalProperties as a supported query param on this endpoint —
+    // it's only documented for the POST /search request BODY. That call
+    // was very likely being silently ignored (list.additionalProperties
+    // undefined), producing the exact "0 across the board" symptom that
+    // got this caught, not real zero counts.
+    //
+    // The memberships endpoint's `total` field IS explicitly documented
+    // with a concrete example response (HubSpot's v1->v3 migration
+    // guide), so this is a confirmed-reliable way to get a list's real
+    // size instead. limit=1 keeps the payload minimal since only the
+    // total count is needed, not the actual member records.
     const data = await hubspotFetch(
-      `/crm/v3/lists/${listId}?additionalProperties=hs_list_size`
+      `/crm/v3/lists/${listId}/memberships?limit=1`
     );
-    const list = data.list ?? data;
-    const size = list.additionalProperties?.hs_list_size;
-    return size !== undefined ? parseInt(size, 10) || 0 : 0;
+    return { size: typeof data.total === "number" ? data.total : 0, failed: false };
   } catch {
-    return 0;
+    // Tracked separately from a genuine 0 — a silent catch-and-return-0
+    // here is exactly what masked the previous bug. Surfaced in the
+    // response as listSizeResolutionErrors so a future failure is
+    // visible instead of looking like real (zero) data.
+    return { size: 0, failed: true };
   }
 }
 
@@ -85,19 +102,23 @@ export async function GET() {
         !EXCLUDED_WORKFLOW_NAMES.has(w.name)
     );
 
+    let listSizeResolutionErrors = 0;
+
     const rows = await Promise.all(
       nurtureActive.map(async (w) => {
         const [active, enrolled] = await Promise.all([
           resolveListSize(w.contactListIds?.active),
           resolveListSize(w.contactListIds?.enrolled),
         ]);
+        if (active.failed) listSizeResolutionErrors++;
+        if (enrolled.failed) listSizeResolutionErrors++;
         return {
           id: String(w.id),
           name: w.name,
           type: w.type || null,
           enabled: w.enabled,
-          activeContacts: active,
-          totalEnrolled: enrolled,
+          activeContacts: active.size,
+          totalEnrolled: enrolled.size,
           status: "active" as const,
           hubspotUrl: workflowUrl(String(w.id)),
         };
@@ -111,6 +132,7 @@ export async function GET() {
       status: "ok",
       totalWorkflows: raw.length,
       matchedCount: rows.length,
+      listSizeResolutionErrors,
       rows: ordered,
       truncated: rows.length > ordered.length,
     });
