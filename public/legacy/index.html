@@ -1514,7 +1514,7 @@ class Component extends DCLogic {
       ],
 
       weeklyPerformersCaption: (performanceData && performanceData.weeklyPerformers)
-        ? 'Last ' + performanceData.weeklyPerformers.windowDays + ' days · DG/NU sends only (' + performanceData.weeklyPerformers.dgNuMatchedInWeek + ' of ' + performanceData.weeklyPerformers.scannedInWeek + ' scanned) · ranked by Click Rate'
+        ? 'Last ' + performanceData.weeklyPerformers.windowDays + ' days · DG/NU sends only'
         : '',
       weeklyPerformersIsSmall: !!(performanceData && performanceData.weeklyPerformers && performanceData.weeklyPerformers.isSmallSample),
       weeklyPerformersAll: (performanceData && performanceData.weeklyPerformers)
