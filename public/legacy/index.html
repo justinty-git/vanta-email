@@ -1477,7 +1477,7 @@ class Component extends DCLogic {
         ? 'Checking marketing contact coverage…'
         : this.state.underutilizedError
         ? this.state.underutilizedError
-        : 'Marketing contacts only (hs_marketable_status) · auto-refreshes daily' + (this.state.underutilizedData ? ' · checked ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
+        : 'Healthy marketing contacts (not opted out, no hard bounce, <3 bounces) · auto-refreshes daily' + (this.state.underutilizedData ? ' · checked ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
       underutilizedHasData: !!(this.state.underutilizedData && this.state.underutilizedData.totalMarketable > 0),
       underutilizedCoveragePct: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(1) + '%' : '—',
       underutilizedCount: this.state.underutilizedData ? this.state.underutilizedData.underutilized.toLocaleString() : '—',
