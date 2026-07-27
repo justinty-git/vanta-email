@@ -325,7 +325,7 @@
                   <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
                 </div>
                 <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
-                <div style="font-size:0.6875rem; color:var(--text-tertiary); margin-top:4px;">{{ s.trendStatus }}</div>
+                <div style="font-size:0.6875rem; color:{{ s.trendColor }}; margin-top:4px; font-weight:500;">{{ s.trendStatus }}</div>
               </div>
             </sc-for>
           </div>
@@ -1577,7 +1577,7 @@ class Component extends DCLogic {
         ? 'Checking segment sizes…'
         : this.state.segmentHealthError
         ? this.state.segmentHealthError
-        : 'Base segment size vs. its "- Healthy" clone (built in HubSpot) · auto-refreshes daily · right-now snapshot, trend pending Vercel KV',
+        : 'How many contacts in this region are healthy to email · checked once a day',
       segmentHealthRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).map(s => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
         const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
@@ -1587,12 +1587,21 @@ class Component extends DCLogic {
           ? 'Lookup failed: ' + s.error
           : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
         const trendPoints = (this.state.segmentHealthTrendData && this.state.segmentHealthTrendData.segments[s.label]) || [];
-        const trendStatus = trendPoints.length === 0
-          ? 'Trend: no snapshots yet — daily cron hasn\'t run yet, or this is its first day'
-          : trendPoints.length === 1
-          ? 'Trend: 1 day collected so far — need at least 2 to show a line'
-          : 'Trend: ' + trendPoints.length + ' days collected (' + trendPoints[0].date + ' to ' + trendPoints[trendPoints.length - 1].date + ')';
-        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus };
+        let trendStatus;
+        if (trendPoints.length === 0) {
+          trendStatus = 'Just started tracking today — check back tomorrow to see if this is growing or shrinking';
+        } else if (trendPoints.length === 1) {
+          trendStatus = 'Tracking started ' + trendPoints[0].date + ' — check back tomorrow for the first day-over-day comparison';
+        } else {
+          const latest = trendPoints[trendPoints.length - 1];
+          const prev = trendPoints[trendPoints.length - 2];
+          const healthyDelta = latest.healthyCount - prev.healthyCount;
+          const arrow = healthyDelta > 0 ? '▲' : healthyDelta < 0 ? '▼' : '—';
+          const deltaColor = healthyDelta > 0 ? 'var(--badge-success-text)' : healthyDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+          trendStatus = arrow + ' ' + (healthyDelta > 0 ? '+' : '') + healthyDelta.toLocaleString() + ' healthy contacts since ' + prev.date + ' (' + trendPoints.length + ' days tracked)';
+          return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor: deltaColor };
+        }
+        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor: 'var(--text-tertiary)' };
       }),
 
       onLookupSearch: (e) => this.runLookupSearch(e.target.value),
