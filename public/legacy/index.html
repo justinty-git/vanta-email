@@ -1555,16 +1555,18 @@ class Component extends DCLogic {
       segmentHealthBadgeBg: this.state.segmentHealthError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
       segmentHealthBadgeColor: this.state.segmentHealthError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
       segmentHealthCaption: this.state.segmentHealthLoading
-        ? 'Evaluating segment members…'
+        ? 'Checking segment sizes…'
         : this.state.segmentHealthError
         ? this.state.segmentHealthError
-        : 'Marketable, not hard-bounced/opted-out/quarantined/invalid · auto-refreshes daily · right-now snapshot, trend pending Vercel KV',
+        : 'Base segment size vs. its "- Healthy" clone (built in HubSpot) · auto-refreshes daily · right-now snapshot, trend pending Vercel KV',
       segmentHealthRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).map(s => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
         const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
-        const detail = s.error
+        const detail = s.healthyListId === null
+          ? "Waiting on the '- Healthy' clone list to be built in HubSpot — base segment is " + (s.totalCount !== null ? s.totalCount.toLocaleString() : '—') + ' contacts'
+          : s.error
           ? 'Lookup failed: ' + s.error
-          : s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' + (s.truncated ? ' (capped scan, real segment may be larger)' : '');
+          : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
         return { label: s.label, rateLabel: rate, rateColor, detail };
       }),
 
