@@ -626,10 +626,10 @@
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:18px;">{{ audienceStatusCaption }}</div>
 
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--icon-accent); margin-bottom:6px;">Region</div>
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin-bottom:6px;">Region</div>
             <div style="display:flex; flex-direction:column;">
               <sc-for list="{{ audienceStatusRegionRows }}" as="a" hint-placeholder-count="5">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:{{ a.rowBorder }};">
                   <div style="min-width:0;">
                     <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
                     <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
@@ -639,10 +639,10 @@
               </sc-for>
             </div>
 
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--icon-accent); margin:18px 0 6px;">Type</div>
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin:18px 0 6px;">Type</div>
             <div style="display:flex; flex-direction:column;">
               <sc-for list="{{ audienceStatusAudienceRows }}" as="a" hint-placeholder-count="2">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:{{ a.rowBorder }};">
                   <div style="min-width:0;">
                     <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
                     <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
@@ -662,10 +662,10 @@
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:18px;">{{ segmentHealthCaption }}</div>
 
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--icon-accent); margin-bottom:6px;">Region</div>
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin-bottom:6px;">Region</div>
             <div style="display:flex; flex-direction:column;">
               <sc-for list="{{ segmentHealthRegionRows }}" as="s" hint-placeholder-count="5">
-                <div style="padding:11px 0; border-top:1px solid var(--border-table);">
+                <div style="padding:11px 0; border-top:{{ s.rowBorder }};">
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
                     <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
                     <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
@@ -676,10 +676,10 @@
               </sc-for>
             </div>
 
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--icon-accent); margin:18px 0 6px;">Type</div>
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin:18px 0 6px;">Type</div>
             <div style="display:flex; flex-direction:column;">
               <sc-for list="{{ segmentHealthAudienceRows }}" as="s" hint-placeholder-count="2">
-                <div style="padding:11px 0; border-top:1px solid var(--border-table);">
+                <div style="padding:11px 0; border-top:{{ s.rowBorder }};">
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
                     <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
                     <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
@@ -1606,15 +1606,17 @@ class Component extends DCLogic {
         : this.state.audienceStatusError
         ? this.state.audienceStatusError
         : 'List of all segment totals as of today',
-      audienceStatusRegionRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group !== 'audience').map(s => ({
+      audienceStatusRegionRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group !== 'audience').map((s, i) => ({
         label: s.label,
         detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
         sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
+        rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)',
       })),
-      audienceStatusAudienceRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group === 'audience').map(s => ({
+      audienceStatusAudienceRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group === 'audience').map((s, i) => ({
         label: s.label,
         detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
         sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
+        rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)',
       })),
 
       segmentHealthBadgeLabel: this.state.segmentHealthLoading ? 'Loading · HubSpot' : (this.state.segmentHealthError ? 'Error · HubSpot' : 'Live · HubSpot'),
@@ -1625,7 +1627,7 @@ class Component extends DCLogic {
         : this.state.segmentHealthError
         ? this.state.segmentHealthError
         : 'Daily % change to each segment · checked once a day',
-      segmentHealthRegionRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group !== 'audience').map(s => {
+      segmentHealthRegionRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group !== 'audience').map((s, i) => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
         const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
         const detail = s.healthyListId === null
@@ -1646,9 +1648,9 @@ class Component extends DCLogic {
         } else {
           trendStatus = '';
         }
-        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor };
+        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor, rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)' };
       }),
-      segmentHealthAudienceRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group === 'audience').map(s => {
+      segmentHealthAudienceRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group === 'audience').map((s, i) => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
         const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
         const detail = s.healthyListId === null
@@ -1669,7 +1671,7 @@ class Component extends DCLogic {
         } else {
           trendStatus = '';
         }
-        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor };
+        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor, rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)' };
       }),
 
       onLookupSearch: (e) => this.runLookupSearch(e.target.value),
