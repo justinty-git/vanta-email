@@ -94,6 +94,13 @@ export async function fetchMarketingEmailsPaginated(
 // healthyListId } triples. Adding a new region is a config row, not new
 // code. Each region has its own base + healthy list pair. Global sits
 // on top of the regional breakdown, same shape.
+//
+// NOTE: healthy(30565)=370,817 vs base(31135)=99,462 looked backwards
+// (healthy larger than its own base), which is why this was briefly
+// swapped. Reverted per Justin — list 31135 is still processing in
+// HubSpot, so that count was likely a partial/incomplete snapshot, not
+// a true final size. Worth re-checking both numbers once 31135 finishes
+// processing before assuming either direction is correct.
 export const SEGMENT_HEALTH_CONFIG: Array<{
   label: string;
   baseListId: number;
