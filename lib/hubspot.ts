@@ -90,29 +90,31 @@ export async function fetchMarketingEmailsPaginated(
 // daily snapshot cron job, so both use identical logic — no risk of the
 // live view and the stored history silently drifting apart.
 //
-// Config-driven: SEGMENTS is a list of { label, baseListId,
-// healthyListId } triples. Adding a new region is a config row, not new
-// code. Global sits on top of the regional breakdown, same shape.
+// Config-driven: SEGMENTS is a list of { label, group, baseListId,
+// healthyListId } triples. Adding a new region/segment is a config row,
+// not new code. group distinguishes REGIONS (Global/NAMER/EMEA/APAC/
+// Other) from AUDIENCE TYPES (Prospects/Customers) — Justin flagged
+// that Prospects/Customers aren't regions and shouldn't be lumped into
+// the same panel, so the UI splits into two separate panel pairs based
+// on this tag rather than duplicating the list-lookup logic per group.
 //
 // Global: base 31135, healthy 30565 — confirmed directly by Justin.
-// (31135 was briefly changed to 31137 based on a prior message that
-// turned out to mean Other's base specifically, not Global's — fixed.)
-// Global's real numbers: healthy 370,817 / base 1,776,438 ≈ 20.9%,
-// sane and confirmed once 31135 finished processing in HubSpot.
-//
 // Other: base 31137 (revised filters), healthy 31136.
+// Prospects: base 26647, healthy 31139 — verified healthy<base (9.9%).
+// Customers: base 17717, healthy 31140 — verified healthy<base (52.7%).
 export const SEGMENT_HEALTH_CONFIG: Array<{
   label: string;
+  group: "region" | "audience";
   baseListId: number;
   healthyListId: number | null;
 }> = [
-  { label: "Global", baseListId: 31135, healthyListId: 30565 },
-  { label: "NAMER", baseListId: 10077, healthyListId: 31109 },
-  { label: "EMEA", baseListId: 15048, healthyListId: 31133 },
-  { label: "APAC", baseListId: 10193, healthyListId: 31134 },
-  { label: "Other", baseListId: 31137, healthyListId: 31136 },
-  { label: "Prospects", baseListId: 26647, healthyListId: 31139 },
-  { label: "Customers", baseListId: 17717, healthyListId: 31140 },
+  { label: "Global", group: "region", baseListId: 31135, healthyListId: 30565 },
+  { label: "NAMER", group: "region", baseListId: 10077, healthyListId: 31109 },
+  { label: "EMEA", group: "region", baseListId: 15048, healthyListId: 31133 },
+  { label: "APAC", group: "region", baseListId: 10193, healthyListId: 31134 },
+  { label: "Other", group: "region", baseListId: 31137, healthyListId: 31136 },
+  { label: "Prospects", group: "audience", baseListId: 26647, healthyListId: 31139 },
+  { label: "Customers", group: "audience", baseListId: 17717, healthyListId: 31140 },
 ];
 
 export async function resolveListSize(
@@ -129,6 +131,7 @@ export async function resolveListSize(
 
 export type SegmentHealthResult = {
   label: string;
+  group: "region" | "audience";
   baseListId: number;
   healthyListId: number | null;
   totalCount: number | null;
@@ -150,6 +153,7 @@ export async function computeSegmentHealth(): Promise<SegmentHealthResult[]> {
           : null;
       return {
         label: s.label,
+        group: s.group,
         baseListId: s.baseListId,
         healthyListId: s.healthyListId,
         totalCount: base.size,

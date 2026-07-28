@@ -615,9 +615,9 @@
           </sc-if>
         </div>
 
-        <!-- Segment Sizing + Region Tracking — paired side-by-side; both are region-based lists of similar length, a natural match instead of the previous lopsided layout -->
+        <!-- Segment Sizing + Region Tracking (regions only) — paired side-by-side; both are similar-length lists, a natural match -->
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
-          <!-- Segment Sizing (formerly "Audience Status") — list of all segment totals as of that day -->
+          <!-- Segment Sizing (formerly "Audience Status") — list of all REGION segment totals as of that day -->
           <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
               <i class="fa-grid-2 alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
@@ -626,7 +626,7 @@
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ audienceStatusCaption }}</div>
             <div style="display:flex; flex-direction:column;">
-              <sc-for list="{{ audienceStatusRows }}" as="a" hint-placeholder-count="7">
+              <sc-for list="{{ audienceStatusRegionRows }}" as="a" hint-placeholder-count="5">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
                   <div style="min-width:0;">
                     <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
@@ -638,7 +638,7 @@
             </div>
           </div>
 
-          <!-- Region Tracking (formerly "Segment Health") -->
+          <!-- Region Tracking (formerly "Segment Health") — regions only -->
           <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
               <i class="fa-arrows-up-down alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
@@ -647,7 +647,53 @@
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ segmentHealthCaption }}</div>
             <div style="display:flex; flex-direction:column;">
-              <sc-for list="{{ segmentHealthRows }}" as="s" hint-placeholder-count="7">
+              <sc-for list="{{ segmentHealthRegionRows }}" as="s" hint-placeholder-count="5">
+                <div style="padding:11px 0; border-top:1px solid var(--border-table);">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
+                    <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
+                  </div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
+                  <div style="font-size:0.6875rem; color:{{ s.trendColor }}; margin-top:4px; font-weight:500;">{{ s.trendStatus }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audience Sizing + Audience Tracking (Prospects/Customers) — isolated from regions per Justin, same paired layout -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
+          <!-- Audience Sizing — Prospects/Customers segment totals -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+              <i class="fa-grid-2 alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Audience Sizing</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ audienceStatusBadgeBg }}; color:{{ audienceStatusBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ audienceStatusBadgeLabel }}</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">Prospects and Customers — not regions, tracked separately</div>
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ audienceStatusAudienceRows }}" as="a" hint-placeholder-count="2">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
+                  <div style="min-width:0;">
+                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
+                  </div>
+                  <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ a.sizeLabel }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- Audience Tracking — Prospects/Customers health rate + trend -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+              <i class="fa-arrows-up-down alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Audience Tracking</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ segmentHealthBadgeBg }}; color:{{ segmentHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ segmentHealthBadgeLabel }}</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">Daily % change for Prospects and Customers · checked once a day</div>
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ segmentHealthAudienceRows }}" as="s" hint-placeholder-count="2">
                 <div style="padding:11px 0; border-top:1px solid var(--border-table);">
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
                     <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
@@ -1575,7 +1621,12 @@ class Component extends DCLogic {
         : this.state.audienceStatusError
         ? this.state.audienceStatusError
         : 'List of all segment totals as of today',
-      audienceStatusRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).map(s => ({
+      audienceStatusRegionRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group !== 'audience').map(s => ({
+        label: s.label,
+        detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
+        sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
+      })),
+      audienceStatusAudienceRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group === 'audience').map(s => ({
         label: s.label,
         detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
         sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
@@ -1589,7 +1640,7 @@ class Component extends DCLogic {
         : this.state.segmentHealthError
         ? this.state.segmentHealthError
         : 'Daily % change to each segment · checked once a day',
-      segmentHealthRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).map(s => {
+      segmentHealthRegionRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group !== 'audience').map(s => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
         const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
         const detail = s.healthyListId === null
@@ -1598,22 +1649,42 @@ class Component extends DCLogic {
           ? 'Lookup failed: ' + s.error
           : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
         const trendPoints = (this.state.segmentHealthTrendData && this.state.segmentHealthTrendData.segments[s.label]) || [];
-        let trendStatus;
-        if (trendPoints.length === 0) {
-          trendStatus = '';
-        } else if (trendPoints.length === 1) {
-          trendStatus = '';
-        } else {
+        let trendStatus, trendColor = 'var(--text-tertiary)';
+        if (trendPoints.length >= 2) {
           const latest = trendPoints[trendPoints.length - 1];
           const prev = trendPoints[trendPoints.length - 2];
           const totalDelta = latest.totalCount - prev.totalCount;
           const pctChange = prev.totalCount > 0 ? (totalDelta / prev.totalCount) * 100 : 0;
           const arrow = totalDelta > 0 ? '▲' : totalDelta < 0 ? '▼' : '—';
-          const deltaColor = totalDelta > 0 ? 'var(--badge-success-text)' : totalDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+          trendColor = totalDelta > 0 ? 'var(--badge-success-text)' : totalDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
           trendStatus = arrow + ' ' + (pctChange > 0 ? '+' : '') + pctChange.toFixed(2) + '% since ' + prev.date + ' (' + (totalDelta > 0 ? '+' : '') + totalDelta.toLocaleString() + ' contacts)';
-          return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor: deltaColor };
+        } else {
+          trendStatus = '';
         }
-        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor: 'var(--text-tertiary)' };
+        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor };
+      }),
+      segmentHealthAudienceRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group === 'audience').map(s => {
+        const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
+        const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
+        const detail = s.healthyListId === null
+          ? "Waiting on the '- Healthy' clone list to be built in HubSpot — base segment is " + (s.totalCount !== null ? s.totalCount.toLocaleString() : '—') + ' contacts'
+          : s.error
+          ? 'Lookup failed: ' + s.error
+          : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
+        const trendPoints = (this.state.segmentHealthTrendData && this.state.segmentHealthTrendData.segments[s.label]) || [];
+        let trendStatus, trendColor = 'var(--text-tertiary)';
+        if (trendPoints.length >= 2) {
+          const latest = trendPoints[trendPoints.length - 1];
+          const prev = trendPoints[trendPoints.length - 2];
+          const totalDelta = latest.totalCount - prev.totalCount;
+          const pctChange = prev.totalCount > 0 ? (totalDelta / prev.totalCount) * 100 : 0;
+          const arrow = totalDelta > 0 ? '▲' : totalDelta < 0 ? '▼' : '—';
+          trendColor = totalDelta > 0 ? 'var(--badge-success-text)' : totalDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+          trendStatus = arrow + ' ' + (pctChange > 0 ? '+' : '') + pctChange.toFixed(2) + '% since ' + prev.date + ' (' + (totalDelta > 0 ? '+' : '') + totalDelta.toLocaleString() + ' contacts)';
+        } else {
+          trendStatus = '';
+        }
+        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor };
       }),
 
       onLookupSearch: (e) => this.runLookupSearch(e.target.value),

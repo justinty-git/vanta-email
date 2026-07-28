@@ -15,18 +15,19 @@ import { hubspotFetch } from "@/lib/hubspot";
 // automation-specific API problem, not a general problem with list
 // resolution.
 //
-// Currently one segment (NAMER). Add more entries to SEGMENTS below as
-// the full region x persona list gets defined — no code changes
-// needed, just new config rows.
+// group distinguishes REGIONS from AUDIENCE TYPES (Prospects/Customers)
+// — Justin flagged that Prospects/Customers aren't regions and
+// shouldn't be lumped into the same panel, so the UI splits into two
+// separate panel pairs based on this tag.
 
-const SEGMENTS: Array<{ label: string; listId: number }> = [
-  { label: "Global Marketing Contacts", listId: 30565 },
-  { label: "NAMER Marketing Contacts", listId: 31109 },
-  { label: "EMEA Marketing Contacts", listId: 31133 },
-  { label: "APAC Marketing Contacts", listId: 31134 },
-  { label: "Other Marketing Contacts", listId: 31136 },
-  { label: "Prospects Marketing Contacts", listId: 31139 },
-  { label: "Customers Marketing Contacts", listId: 31140 },
+const SEGMENTS: Array<{ label: string; group: "region" | "audience"; listId: number }> = [
+  { label: "Global Marketing Contacts", group: "region", listId: 30565 },
+  { label: "NAMER Marketing Contacts", group: "region", listId: 31109 },
+  { label: "EMEA Marketing Contacts", group: "region", listId: 31133 },
+  { label: "APAC Marketing Contacts", group: "region", listId: 31134 },
+  { label: "Other Marketing Contacts", group: "region", listId: 31136 },
+  { label: "Prospects Marketing Contacts", group: "audience", listId: 31139 },
+  { label: "Customers Marketing Contacts", group: "audience", listId: 31140 },
 ];
 
 async function resolveSegment(listId: number): Promise<{
@@ -65,7 +66,7 @@ export async function GET() {
     const resolved = await Promise.all(
       SEGMENTS.map(async (s) => {
         const r = await resolveSegment(s.listId);
-        return { ...r, label: s.label };
+        return { ...r, label: s.label, group: s.group };
       })
     );
 
