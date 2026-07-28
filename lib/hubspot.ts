@@ -94,30 +94,26 @@ export async function fetchMarketingEmailsPaginated(
 // healthyListId } triples. Adding a new region is a config row, not new
 // code. Global sits on top of the regional breakdown, same shape.
 //
-// "Other" was originally computed on the fly (property-based, "no
-// country set") after finding Global's healthy count was ~84,764 higher
-// than the sum of NAMER+EMEA+APAC. Justin changed his mind and built a
-// real HubSpot list for it instead (base 31135, healthy 31136) — same
-// pattern as every other region now, removing the one-off computed
-// logic that existed before this.
+// Global/Other's base was 31135, revised by Justin to 31137 (updated
+// filters) — replaced everywhere it was used.
 //
-// NOTE: Other's base (31135) is the SAME list as Global's base — not a
-// copy/paste error, confirmed intentional. That means Other's rate is
-// healthy(31136) over the FULL global base (1,776,438), not a base
-// scoped to "Other" specifically. Worth a sanity check once this
-// deploys: real numbers are healthy=63,303 / base=1,776,438 ≈ 3.56% —
-// if that doesn't look like what "Other" is supposed to represent,
-// that's the thing to double check first.
+// FLAGGED, NOT YET RESOLVED: verified 31137's real size (334,770) before
+// wiring it in, and it's SMALLER than Global's healthy list (30565 =
+// 370,817) — the same "healthy bigger than its own base" problem caught
+// once already with the old 31135. Possible this list is still
+// processing (same as last time), or the two lists just don't line up
+// the way expected. Needs a re-check once 31137 is confirmed fully
+// processed before trusting either Global's or Other's resulting rate.
 export const SEGMENT_HEALTH_CONFIG: Array<{
   label: string;
   baseListId: number;
   healthyListId: number | null;
 }> = [
-  { label: "Global", baseListId: 31135, healthyListId: 30565 },
+  { label: "Global", baseListId: 31137, healthyListId: 30565 },
   { label: "NAMER [Region]", baseListId: 10077, healthyListId: 31109 },
   { label: "EMEA [Region]", baseListId: 15048, healthyListId: 31133 },
   { label: "APAC [Region]", baseListId: 10193, healthyListId: 31134 },
-  { label: "Other", baseListId: 31135, healthyListId: 31136 },
+  { label: "Other", baseListId: 31137, healthyListId: 31136 },
 ];
 
 export async function resolveListSize(
