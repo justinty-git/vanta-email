@@ -1116,7 +1116,14 @@ class Component extends DCLogic {
     // sits mid-sentence after "Ready to"/"Want to". A question ending in
     // a common CTA action phrase is its own distinct, common framing.
     const CTA_VERBS = ['click','learn','get','sign','book','download','read','register','request','contact','start','try','schedule','watch','see','explore','discover','claim','save','reserve','unlock','access','view','shop','browse','subscribe','upgrade','activate','enable','complete','confirm','verify','update','renew','join','continue','apply','enroll','rsvp','attend','grab','redeem','share','invite','submit','check','head','take','follow','tap','swipe','meet','find','look'];
-    const ctaPattern = new RegExp('(^|[.!?\\n]\\s*)(' + CTA_VERBS.join('|') + ')\\b\\s+\\w+', 'gi');
+    // Allows optional bracket/paren/quote wrapping before the verb —
+    // button/link CTA text is very commonly written as "[Join the
+    // workshop]" in a brief, and the sentence-boundary anchor alone
+    // (whitespace only) doesn't tolerate that leading punctuation.
+    // Confirmed this exact case failed without it (Justin's real
+    // example: a workshop invite with "[Join the workshop]" as its own
+    // line) before adding.
+    const ctaPattern = new RegExp('(^|[.!?\\n]\\s*)[\\[\\(">*_-]*(' + CTA_VERBS.join('|') + ')\\b\\s+\\w+', 'gi');
     const CTA_ACTION_PHRASES = ['get started','learn more','sign up','try it','join','see how','check out','book a','schedule a'];
     const questionCtaPattern = new RegExp('[^.!?]*(' + CTA_ACTION_PHRASES.join('|') + ')[^.!?]*\\?', 'gi');
     const cta = (t.match(ctaPattern) || []).length + (t.match(questionCtaPattern) || []).length;
@@ -1146,7 +1153,17 @@ class Component extends DCLogic {
     else if (pre.length < 20) preS = ['Warn', warn, warnb, 'Preheader is only ' + pre.length + ' chars — room to add more context (aim 40–100).'];
     else preS = ['Pass', ok, okb, 'Preheader is ' + pre.length + ' chars — good length, distinct from the subject.'];
 
-    const sents = (t.split(/[.!?]+/).filter(s => s.trim().length > 0)).length || 1;
+    // Split on sentence punctuation OR line breaks — a line break is a
+    // real visual/reading break too. Without this, bulleted lists and
+    // short header lines (no terminal period) got merged with whatever
+    // came before/after into one giant "sentence", inflating the
+    // words/sentence average and falsely flagging well-formatted,
+    // scannable bullet content as a run-on. Verified against a real
+    // example (a workshop invite with a bulleted "what you'll get"
+    // section): old logic gave 27 words/sentence (false Warn), fixed
+    // logic gives 10 (correct Pass). Verified a genuine run-on paragraph
+    // with no line breaks still correctly flags (61 words/sentence).
+    const sents = (t.split(/[.!?]+|\n+/).filter(s => s.trim().length > 0)).length || 1;
     const avg = Math.round(words / sents);
     const readS = avg > 25 ? ['Warn', warn, warnb, 'Avg ~' + avg + ' words/sentence — long for mobile.'] : ['Pass', ok, okb, 'Avg ~' + avg + ' words/sentence — scannable.'];
 
