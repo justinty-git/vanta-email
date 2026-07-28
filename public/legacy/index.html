@@ -598,24 +598,25 @@
     <sc-if value="{{ isHealth }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex; flex-direction:column; gap:20px; max-width:1400px; margin:0 auto;">
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
-          <!-- Underutilized Audience -->
-          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-              <i class="fa-inbox-full alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Underutilized Audience</span>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ underutilizedBadgeBg }}; color:{{ underutilizedBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ underutilizedBadgeLabel }}</span>
-            </div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ underutilizedCaption }}</div>
-            <sc-if value="{{ underutilizedHasData }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
-                <span style="font-size:2rem; font-weight:700; color:var(--text-primary);">{{ underutilizedCoveragePct }}</span>
-                <span style="font-size:0.8125rem; color:var(--text-secondary);">reached in the last {{ underutilizedWindowDays }} days</span>
-              </div>
-              <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
-            </sc-if>
+        <!-- Underutilized Audience — full-width; one big stat reads better wide than squeezed into a half-column -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+            <i class="fa-inbox-full alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Underutilized Audience</span>
+            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ underutilizedBadgeBg }}; color:{{ underutilizedBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ underutilizedBadgeLabel }}</span>
           </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ underutilizedCaption }}</div>
+          <sc-if value="{{ underutilizedHasData }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
+              <span style="font-size:2rem; font-weight:700; color:var(--text-primary);">{{ underutilizedCoveragePct }}</span>
+              <span style="font-size:0.8125rem; color:var(--text-secondary);">reached in the last {{ underutilizedWindowDays }} days</span>
+            </div>
+            <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
+          </sc-if>
+        </div>
 
+        <!-- Segment Sizing + Region Tracking — paired side-by-side; both are region-based lists of similar length, a natural match instead of the previous lopsided layout -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
           <!-- Segment Sizing (formerly "Audience Status") — list of all segment totals as of that day -->
           <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
@@ -636,27 +637,27 @@
               </sc-for>
             </div>
           </div>
-        </div>
 
-        <!-- Region Tracking (formerly "Segment Health") -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card); max-width:600px;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-            <i class="fa-arrows-up-down alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Region Tracking</span>
-            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ segmentHealthBadgeBg }}; color:{{ segmentHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ segmentHealthBadgeLabel }}</span>
-          </div>
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ segmentHealthCaption }}</div>
-          <div style="display:flex; flex-direction:column;">
-            <sc-for list="{{ segmentHealthRows }}" as="s" hint-placeholder-count="5">
-              <div style="padding:11px 0; border-top:1px solid var(--border-table);">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
-                  <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
+          <!-- Region Tracking (formerly "Segment Health") -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+              <i class="fa-arrows-up-down alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Region Tracking</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ segmentHealthBadgeBg }}; color:{{ segmentHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ segmentHealthBadgeLabel }}</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ segmentHealthCaption }}</div>
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ segmentHealthRows }}" as="s" hint-placeholder-count="5">
+                <div style="padding:11px 0; border-top:1px solid var(--border-table);">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
+                    <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
+                  </div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
+                  <div style="font-size:0.6875rem; color:{{ s.trendColor }}; margin-top:4px; font-weight:500;">{{ s.trendStatus }}</div>
                 </div>
-                <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
-                <div style="font-size:0.6875rem; color:{{ s.trendColor }}; margin-top:4px; font-weight:500;">{{ s.trendStatus }}</div>
-              </div>
-            </sc-for>
+              </sc-for>
+            </div>
           </div>
         </div>
 
