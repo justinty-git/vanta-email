@@ -950,11 +950,7 @@ class Component extends DCLogic {
       if (e.status === 'conflict') {
         const c = detailByEmailId.get(e.id);
         const estimate = c ? c.contactsAtRiskEstimate : null;
-        const isRealOverlap = c && c.realOverlapCount !== null;
-        const riskLine = isRealOverlap
-          ? { text: c.realOverlapCount.toLocaleString() + ' contacts overlap (verified, different lists)', fontSize: '0.6125rem' }
-          : (estimate !== null ? { text: '~' + estimate.toLocaleString() + ' at risk', fontSize: '0.6125rem' } : null);
-        const lines = riskLine ? [...audienceLines, riskLine] : audienceLines;
+        const lines = estimate !== null ? [...audienceLines, { text: '~' + estimate.toLocaleString() + ' at risk', fontSize: '0.6125rem' }] : audienceLines;
         return {
           campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
           audienceLines: lines,
@@ -1505,7 +1501,7 @@ class Component extends DCLogic {
         ? 'Scanning the next 14 days…'
         : this.state.conflictsError
         ? this.state.conflictsError
-        : 'Next 14 days · same/next-day + shared list, or verified overlap between different lists (under 5K members) · auto-refreshes hourly' + (this.state.conflictsCheckedAt ? ' · checked ' + this.state.conflictsCheckedAt : ''),
+        : 'Next 14 days · same/next-day + shared list = conflict · auto-refreshes hourly' + (this.state.conflictsCheckedAt ? ' · checked ' + this.state.conflictsCheckedAt : ''),
       conflictsEmpty: !this.state.conflictsLoading && !this.state.conflictsError && sendScheduleRows.length === 0,
       onRefreshConflicts: () => this.loadConflicts(),
       conflictsRefreshIcon: this.state.conflictsLoading ? 'fa-clock-rotate-left alpaca-fa-solid fa-spin' : 'fa-clock-rotate-left alpaca-fa-solid',

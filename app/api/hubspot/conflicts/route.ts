@@ -17,30 +17,13 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 // Conflict definition:
 // - Two SCHEDULED emails are flagged if abs(date difference) <= ADJACENT_DAYS
 //   AND they share at least one target list ID.
-// - "Contacts at risk" is an ESTIMATE (the smaller of the two lists' sizes)
-//   by default — but see REAL OVERLAP below.
-//
-// REAL OVERLAP (added per Justin — "the ultimate overlap detector"):
-// The size-based estimate above only catches conflicts where both emails
-// target the literal SAME list ID. It completely misses the more subtle,
-// arguably more valuable case: two DIFFERENT lists (e.g. "NAMER
-// Prospects" and "Enterprise Prospects") that still share real contacts.
-// For every list pair across ALL scheduled emails in the window (not just
-// already-same-ID matches), this checks the two lists' ACTUAL membership
-// overlap — but only when BOTH lists are under SAFE_LIST_SIZE_CAP. Lists
-// bigger than that (this account has several in the hundreds of
-// thousands to millions — confirmed while building Region Tracking) are
-// skipped with an honest "too large to check safely" flag rather than
-// attempting a pull that would time out. This is a genuine scope
-// limitation, not a bug: broad regional lists are already obviously
-// risky if sent close together; the real NEW value here is catching
-// subtler overlaps between smaller, more targeted lists.
+// - "Contacts at risk" is an ESTIMATE: the smaller of the two lists' sizes,
+//   since we don't have per-contact intersection without a much heavier
+//   batch-membership call. This is intentionally a ceiling, not an exact
+//   count — the UI should label it as such.
 
 const ADJACENT_DAYS = 1; // same day or the very next day counts as a conflict window
-const WINDOW_DAYS = 14; // scan sends within the next 14 days — cheap, list-ID-only comparison
-const REAL_OVERLAP_WINDOW_DAYS = 7; // real membership pulls only attempted for pairs both within this narrower window — per Justin, keeps the expensive part bounded without shrinking the cheap same-list check's full lookahead
-const SAFE_LIST_SIZE_CAP = 5000; // max list size to pull full membership for real overlap
-const MAX_PAGES_PER_LIST = 50; // 50 x 100 = 5,000 — matches SAFE_LIST_SIZE_CAP
+const WINDOW_DAYS = 14; // scan sends within the next 14 days
 
 type RawEmail = {
   id: string;
@@ -89,68 +72,6 @@ async function resolveListInfo(listIds: string[]): Promise<Map<string, ListInfo>
   return map;
 }
 
-// Real overlap: pulls every member ID for a list, paginated, capped at
-// MAX_PAGES_PER_LIST (SAFE_LIST_SIZE_CAP total). Returns null if the list
-// is too large to check safely — caller must handle that as "can't
-// compute real overlap for this pair", not silently return 0.
-async function fetchMemberIdsCapped(listId: string): Promise<Set<string> | null> {
-  const ids = new Set<string>();
-  let after: string | undefined;
-
-  for (let page = 0; page < MAX_PAGES_PER_LIST; page++) {
-    const url =
-      `/crm/v3/lists/${listId}/memberships?limit=100` +
-      (after ? `&after=${encodeURIComponent(after)}` : "");
-    const data = await hubspotFetch(url);
-    for (const r of data.results || []) {
-      if (r.recordId) ids.add(String(r.recordId));
-    }
-    after = data.paging?.next?.after;
-    if (!after) return ids; // fully paginated within the cap — real, complete set
-  }
-
-  // Still has more pages after MAX_PAGES_PER_LIST — this list exceeds the
-  // safe cap. Don't return a partial set pretending to be complete.
-  return null;
-}
-
-// For a pair of emails, computes REAL contact-level overlap across every
-// combination of their target lists (not just literally-shared IDs).
-// Returns null (not 0) if any involved list exceeds the safe size cap —
-// "couldn't check" must never look identical to "checked, found none".
-async function computeRealOverlap(
-  listsA: string[],
-  listsB: string[],
-  memberCache: Map<string, Set<string> | null>
-): Promise<{ overlapCount: number; checkedListsA: string[]; checkedListsB: string[] } | null> {
-  const distinctIds = Array.from(new Set([...listsA, ...listsB]));
-  for (const id of distinctIds) {
-    if (!memberCache.has(id)) {
-      memberCache.set(id, await fetchMemberIdsCapped(id));
-    }
-  }
-
-  // Any involved list too large (cached as null) means we can't safely
-  // claim a real overlap number for this pair.
-  if (distinctIds.some((id) => memberCache.get(id) === null)) return null;
-
-  const unionA = new Set<string>();
-  for (const id of listsA) {
-    const members = memberCache.get(id);
-    if (members) for (const m of members) unionA.add(m);
-  }
-  const unionB = new Set<string>();
-  for (const id of listsB) {
-    const members = memberCache.get(id);
-    if (members) for (const m of members) unionB.add(m);
-  }
-
-  let overlapCount = 0;
-  for (const id of unionA) if (unionB.has(id)) overlapCount++;
-
-  return { overlapCount, checkedListsA: listsA, checkedListsB: listsB };
-}
-
 export async function GET() {
   try {
     const rawEmails = await fetchMarketingEmailsPaginated(5);
@@ -180,9 +101,6 @@ export async function GET() {
       daysApart: number;
       sharedLists: ListInfo[];
       contactsAtRiskEstimate: number | null;
-      realOverlapCount: number | null;
-      realOverlapListsA: ListInfo[];
-      realOverlapListsB: ListInfo[];
     }> = [];
 
     const unscoped: Array<{ id: string; name: string; publishDate: string }> = [];
@@ -197,11 +115,6 @@ export async function GET() {
       }
     }
 
-    // Shared across every pair checked in this request — a list looked up
-    // once for one pair doesn't get re-pulled for another pair that also
-    // references it.
-    const memberCache = new Map<string, Set<string> | null>();
-
     for (let i = 0; i < emails.length; i++) {
       for (let j = i + 1; j < emails.length; j++) {
         const a = emails[i];
@@ -212,60 +125,23 @@ export async function GET() {
         const listsA = audienceListIds(a);
         const listsB = audienceListIds(b);
         const shared = listsA.filter((id) => listsB.includes(id));
+        if (shared.length === 0) continue;
 
-        if (shared.length > 0) {
-          // Same list ID targeted by both — existing size-estimate path.
-          const sharedLists = shared.map(
-            (id) => listInfo.get(id) || { id, name: `List ${id}`, size: null }
-          );
-          const sizes = sharedLists
-            .map((l) => l.size)
-            .filter((s): s is number => typeof s === "number");
-          const contactsAtRiskEstimate = sizes.length ? Math.min(...sizes) : null;
+        const sharedLists = shared.map(
+          (id) => listInfo.get(id) || { id, name: `List ${id}`, size: null }
+        );
+        const sizes = sharedLists
+          .map((l) => l.size)
+          .filter((s): s is number => typeof s === "number");
+        const contactsAtRiskEstimate = sizes.length ? Math.min(...sizes) : null;
 
-          conflicts.push({
-            emailA: { id: a.id, name: a.name, publishDate: a.publishDate! },
-            emailB: { id: b.id, name: b.name, publishDate: b.publishDate! },
-            daysApart: Math.round(gap * 10) / 10,
-            sharedLists,
-            contactsAtRiskEstimate,
-            realOverlapCount: null,
-            realOverlapListsA: [],
-            realOverlapListsB: [],
-          });
-          continue;
-        }
-
-        // No literal shared list ID — check for REAL overlap between the
-        // DIFFERENT lists each email targets (the gap the size-estimate
-        // approach above completely misses). Only flagged as a conflict
-        // if genuine overlapping contacts are found AND every involved
-        // list was small enough to check safely (null = skipped, not "0").
-        //
-        // Bounded to REAL_OVERLAP_WINDOW_DAYS (narrower than the full
-        // 14-day scan) — this is the expensive path (full membership
-        // pulls), so it's kept to the nearest week rather than the full
-        // lookahead, per Justin's stability concern.
-        const aWithinOverlapWindow =
-          new Date(a.publishDate!).getTime() - now <= REAL_OVERLAP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-        const bWithinOverlapWindow =
-          new Date(b.publishDate!).getTime() - now <= REAL_OVERLAP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-        if (!aWithinOverlapWindow || !bWithinOverlapWindow) continue;
-
-        if (listsA.length === 0 || listsB.length === 0) continue;
-        const overlapResult = await computeRealOverlap(listsA, listsB, memberCache);
-        if (overlapResult && overlapResult.overlapCount > 0) {
-          conflicts.push({
-            emailA: { id: a.id, name: a.name, publishDate: a.publishDate! },
-            emailB: { id: b.id, name: b.name, publishDate: b.publishDate! },
-            daysApart: Math.round(gap * 10) / 10,
-            sharedLists: [],
-            contactsAtRiskEstimate: overlapResult.overlapCount,
-            realOverlapCount: overlapResult.overlapCount,
-            realOverlapListsA: listsA.map((id) => listInfo.get(id) || { id, name: `List ${id}`, size: null }),
-            realOverlapListsB: listsB.map((id) => listInfo.get(id) || { id, name: `List ${id}`, size: null }),
-          });
-        }
+        conflicts.push({
+          emailA: { id: a.id, name: a.name, publishDate: a.publishDate! },
+          emailB: { id: b.id, name: b.name, publishDate: b.publishDate! },
+          daysApart: Math.round(gap * 10) / 10,
+          sharedLists,
+          contactsAtRiskEstimate,
+        });
       }
     }
 
