@@ -107,9 +107,9 @@ export const SEGMENT_HEALTH_CONFIG: Array<{
   healthyListId: number | null;
 }> = [
   { label: "Global", baseListId: 31135, healthyListId: 30565 },
-  { label: "NAMER [Region]", baseListId: 10077, healthyListId: 31109 },
-  { label: "EMEA [Region]", baseListId: 15048, healthyListId: 31133 },
-  { label: "APAC [Region]", baseListId: 10193, healthyListId: 31134 },
+  { label: "NAMER", baseListId: 10077, healthyListId: 31109 },
+  { label: "EMEA", baseListId: 15048, healthyListId: 31133 },
+  { label: "APAC", baseListId: 10193, healthyListId: 31134 },
   { label: "Other", baseListId: 31137, healthyListId: 31136 },
 ];
 
