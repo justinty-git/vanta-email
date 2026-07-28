@@ -615,9 +615,9 @@
           </sc-if>
         </div>
 
-        <!-- Segment Sizing + Region Tracking (regions only) — paired side-by-side; both are similar-length lists, a natural match -->
+        <!-- Segment Sizing + Audience Tracking — one panel per metric, each with Region/Type sections instead of 4 separate boxes -->
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
-          <!-- Segment Sizing (formerly "Audience Status") — list of all REGION segment totals as of that day -->
+          <!-- Segment Sizing (formerly "Audience Status") — Region section, then Type section -->
           <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
               <i class="fa-grid-2 alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
@@ -625,6 +625,8 @@
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ audienceStatusBadgeBg }}; color:{{ audienceStatusBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ audienceStatusBadgeLabel }}</span>
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ audienceStatusCaption }}</div>
+
+            <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:2px;">Region</div>
             <div style="display:flex; flex-direction:column;">
               <sc-for list="{{ audienceStatusRegionRows }}" as="a" hint-placeholder-count="5">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
@@ -636,41 +638,8 @@
                 </div>
               </sc-for>
             </div>
-          </div>
 
-          <!-- Region Tracking (formerly "Segment Health") — regions only -->
-          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-              <i class="fa-arrows-up-down alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Region Tracking</span>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ segmentHealthBadgeBg }}; color:{{ segmentHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ segmentHealthBadgeLabel }}</span>
-            </div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ segmentHealthCaption }}</div>
-            <div style="display:flex; flex-direction:column;">
-              <sc-for list="{{ segmentHealthRegionRows }}" as="s" hint-placeholder-count="5">
-                <div style="padding:11px 0; border-top:1px solid var(--border-table);">
-                  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
-                    <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
-                  </div>
-                  <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
-                  <div style="font-size:0.6875rem; color:{{ s.trendColor }}; margin-top:4px; font-weight:500;">{{ s.trendStatus }}</div>
-                </div>
-              </sc-for>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audience Sizing + Audience Tracking (Prospects/Customers) — isolated from regions per Justin, same paired layout -->
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
-          <!-- Audience Sizing — Prospects/Customers segment totals -->
-          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-              <i class="fa-grid-2 alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Audience Sizing</span>
-              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ audienceStatusBadgeBg }}; color:{{ audienceStatusBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ audienceStatusBadgeLabel }}</span>
-            </div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">Prospects and Customers — not regions, tracked separately</div>
+            <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin:14px 0 2px; padding-top:12px; border-top:1px solid var(--border-table-strong);">Type</div>
             <div style="display:flex; flex-direction:column;">
               <sc-for list="{{ audienceStatusAudienceRows }}" as="a" hint-placeholder-count="2">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
@@ -684,14 +653,30 @@
             </div>
           </div>
 
-          <!-- Audience Tracking — Prospects/Customers health rate + trend -->
+          <!-- Audience Tracking (formerly "Region Tracking" + separate "Audience Tracking") — Region section, then Type section -->
           <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
               <i class="fa-arrows-up-down alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Audience Tracking</span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ segmentHealthBadgeBg }}; color:{{ segmentHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ segmentHealthBadgeLabel }}</span>
             </div>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">Daily % change for Prospects and Customers · checked once a day</div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ segmentHealthCaption }}</div>
+
+            <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:2px;">Region</div>
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ segmentHealthRegionRows }}" as="s" hint-placeholder-count="5">
+                <div style="padding:11px 0; border-top:1px solid var(--border-table);">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
+                    <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
+                  </div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
+                  <div style="font-size:0.6875rem; color:{{ s.trendColor }}; margin-top:4px; font-weight:500;">{{ s.trendStatus }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin:14px 0 2px; padding-top:12px; border-top:1px solid var(--border-table-strong);">Type</div>
             <div style="display:flex; flex-direction:column;">
               <sc-for list="{{ segmentHealthAudienceRows }}" as="s" hint-placeholder-count="2">
                 <div style="padding:11px 0; border-top:1px solid var(--border-table);">
