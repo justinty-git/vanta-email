@@ -94,22 +94,19 @@ export async function fetchMarketingEmailsPaginated(
 // healthyListId } triples. Adding a new region is a config row, not new
 // code. Global sits on top of the regional breakdown, same shape.
 //
-// Global/Other's base was 31135, revised by Justin to 31137 (updated
-// filters) — replaced everywhere it was used.
+// Global: base 31135, healthy 30565 — confirmed directly by Justin.
+// (31135 was briefly changed to 31137 based on a prior message that
+// turned out to mean Other's base specifically, not Global's — fixed.)
+// Global's real numbers: healthy 370,817 / base 1,776,438 ≈ 20.9%,
+// sane and confirmed once 31135 finished processing in HubSpot.
 //
-// FLAGGED, NOT YET RESOLVED: verified 31137's real size (334,770) before
-// wiring it in, and it's SMALLER than Global's healthy list (30565 =
-// 370,817) — the same "healthy bigger than its own base" problem caught
-// once already with the old 31135. Possible this list is still
-// processing (same as last time), or the two lists just don't line up
-// the way expected. Needs a re-check once 31137 is confirmed fully
-// processed before trusting either Global's or Other's resulting rate.
+// Other: base 31137 (revised filters), healthy 31136.
 export const SEGMENT_HEALTH_CONFIG: Array<{
   label: string;
   baseListId: number;
   healthyListId: number | null;
 }> = [
-  { label: "Global", baseListId: 31137, healthyListId: 30565 },
+  { label: "Global", baseListId: 31135, healthyListId: 30565 },
   { label: "NAMER [Region]", baseListId: 10077, healthyListId: 31109 },
   { label: "EMEA [Region]", baseListId: 15048, healthyListId: 31133 },
   { label: "APAC [Region]", baseListId: 10193, healthyListId: 31134 },
