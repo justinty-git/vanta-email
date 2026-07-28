@@ -111,6 +111,8 @@ export const SEGMENT_HEALTH_CONFIG: Array<{
   { label: "EMEA", baseListId: 15048, healthyListId: 31133 },
   { label: "APAC", baseListId: 10193, healthyListId: 31134 },
   { label: "Other", baseListId: 31137, healthyListId: 31136 },
+  { label: "Prospects", baseListId: 26647, healthyListId: 31139 },
+  { label: "Customers", baseListId: 17717, healthyListId: 31140 },
 ];
 
 export async function resolveListSize(

@@ -25,6 +25,8 @@ const SEGMENTS: Array<{ label: string; listId: number }> = [
   { label: "EMEA Marketing Contacts", listId: 31133 },
   { label: "APAC Marketing Contacts", listId: 31134 },
   { label: "Other Marketing Contacts", listId: 31136 },
+  { label: "Prospects Marketing Contacts", listId: 31139 },
+  { label: "Customers Marketing Contacts", listId: 31140 },
 ];
 
 async function resolveSegment(listId: number): Promise<{
