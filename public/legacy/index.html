@@ -1099,8 +1099,19 @@ class Component extends DCLogic {
     const t = (body || '').trim(), lower = t.toLowerCase();
     const words = (t.match(/\S+/g) || []).length;
 
-    const ctas = ['click here','learn more','get started','sign up','signup','book a demo','book a','download','read more','read the full','register','request a demo','contact us','start free','try free','get a demo','schedule a'];
-    let cta = 0; ctas.forEach(p => { let i = lower.indexOf(p); while (i >= 0) { cta++; i = lower.indexOf(p, i + p.length); } });
+    // Broad CTA-verb pattern instead of a fixed phrase list — a fixed
+    // list is an unbounded problem (there's always another real CTA
+    // phrasing it doesn't know, e.g. "Continue onboarding now"). Requires
+    // the verb to START a sentence (beginning of text, or right after
+    // . ! ? or a newline) rather than matching anywhere — real CTAs are
+    // imperative sentence-starters; without this anchor, ordinary
+    // transactional prose ("thanks for signing up... to get full
+    // access... and start monitoring...") falsely inflated the count
+    // and triggered a false "too many competing CTAs" — confirmed via a
+    // real end-to-end test before fixing.
+    const CTA_VERBS = ['click','learn','get','sign','book','download','read','register','request','contact','start','try','schedule','watch','see','explore','discover','claim','save','reserve','unlock','access','view','shop','browse','subscribe','upgrade','activate','enable','complete','confirm','verify','update','renew','join','continue','apply','enroll','rsvp','attend','grab','redeem','share','invite','submit'];
+    const ctaPattern = new RegExp('(^|[.!?\\n]\\s*)(' + CTA_VERBS.join('|') + ')\\b\\s+\\w+', 'gi');
+    const cta = (t.match(ctaPattern) || []).length;
     let ctaS;
     if (cta === 0) ctaS = ['Warn', warn, warnb, 'No clear call-to-action found.'];
     else if (cta <= 3) ctaS = ['Pass', ok, okb, cta + ' CTA' + (cta > 1 ? 's' : '') + ' — focused ask.'];
