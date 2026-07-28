@@ -102,6 +102,12 @@ function median(values: Array<number | null>): number | null {
   return nums.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
 }
 
+// Excludes sends whose name ends in an RC or OP suffix (e.g. "...RC1",
+// "...OP3") — per Justin, these shouldn't be considered for anomaly
+// flagging. Applied BEFORE slicing to RECENT_SEND_LIMIT so an excluded
+// send doesn't crowd out a real candidate within the scan window.
+const EXCLUDE_SUFFIX = /\b(RC|OP)\d*\s*$/i;
+
 export async function GET() {
   try {
     const rawEmails = await fetchMarketingEmailsPaginated(3);
@@ -111,6 +117,7 @@ export async function GET() {
 
     const emails: EmailSummary[] = rawEmails
       .filter((e: any) => classifyEmailState(e.state) === "sent" && !!e.publishDate)
+      .filter((e: any) => !EXCLUDE_SUFFIX.test(e.name || ""))
       .sort(
         (a: any, b: any) =>
           new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
