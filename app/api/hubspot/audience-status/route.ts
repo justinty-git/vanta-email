@@ -21,13 +21,13 @@ import { hubspotFetch } from "@/lib/hubspot";
 // separate panel pairs based on this tag.
 
 const SEGMENTS: Array<{ label: string; group: "region" | "audience"; listId: number }> = [
-  { label: "Global Marketing Contacts", group: "region", listId: 30565 },
-  { label: "NAMER Marketing Contacts", group: "region", listId: 31109 },
-  { label: "EMEA Marketing Contacts", group: "region", listId: 31133 },
-  { label: "APAC Marketing Contacts", group: "region", listId: 31134 },
-  { label: "Other Marketing Contacts", group: "region", listId: 31136 },
-  { label: "Prospects Marketing Contacts", group: "audience", listId: 31139 },
-  { label: "Customers Marketing Contacts", group: "audience", listId: 31140 },
+  { label: "Global", group: "region", listId: 30565 },
+  { label: "NAMER", group: "region", listId: 31109 },
+  { label: "EMEA", group: "region", listId: 31133 },
+  { label: "APAC", group: "region", listId: 31134 },
+  { label: "Other", group: "region", listId: 31136 },
+  { label: "Prospects", group: "audience", listId: 31139 },
+  { label: "Customers", group: "audience", listId: 31140 },
 ];
 
 async function resolveSegment(listId: number): Promise<{
