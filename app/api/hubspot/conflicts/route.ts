@@ -37,7 +37,8 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 // subtler overlaps between smaller, more targeted lists.
 
 const ADJACENT_DAYS = 1; // same day or the very next day counts as a conflict window
-const WINDOW_DAYS = 14; // scan sends within the next 14 days
+const WINDOW_DAYS = 14; // scan sends within the next 14 days — cheap, list-ID-only comparison
+const REAL_OVERLAP_WINDOW_DAYS = 7; // real membership pulls only attempted for pairs both within this narrower window — per Justin, keeps the expensive part bounded without shrinking the cheap same-list check's full lookahead
 const SAFE_LIST_SIZE_CAP = 5000; // max list size to pull full membership for real overlap
 const MAX_PAGES_PER_LIST = 50; // 50 x 100 = 5,000 — matches SAFE_LIST_SIZE_CAP
 
@@ -240,6 +241,17 @@ export async function GET() {
         // approach above completely misses). Only flagged as a conflict
         // if genuine overlapping contacts are found AND every involved
         // list was small enough to check safely (null = skipped, not "0").
+        //
+        // Bounded to REAL_OVERLAP_WINDOW_DAYS (narrower than the full
+        // 14-day scan) — this is the expensive path (full membership
+        // pulls), so it's kept to the nearest week rather than the full
+        // lookahead, per Justin's stability concern.
+        const aWithinOverlapWindow =
+          new Date(a.publishDate!).getTime() - now <= REAL_OVERLAP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+        const bWithinOverlapWindow =
+          new Date(b.publishDate!).getTime() - now <= REAL_OVERLAP_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+        if (!aWithinOverlapWindow || !bWithinOverlapWindow) continue;
+
         if (listsA.length === 0 || listsB.length === 0) continue;
         const overlapResult = await computeRealOverlap(listsA, listsB, memberCache);
         if (overlapResult && overlapResult.overlapCount > 0) {
