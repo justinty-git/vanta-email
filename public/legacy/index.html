@@ -1109,9 +1109,17 @@ class Component extends DCLogic {
     // access... and start monitoring...") falsely inflated the count
     // and triggered a false "too many competing CTAs" — confirmed via a
     // real end-to-end test before fixing.
-    const CTA_VERBS = ['click','learn','get','sign','book','download','read','register','request','contact','start','try','schedule','watch','see','explore','discover','claim','save','reserve','unlock','access','view','shop','browse','subscribe','upgrade','activate','enable','complete','confirm','verify','update','renew','join','continue','apply','enroll','rsvp','attend','grab','redeem','share','invite','submit'];
+    //
+    // Plus a second pattern for question-style CTAs ("Ready to get
+    // started?", "Want to learn more?") — these structurally can't be
+    // caught by the sentence-start anchor above, since the actual verb
+    // sits mid-sentence after "Ready to"/"Want to". A question ending in
+    // a common CTA action phrase is its own distinct, common framing.
+    const CTA_VERBS = ['click','learn','get','sign','book','download','read','register','request','contact','start','try','schedule','watch','see','explore','discover','claim','save','reserve','unlock','access','view','shop','browse','subscribe','upgrade','activate','enable','complete','confirm','verify','update','renew','join','continue','apply','enroll','rsvp','attend','grab','redeem','share','invite','submit','check','head','take','follow','tap','swipe','meet','find','look'];
     const ctaPattern = new RegExp('(^|[.!?\\n]\\s*)(' + CTA_VERBS.join('|') + ')\\b\\s+\\w+', 'gi');
-    const cta = (t.match(ctaPattern) || []).length;
+    const CTA_ACTION_PHRASES = ['get started','learn more','sign up','try it','join','see how','check out','book a','schedule a'];
+    const questionCtaPattern = new RegExp('[^.!?]*(' + CTA_ACTION_PHRASES.join('|') + ')[^.!?]*\\?', 'gi');
+    const cta = (t.match(ctaPattern) || []).length + (t.match(questionCtaPattern) || []).length;
     let ctaS;
     if (cta === 0) ctaS = ['Warn', warn, warnb, 'No clear call-to-action found.'];
     else if (cta <= 3) ctaS = ['Pass', ok, okb, cta + ' CTA' + (cta > 1 ? 's' : '') + ' — focused ask.'];
