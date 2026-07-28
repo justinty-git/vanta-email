@@ -135,7 +135,7 @@ export type SegmentHealthResult = {
 };
 
 export async function computeSegmentHealth(): Promise<SegmentHealthResult[]> {
-  return Promise.all(
+  const regionResults = await Promise.all(
     SEGMENT_HEALTH_CONFIG.map(async (s) => {
       const [base, healthy] = await Promise.all([
         resolveListSize(s.baseListId),
@@ -156,5 +156,79 @@ export async function computeSegmentHealth(): Promise<SegmentHealthResult[]> {
       };
     })
   );
+
+  const other = await computeOtherNoLocationSegment();
+  return [...regionResults, other];
+}
+
+// "Other / No Location" — found via a real investigation: Global's
+// healthy count (370,817) was ~84,764 higher than the sum of NAMER +
+// EMEA + APAC's healthy counts (286,053). Checked directly against
+// HubSpot: 85,393 marketable contacts have no `country` property set at
+// all — very close to that gap. Region-based lists filter ON country,
+// so contacts missing that field can't land in any of them, but they
+// still count toward Global. This surfaces that real data-quality gap
+// directly, computed via property filters (not a maintained HubSpot
+// list, since "which contacts lack a property" is a query, not
+// something worth asking Justin to build and upkeep as a list).
+//
+// Uses the exact same "healthy" definition already verified for
+// Underutilized Audience: marketable = true, never hard-bounced, not
+// unsubscribed, <3 bounces (with the same null-vs-explicit-false
+// handling already confirmed necessary in this account — hs_email_bounce
+// needs an OR'd NOT_HAS_PROPERTY branch since most contacts have it
+// completely unset rather than "0").
+//
+// "Base" here means ALL contacts with no country set (any marketability
+// status) — matching how the other regions' base lists work (broad
+// population, not pre-filtered to marketable), so the health RATE is
+// computed the same way across every row.
+async function searchContactCount(filterGroups: any[]): Promise<number> {
+  const data = await hubspotFetch("/crm/v3/objects/contacts/search", {
+    method: "POST",
+    body: JSON.stringify({
+      filterGroups,
+      limit: 1,
+      properties: ["hs_object_id"],
+    }),
+  });
+  return data.total ?? 0;
+}
+
+async function computeOtherNoLocationSegment(): Promise<SegmentHealthResult> {
+  try {
+    const noCountry = { propertyName: "country", operator: "NOT_HAS_PROPERTY" };
+    const marketable = { propertyName: "hs_marketable_status", operator: "EQ", value: "true" };
+    const noHardBounce = { propertyName: "hs_email_hard_bounce_reason_enum", operator: "NOT_HAS_PROPERTY" };
+    const notOptedOut = { propertyName: "hs_email_optout", operator: "NOT_HAS_PROPERTY" };
+
+    const [totalCount, healthyCount] = await Promise.all([
+      searchContactCount([{ filters: [noCountry] }]),
+      searchContactCount([
+        { filters: [noCountry, marketable, noHardBounce, notOptedOut, { propertyName: "hs_email_bounce", operator: "LT", value: "3" }] },
+        { filters: [noCountry, marketable, noHardBounce, notOptedOut, { propertyName: "hs_email_bounce", operator: "NOT_HAS_PROPERTY" }] },
+      ]),
+    ]);
+
+    return {
+      label: "Other / No Location",
+      baseListId: -1,
+      healthyListId: -1,
+      totalCount,
+      healthyCount,
+      healthRate: totalCount > 0 ? healthyCount / totalCount : null,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      label: "Other / No Location",
+      baseListId: -1,
+      healthyListId: -1,
+      totalCount: null,
+      healthyCount: null,
+      healthRate: null,
+      error: (error as Error).message,
+    };
+  }
 }
 
