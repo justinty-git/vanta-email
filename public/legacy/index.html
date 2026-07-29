@@ -1636,7 +1636,7 @@ class Component extends DCLogic {
         ? 'Checking segment size…'
         : this.state.audienceStatusError
         ? this.state.audienceStatusError
-        : 'List of all segment totals as of today',
+        : 'List of all segment totals as of today' + (this.state.audienceStatusData && this.state.audienceStatusData.checkedAt ? ' · checked ' + new Date(this.state.audienceStatusData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
       audienceStatusRegionRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group !== 'audience').map((s, i) => ({
         label: s.label,
         detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
@@ -1657,7 +1657,7 @@ class Component extends DCLogic {
         ? 'Checking segment sizes…'
         : this.state.segmentHealthError
         ? this.state.segmentHealthError
-        : 'Daily % change to each segment · checked once a day',
+        : 'Daily % change to each segment · checked once a day' + (this.state.segmentHealthData && this.state.segmentHealthData.checkedAt ? ' · checked ' + new Date(this.state.segmentHealthData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
       segmentHealthRegionRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group !== 'audience').map((s, i) => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
         const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';

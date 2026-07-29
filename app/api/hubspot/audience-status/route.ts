@@ -73,6 +73,7 @@ export async function GET() {
     return NextResponse.json({
       status: "ok",
       segments: resolved,
+      checkedAt: new Date().toISOString(),
     });
   } catch (error) {
     return NextResponse.json(
