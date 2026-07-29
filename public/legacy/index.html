@@ -484,6 +484,9 @@
                 </span>
               </sc-if>
             </div>
+            <sc-if value="{{ performanceCheckedAt }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:0.6875rem; color:var(--text-tertiary); margin-bottom:6px;">Last updated {{ performanceCheckedAt }}</div>
+            </sc-if>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px;">Trailing 8 weeks · points turn red when notably below the trailing average</div>
             <sc-if value="{{ ctorEmpty }}" hint-placeholder-val="{{ false }}">
               <div style="height:220px; display:flex; align-items:center; justify-content:center; font-size:0.8125rem; color:var(--text-tertiary);">Not enough recent send data with opens yet to chart a trend.</div>
@@ -1576,6 +1579,7 @@ class Component extends DCLogic {
         { label: 'Unsub rate (30d)', value: performanceData && performanceData.unsubRate30d !== null ? (performanceData.unsubRate30d * 100).toFixed(2) + '%' : '—', trend: this.state.performanceLoading ? '…' : 'live', trendColor: 'var(--badge-success-text)', trendIcon: 'fa-bolt alpaca-fa-solid' },
       ],
 
+      performanceCheckedAt: this.state.performanceCheckedAt,
       weeklyPerformersCaption: (performanceData && performanceData.weeklyPerformers)
         ? 'Last ' + performanceData.weeklyPerformers.windowDays + ' days · DG/NU sends only'
         : '',
