@@ -1532,7 +1532,7 @@ class Component extends DCLogic {
         ? 'Scanning the next 14 days…'
         : this.state.conflictsError
         ? this.state.conflictsError
-        : 'Next 14 days · same/next-day + shared list = conflict' + (this.state.conflictsCheckedAt ? ' · checked ' + this.state.conflictsCheckedAt : ''),
+        : 'Next 14 days · same/next-day + shared list = conflict' + (this.state.conflictsCheckedAt ? ' · Last updated ' + this.state.conflictsCheckedAt : ''),
       conflictsEmpty: !this.state.conflictsLoading && !this.state.conflictsError && sendScheduleRows.length === 0,
       onRefreshConflicts: () => this.loadConflicts(),
       conflictsRefreshIcon: this.state.conflictsLoading ? 'fa-clock-rotate-left alpaca-fa-solid fa-spin' : 'fa-clock-rotate-left alpaca-fa-solid',
@@ -1564,7 +1564,7 @@ class Component extends DCLogic {
         ? 'Scanning recent sends…'
         : this.state.performanceError
         ? this.state.performanceError
-        : 'Derived from real per-email stats' + (performanceData ? ' · ' + performanceData.scannedCount + ' sends scanned over ' + performanceData.windowDays + ' days' : '') + (this.state.performanceCheckedAt ? ' · checked ' + this.state.performanceCheckedAt : ''),
+        : 'Derived from real per-email stats' + (performanceData ? ' · ' + performanceData.scannedCount + ' sends scanned over ' + performanceData.windowDays + ' days' : '') + (this.state.performanceCheckedAt ? ' · Last updated ' + this.state.performanceCheckedAt : ''),
       onRefreshPerformance: () => this.loadPerformance(),
       performanceRefreshIcon: this.state.performanceLoading ? 'fa-clock-rotate-left alpaca-fa-solid fa-spin' : 'fa-clock-rotate-left alpaca-fa-solid',
       performanceRefreshOpacity: this.state.performanceLoading ? 0.5 : 1,
@@ -1622,7 +1622,7 @@ class Component extends DCLogic {
         ? 'Checking marketing contact coverage…'
         : this.state.underutilizedError
         ? this.state.underutilizedError
-        : 'Checked against HubSpot\'s "[GLOBAL] Marketing Contacts" list' + (this.state.underutilizedData ? ' · checked ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
+        : 'Checked against HubSpot\'s "[GLOBAL] Marketing Contacts" list' + (this.state.underutilizedData ? ' · Last updated ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
       underutilizedHasData: !!(this.state.underutilizedData && this.state.underutilizedData.totalMarketable > 0),
       underutilizedCoveragePct: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(1) + '%' : '—',
       underutilizedCount: this.state.underutilizedData ? this.state.underutilizedData.underutilized.toLocaleString() : '—',
@@ -1636,7 +1636,7 @@ class Component extends DCLogic {
         ? 'Checking segment size…'
         : this.state.audienceStatusError
         ? this.state.audienceStatusError
-        : (this.state.audienceStatusData && this.state.audienceStatusData.checkedAt ? 'Checked ' + new Date(this.state.audienceStatusData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
+        : (this.state.audienceStatusData && this.state.audienceStatusData.checkedAt ? 'Last updated ' + new Date(this.state.audienceStatusData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
       audienceStatusRegionRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group !== 'audience').map((s, i) => ({
         label: s.label,
         detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
@@ -1657,7 +1657,7 @@ class Component extends DCLogic {
         ? 'Checking segment sizes…'
         : this.state.segmentHealthError
         ? this.state.segmentHealthError
-        : (this.state.segmentHealthData && this.state.segmentHealthData.checkedAt ? 'Checked ' + new Date(this.state.segmentHealthData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
+        : (this.state.segmentHealthData && this.state.segmentHealthData.checkedAt ? 'Last updated ' + new Date(this.state.segmentHealthData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
       segmentHealthRegionRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group !== 'audience').map((s, i) => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
         const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
