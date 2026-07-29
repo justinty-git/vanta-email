@@ -860,7 +860,7 @@ class Component extends DCLogic {
         this.setState({ performanceError: data.message, performanceData: null });
       } else {
         const now = new Date();
-        const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+        const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '');
         this.setState({ performanceData: data, performanceCheckedAt: time });
       }
     } catch (err) {
@@ -896,7 +896,7 @@ class Component extends DCLogic {
         this.setState({ conflictsError: data.message, conflictsData: null });
       } else {
         const now = new Date();
-        const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+        const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '');
         this.setState({ conflictsData: data, conflictsCheckedAt: time });
       }
     } catch (err) {
@@ -909,7 +909,7 @@ class Component extends DCLogic {
   formatSendDate(iso) {
     const d = new Date(iso);
     const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '');
     return date + ', ' + time;
   }
 
@@ -1622,7 +1622,7 @@ class Component extends DCLogic {
         ? 'Checking marketing contact coverage…'
         : this.state.underutilizedError
         ? this.state.underutilizedError
-        : 'Checked against HubSpot\'s "[GLOBAL] Marketing Contacts" list' + (this.state.underutilizedData ? ' · Last updated ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
+        : 'Checked against HubSpot\'s "[GLOBAL] Marketing Contacts" list' + (this.state.underutilizedData ? ' · Last updated ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
       underutilizedHasData: !!(this.state.underutilizedData && this.state.underutilizedData.totalMarketable > 0),
       underutilizedCoveragePct: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(1) + '%' : '—',
       underutilizedCount: this.state.underutilizedData ? this.state.underutilizedData.underutilized.toLocaleString() : '—',
@@ -1636,7 +1636,7 @@ class Component extends DCLogic {
         ? 'Checking segment size…'
         : this.state.audienceStatusError
         ? this.state.audienceStatusError
-        : (this.state.audienceStatusData && this.state.audienceStatusData.checkedAt ? 'Last updated ' + new Date(this.state.audienceStatusData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
+        : (this.state.audienceStatusData && this.state.audienceStatusData.checkedAt ? 'Last updated ' + new Date(this.state.audienceStatusData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
       audienceStatusRegionRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group !== 'audience').map((s, i) => ({
         label: s.label,
         detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
@@ -1657,7 +1657,7 @@ class Component extends DCLogic {
         ? 'Checking segment sizes…'
         : this.state.segmentHealthError
         ? this.state.segmentHealthError
-        : (this.state.segmentHealthData && this.state.segmentHealthData.checkedAt ? 'Last updated ' + new Date(this.state.segmentHealthData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase() : ''),
+        : (this.state.segmentHealthData && this.state.segmentHealthData.checkedAt ? 'Last updated ' + new Date(this.state.segmentHealthData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
       segmentHealthRegionRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group !== 'audience').map((s, i) => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
         const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
