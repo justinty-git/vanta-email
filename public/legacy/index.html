@@ -712,7 +712,7 @@ class Component extends DCLogic {
     lookupQuery: '', lookupResults: [], lookupLoading: false, lookupError: null, lookupSearched: false,
     lookupSelected: null, lookupMetrics: null, lookupMetricsLoading: false, lookupMetricsError: null,
     conflictsLoading: true, conflictsError: null, conflictsData: null, conflictsCheckedAt: null,
-    anomaliesLoading: true, anomaliesError: null, anomaliesData: null,
+    anomaliesLoading: true, anomaliesError: null, anomaliesData: null, anomaliesCheckedAt: null,
     performanceLoading: true, performanceError: null, performanceData: null, performanceCheckedAt: null,
     workflowsLoading: true, workflowsError: null, workflowsData: null,
     underutilizedLoading: true, underutilizedError: null, underutilizedData: null,
@@ -881,7 +881,8 @@ class Component extends DCLogic {
       if (data.status === 'error') {
         this.setState({ anomaliesError: data.message, anomaliesData: null });
       } else {
-        this.setState({ anomaliesData: data });
+        const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '');
+        this.setState({ anomaliesData: data, anomaliesCheckedAt: time });
       }
     } catch (err) {
       this.setState({ anomaliesError: "Couldn't reach the anomaly-detection service. Try again." });
@@ -1605,7 +1606,7 @@ class Component extends DCLogic {
         ? 'Scanning recent sends…'
         : this.state.anomaliesError
         ? this.state.anomaliesError
-        : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends · vs recent-batch average + known deliverability thresholds',
+        : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends · vs recent-batch average + known deliverability thresholds' + (this.state.anomaliesCheckedAt ? ' · Last updated ' + this.state.anomaliesCheckedAt : ''),
 
       watchdog: watchdogRows,
       watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading…' : (this.state.workflowsError ? 'Error' : 'Manually maintained'),
