@@ -206,42 +206,50 @@
 
         <!-- Quick Links -->
         <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:16px 20px; box-shadow:var(--shadow-card);">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
             <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="color:var(--icon-accent); font-size:13px;"></i>
             <span style="font-size:0.9375rem; font-weight:600; color:var(--text-primary);">Quick Links</span>
           </div>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <span style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); width:88px; flex-shrink:0;">Design</span>
-              <sc-for list="{{ quickLinksDesign }}" as="q" hint-placeholder-count="2">
-                <a href="{{ q.href }}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); text-decoration:none; font-size:0.75rem; font-weight:500; color:var(--text-secondary); white-space:nowrap;">
-                  <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:10px;"></i>{{ q.label }}
-                </a>
-              </sc-for>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:20px;">
+            <div>
+              <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Design</div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{ quickLinksDesign }}" as="q" hint-placeholder-count="2">
+                  <a href="{{ q.href }}" target="_blank" style="display:flex; align-items:center; gap:7px; text-decoration:none; font-size:0.8125rem; color:var(--text-secondary);">
+                    <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:11px; flex-shrink:0;"></i>{{ q.label }}
+                  </a>
+                </sc-for>
+              </div>
             </div>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <span style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); width:88px; flex-shrink:0;">Reference</span>
-              <sc-for list="{{ quickLinksReference }}" as="q" hint-placeholder-count="2">
-                <a href="{{ q.href }}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); text-decoration:none; font-size:0.75rem; font-weight:500; color:var(--text-secondary); white-space:nowrap;">
-                  <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:10px;"></i>{{ q.label }}
-                </a>
-              </sc-for>
+            <div>
+              <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Reference</div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{ quickLinksReference }}" as="q" hint-placeholder-count="2">
+                  <a href="{{ q.href }}" target="_blank" style="display:flex; align-items:center; gap:7px; text-decoration:none; font-size:0.8125rem; color:var(--text-secondary);">
+                    <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:11px; flex-shrink:0;"></i>{{ q.label }}
+                  </a>
+                </sc-for>
+              </div>
             </div>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <span style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); width:88px; flex-shrink:0;">Project Mgmt</span>
-              <sc-for list="{{ quickLinksPM }}" as="q" hint-placeholder-count="3">
-                <a href="{{ q.href }}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); text-decoration:none; font-size:0.75rem; font-weight:500; color:var(--text-secondary); white-space:nowrap;">
-                  <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:10px;"></i>{{ q.label }}
-                </a>
-              </sc-for>
+            <div>
+              <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Project Mgmt</div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{ quickLinksPM }}" as="q" hint-placeholder-count="3">
+                  <a href="{{ q.href }}" target="_blank" style="display:flex; align-items:center; gap:7px; text-decoration:none; font-size:0.8125rem; color:var(--text-secondary);">
+                    <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:11px; flex-shrink:0;"></i>{{ q.label }}
+                  </a>
+                </sc-for>
+              </div>
             </div>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <span style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); width:88px; flex-shrink:0;">Tools</span>
-              <sc-for list="{{ quickLinksTools }}" as="q" hint-placeholder-count="1">
-                <a href="{{ q.href }}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); text-decoration:none; font-size:0.75rem; font-weight:500; color:var(--text-secondary); white-space:nowrap;">
-                  <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:10px;"></i>{{ q.label }}
-                </a>
-              </sc-for>
+            <div>
+              <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Tools</div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{ quickLinksTools }}" as="q" hint-placeholder-count="1">
+                  <a href="{{ q.href }}" target="_blank" style="display:flex; align-items:center; gap:7px; text-decoration:none; font-size:0.8125rem; color:var(--text-secondary);">
+                    <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:11px; flex-shrink:0;"></i>{{ q.label }}
+                  </a>
+                </sc-for>
+              </div>
             </div>
           </div>
         </div>
