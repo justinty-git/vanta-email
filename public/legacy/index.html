@@ -178,7 +178,6 @@
                   <span style="font-size:1.375rem; font-weight:600; color:{{ p.metricColor }};">{{ p.metricValue }}</span>
                   <span style="font-size:0.75rem; color:var(--text-secondary);">{{ p.metricLabel }}</span>
                 </div>
-                <div style="font-size:0.75rem; color:var(--text-tertiary); margin-top:4px;">{{ p.subMetric }}</div>
               </div>
             </button>
           </sc-for>
@@ -1550,10 +1549,10 @@ class Component extends DCLogic {
       isOverview: active === 'overview', isGovern: active === 'govern', isBuild: active === 'build', isPerformance: active === 'performance', isHealth: active === 'health',
 
       pillars: [
-        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Send-conflict detection and Workflow Watchdog — governing the sending process itself.', metricValue: String(this.state.conflictsData ? this.state.conflictsData.conflicts.length : 0), metricLabel: 'send conflicts flagged', metricColor: (this.state.conflictsData && this.state.conflictsData.conflicts.length > 0) ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', subMetric: 'Send Conflict Detector · Workflow Watchdog', onClick: () => this.setState({ activeTab: 'govern' }) },
-        { icon: 'fa-hammer alpaca-fa-regular', name: 'Build', desc: 'Component library, Email Content Score, and an Outlook pre-flight utility.', metricValue: '2', metricLabel: 'live tools ready to use', metricColor: 'var(--badge-success-text)', subMetric: 'Paste content or HTML to score it', onClick: () => this.setState({ activeTab: 'build' }) },
-        { icon: 'fa-chart-line alpaca-fa-regular', name: 'Performance', desc: 'Click Rate Trend, Weekly Performers, per-email lookup, and Flagged Anomalies — how sends are doing, including problems.', metricValue: performanceData && performanceData.avgClickRate30d !== null ? (performanceData.avgClickRate30d * 100).toFixed(1) + '%' : '—', metricLabel: 'avg click rate (30d)', metricColor: 'var(--badge-success-text)', subMetric: 'Click Rate Trend · Weekly Performers · Flagged Anomalies', onClick: () => this.setState({ activeTab: 'performance' }) },
-        { icon: 'fa-heart-pulse alpaca-fa-regular', name: 'Health', desc: 'Underutilized Audience, Segment Sizing, and Audience Tracking — the state of the database itself.', metricValue: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(0) + '%' : '—', metricLabel: 'weekly reach (healthy contacts)', metricColor: 'var(--badge-success-text)', subMetric: 'Underutilized Audience · Segment Sizing · Audience Tracking', onClick: () => this.setState({ activeTab: 'health' }) },
+        { icon: 'fa-shield-check alpaca-fa-regular', name: 'Govern', desc: 'Send-conflict detection and Workflow Watchdog — governing the sending process itself.', metricValue: String(this.state.conflictsData ? this.state.conflictsData.conflicts.length : 0), metricLabel: 'send conflicts flagged', metricColor: (this.state.conflictsData && this.state.conflictsData.conflicts.length > 0) ? 'var(--badge-danger-text)' : 'var(--badge-success-text)', onClick: () => this.setState({ activeTab: 'govern' }) },
+        { icon: 'fa-hammer alpaca-fa-regular', name: 'Build', desc: 'Component library, Email Content Score, and an Outlook pre-flight utility.', metricValue: '2', metricLabel: 'live tools ready to use', metricColor: 'var(--badge-success-text)', onClick: () => this.setState({ activeTab: 'build' }) },
+        { icon: 'fa-chart-line alpaca-fa-regular', name: 'Performance', desc: 'Click Rate Trend, Weekly Performers, per-email lookup, and Flagged Anomalies — how sends are doing, including problems.', metricValue: performanceData && performanceData.avgClickRate30d !== null ? (performanceData.avgClickRate30d * 100).toFixed(1) + '%' : '—', metricLabel: 'avg click rate (30d)', metricColor: 'var(--badge-success-text)', onClick: () => this.setState({ activeTab: 'performance' }) },
+        { icon: 'fa-heart-pulse alpaca-fa-regular', name: 'Health', desc: 'Underutilized Audience, Segment Sizing, and Audience Tracking — the state of the database itself.', metricValue: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(0) + '%' : '—', metricLabel: 'weekly reach (healthy contacts)', metricColor: 'var(--badge-success-text)', onClick: () => this.setState({ activeTab: 'health' }) },
       ],
 
       attentionItems: attentionItems,
