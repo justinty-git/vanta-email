@@ -351,23 +351,35 @@
     <sc-if value="{{ isBuild }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex; flex-direction:column; gap:20px; max-width:1400px; margin:0 auto;">
 
-        <!-- Email Components Library (Figma link-out) — moved to top: browsing available components is the natural first step before drafting/scoring content -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:18px 20px; box-shadow:var(--shadow-card);">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; flex-wrap:wrap;">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <i class="fa-images alpaca-fa-regular" style="color:var(--icon-accent); font-size:14px;"></i>
-              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Email Components Library</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <a href="https://info.vanta.com/hubfs/mops-internal/email-ready-room/email-standards/email-best-practices.html" target="_blank" style="display:inline-flex; align-items:center; gap:6px; font-size:0.8125rem; font-weight:500; color:var(--icon-accent); white-space:nowrap;"><i class="fa-book alpaca-fa-regular" style="font-size:11px;"></i>Best Practices <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a>
+        <!-- Email Components Library + Email Best Practices — paired side-by-side, both are pre-build reference material -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+          <!-- Email Components Library (Figma link-out) -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:18px 20px; box-shadow:var(--shadow-card);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i class="fa-images alpaca-fa-regular" style="color:var(--icon-accent); font-size:14px;"></i>
+                <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Email Components Library</span>
+              </div>
               <a href="https://www.figma.com/design/MlE32aFvK37j0N86n7RYnx/Vanta-Email-Components?node-id=19-2&m=dev" target="_blank" style="display:inline-flex; align-items:center; gap:7px; font-size:0.8125rem; font-weight:500; padding:8px 14px; border-radius:var(--r-sm); background:var(--bg-card-alt); color:var(--icon-accent); white-space:nowrap;">Open in Figma <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:10px;"></i></a>
             </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px; line-height:1.5;">The à la carte set of approved building blocks for emails — browse by category before designing a new send from scratch.</div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <sc-for list="{{ componentCategories }}" as="c" hint-placeholder-count="5">
+                <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:500; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); color:var(--text-secondary);"><i class="{{ c.icon }}" style="font-size:10px; color:var(--icon-accent);"></i>{{ c.label }}</span>
+              </sc-for>
+            </div>
           </div>
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px; line-height:1.5;">The à la carte set of approved building blocks for emails — browse by category before designing a new send from scratch.</div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            <sc-for list="{{ componentCategories }}" as="c" hint-placeholder-count="5">
-              <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:500; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); color:var(--text-secondary);"><i class="{{ c.icon }}" style="font-size:10px; color:var(--icon-accent);"></i>{{ c.label }}</span>
-            </sc-for>
+
+          <!-- Email Best Practices -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:18px 20px; box-shadow:var(--shadow-card);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i class="fa-book alpaca-fa-regular" style="color:var(--icon-accent); font-size:14px;"></i>
+                <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Email Best Practices</span>
+              </div>
+              <a href="https://info.vanta.com/hubfs/mops-internal/email-ready-room/email-standards/email-best-practices.html" target="_blank" style="display:inline-flex; align-items:center; gap:7px; font-size:0.8125rem; font-weight:500; padding:8px 14px; border-radius:var(--r-sm); background:var(--bg-card-alt); color:var(--icon-accent); white-space:nowrap;">Open reference <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:10px;"></i></a>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">Standards for subject lines, CTAs, rendering, and tone — worth a check before sending anything new.</div>
           </div>
         </div>
 
