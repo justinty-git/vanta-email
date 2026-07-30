@@ -243,7 +243,7 @@ export async function GET() {
         const rank = { Critical: 4, High: 3, Medium: 2 }[riskLabel];
         const changeLabel =
           c.base && c.base > 0
-            ? (relChange >= 0 ? "+" : "") + Math.round(relChange * 100) + "% vs recent median"
+            ? (relChange >= 0 ? "+" : "") + Math.round(relChange * 100) + "%"
             : c.format(c.rate);
         const cause =
           c.base && c.base > 0
