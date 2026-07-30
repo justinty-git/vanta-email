@@ -304,7 +304,7 @@
                 <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ s.date }}</span>
                 <div style="display:flex; flex-direction:column; gap:2px;">
                   <sc-for list="{{ s.audienceLines }}" as="al" hint-placeholder-count="2">
-                    <span style="font-size:{{ al.fontSize }}; color:var(--text-tertiary); line-height:1.4;">{{ al.text }}</span>
+                    <a href="{{ al.href }}" target="_blank" style="display:block; font-size:{{ al.fontSize }}; color:{{ al.color }}; line-height:1.4; text-decoration:none; pointer-events:{{ al.pointerEvents }};">{{ al.text }}</a>
                   </sc-for>
                 </div>
                 <span style="font-size:0.875rem; font-weight:500; color:{{ s.overlapColor }};">{{ s.overlap }}</span>
@@ -989,17 +989,22 @@ class Component extends DCLogic {
 
     return (data.scanned || []).map(e => {
       const isFallbackId = (name) => /^List \d+$/.test(name);
-      const mkLine = (text, size) => ({
-        text: text + (typeof size === 'number' ? ' (' + size.toLocaleString() + ')' : ''),
+      const HUBSPOT_PORTAL_ID = '8588479';
+      const listUrl = (id) => 'https://app.hubspot.com/contacts/' + HUBSPOT_PORTAL_ID + '/objectLists/' + id + '/filters';
+      const mkLine = (text, id) => ({
+        text,
+        href: id ? listUrl(id) : '#',
+        color: id ? 'var(--icon-accent)' : 'var(--text-tertiary)',
+        pointerEvents: id ? 'auto' : 'none',
         fontSize: isFallbackId(text) ? '0.6125rem' : '0.875rem',
       });
-      const audienceLines = (e.lists || []).map(l => mkLine(l.name, l.size));
-      if (audienceLines.length === 0) audienceLines.push(mkLine('No list target resolved'));
+      const audienceLines = (e.lists || []).map(l => mkLine(l.name, l.id));
+      if (audienceLines.length === 0) audienceLines.push(mkLine('No list target resolved', null));
 
       if (e.status === 'conflict') {
         const c = detailByEmailId.get(e.id);
         const estimate = c ? c.contactsAtRiskEstimate : null;
-        const lines = estimate !== null ? [...audienceLines, { text: '~' + estimate.toLocaleString() + ' at risk', fontSize: '0.6125rem' }] : audienceLines;
+        const lines = estimate !== null ? [...audienceLines, { text: '~' + estimate.toLocaleString() + ' at risk', href: '#', color: 'var(--text-tertiary)', pointerEvents: 'none', fontSize: '0.6125rem' }] : audienceLines;
         return {
           campaign: e.name, date: this.formatSendDate(e.publishDate), dateNum: new Date(e.publishDate).getTime(),
           audienceLines: lines,
