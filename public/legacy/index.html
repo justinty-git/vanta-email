@@ -994,7 +994,7 @@ class Component extends DCLogic {
       const mkLine = (text, id) => ({
         text,
         href: id ? listUrl(id) : '#',
-        color: id ? 'var(--icon-accent)' : 'var(--text-tertiary)',
+        color: 'var(--text-tertiary)',
         pointerEvents: id ? 'auto' : 'none',
         fontSize: isFallbackId(text) ? '0.6125rem' : '0.875rem',
       });
