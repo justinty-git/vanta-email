@@ -113,6 +113,18 @@ function median(values: Array<number | null>): number | null {
 // send doesn't crowd out a real candidate within the scan window.
 const EXCLUDE_SUFFIX = /\b(RC|OP)\d*\s*$/i;
 
+// Excludes re-engagement / win-back sends — these deliberately target a
+// dormant/low-engagement audience, so naturally-low click rates aren't
+// an anomaly, they're the expected outcome of who's being emailed. If
+// left in, a re-engagement send could either get falsely flagged itself,
+// or (worse) drag the MEDIAN baseline down enough to make genuinely
+// normal sends to engaged audiences look artificially fine by
+// comparison. "Anti-Ghost" is a real, currently-active nurture name in
+// this account (confirmed via Workflow Watchdog), not a hypothetical
+// case. Applied the same way as EXCLUDE_SUFFIX — before slicing, so
+// excluded sends affect neither the candidate pool nor the baseline.
+const EXCLUDE_REENGAGEMENT = /\b(re-?engagement|win-?back|anti-?ghost|reactivat(e|ion)|dormant)\b/i;
+
 export async function GET() {
   try {
     const rawEmails = await fetchMarketingEmailsPaginated(3);
@@ -123,6 +135,7 @@ export async function GET() {
     const emails: EmailSummary[] = rawEmails
       .filter((e: any) => classifyEmailState(e.state) === "sent" && !!e.publishDate)
       .filter((e: any) => !EXCLUDE_SUFFIX.test(e.name || ""))
+      .filter((e: any) => !EXCLUDE_REENGAGEMENT.test(e.name || ""))
       .sort(
         (a: any, b: any) =>
           new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
