@@ -14,12 +14,17 @@ import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from 
 //
 // Bounce rate deliberately excluded as a flaggable metric (removed per
 // Justin: not something actionable day-to-day, and was triggering on
-// nearly every send). Spam/unsub/open/click rate remain.
+// nearly every send). Open rate also deliberately excluded (removed
+// per Justin: Apple Mail Privacy Protection's image prefetching, live
+// since 2021, means open events fire regardless of whether a person
+// actually opened the email — widely treated industry-wide as
+// unreliable beyond a rough directional signal, not something worth
+// flagging deviations on). Spam/unsub/click rate remain.
 //
 // This intentionally does NOT try to reproduce the Snowflake-backed CTOR
 // trend / Top-5-Bottom-5 panels — those stay as-is. This is a parallel,
-// HubSpot-only anomaly surface: per-send unsub/spam/open/click health,
-// not historical trend analysis.
+// HubSpot-only anomaly surface: per-send unsub/spam/click health, not
+// historical trend analysis.
 //
 // Field names verified against HubSpot's Marketing Email statistics
 // response: counters.{sent,delivered,open,click,bounce,unsubscribed,
@@ -138,7 +143,6 @@ export async function GET() {
     }
 
     const baseline = {
-      openRate: median(Array.from(metricsById.values()).map((m) => m.openRate)),
       clickRate: median(Array.from(metricsById.values()).map((m) => m.clickRate)),
       unsubRate: median(Array.from(metricsById.values()).map((m) => m.unsubRate)),
       spamRate: median(Array.from(metricsById.values()).map((m) => m.spamRate)),
@@ -193,13 +197,6 @@ export async function GET() {
           hardHigh: HARD.unsubHigh,
           minFloor: 0.01,
           format: (v) => (v * 100).toFixed(2) + "%",
-        },
-        {
-          metric: "Open rate",
-          rate: m.openRate,
-          base: baseline.openRate,
-          higherIsBad: false,
-          format: (v) => (v * 100).toFixed(1) + "%",
         },
         {
           metric: "Click rate",
