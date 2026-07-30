@@ -155,7 +155,7 @@
       <div style="display:flex; flex-direction:column; gap:20px; max-width:1400px; margin:0 auto;">
         <div>
           <div style="font-size:1.5rem; font-weight:600; color:var(--text-primary);">{{ greeting }}, Justin</div>
-          <div style="font-size:0.875rem; color:var(--text-secondary); margin-top:2px;">Vanta's live email operations command center — conflict detection, anomaly monitoring, performance reporting, workflow health, and content QA, all running on real HubSpot data.</div>
+          <div style="font-size:0.875rem; color:var(--text-secondary); margin-top:2px;">Vanta's live email operations command center — send conflict detection, database and audience health, performance reporting, and content QA, all running on real HubSpot data.</div>
         </div>
 
         <!-- Category legend removed per feedback — badges on each panel are self-explanatory -->
@@ -328,7 +328,7 @@
           </div>
           <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ watchdogCaption }}</div>
           <div style="display:flex; flex-direction:column;">
-            <sc-for list="{{ watchdog }}" as="w" hint-placeholder-count="5">
+            <sc-for list="{{ watchdog }}" as="w" hint-placeholder-count="6">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
                 <div style="min-width:0;">
                   <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.workflow }}</div>
