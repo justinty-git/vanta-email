@@ -206,16 +206,43 @@
 
         <!-- Quick Links -->
         <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:16px 20px; box-shadow:var(--shadow-card);">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
             <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="color:var(--icon-accent); font-size:13px;"></i>
             <span style="font-size:0.9375rem; font-weight:600; color:var(--text-primary);">Quick Links</span>
           </div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            <sc-for list="{{ quickLinksAll }}" as="q" hint-placeholder-count="8">
-              <a href="{{ q.href }}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); text-decoration:none; font-size:0.75rem; font-weight:500; color:var(--text-secondary); white-space:nowrap;">
-                <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:10px;"></i>{{ q.label }}
-              </a>
-            </sc-for>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); width:88px; flex-shrink:0;">Design</span>
+              <sc-for list="{{ quickLinksDesign }}" as="q" hint-placeholder-count="2">
+                <a href="{{ q.href }}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); text-decoration:none; font-size:0.75rem; font-weight:500; color:var(--text-secondary); white-space:nowrap;">
+                  <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:10px;"></i>{{ q.label }}
+                </a>
+              </sc-for>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); width:88px; flex-shrink:0;">Reference</span>
+              <sc-for list="{{ quickLinksReference }}" as="q" hint-placeholder-count="2">
+                <a href="{{ q.href }}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); text-decoration:none; font-size:0.75rem; font-weight:500; color:var(--text-secondary); white-space:nowrap;">
+                  <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:10px;"></i>{{ q.label }}
+                </a>
+              </sc-for>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); width:88px; flex-shrink:0;">Project Mgmt</span>
+              <sc-for list="{{ quickLinksPM }}" as="q" hint-placeholder-count="3">
+                <a href="{{ q.href }}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); text-decoration:none; font-size:0.75rem; font-weight:500; color:var(--text-secondary); white-space:nowrap;">
+                  <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:10px;"></i>{{ q.label }}
+                </a>
+              </sc-for>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:0.6875rem; font-weight:600; color:var(--text-tertiary); width:88px; flex-shrink:0;">Tools</span>
+              <sc-for list="{{ quickLinksTools }}" as="q" hint-placeholder-count="1">
+                <a href="{{ q.href }}" target="_blank" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:var(--bg-card-alt); text-decoration:none; font-size:0.75rem; font-weight:500; color:var(--text-secondary); white-space:nowrap;">
+                  <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:10px;"></i>{{ q.label }}
+                </a>
+              </sc-for>
+            </div>
           </div>
         </div>
       </div>
@@ -1523,14 +1550,20 @@ class Component extends DCLogic {
       ],
 
       attentionItems: attentionItems,
-      quickLinksAll: [
+      quickLinksDesign: [
         { label: 'Email Gallery', icon: 'fa-images alpaca-fa-regular', href: 'https://info.vanta.com/hubfs/mops-internal/email-inventory/fy27/vanta-fy27-email-gallery.html' },
         { label: 'Component Library', icon: 'fa-hammer alpaca-fa-regular', href: 'https://www.figma.com/design/MlE32aFvK37j0N86n7RYnx/Vanta-Email-Components?node-id=19-2&m=dev' },
+      ],
+      quickLinksReference: [
         { label: 'HubSpot Common Segments', icon: 'fa-grid-2 alpaca-fa-regular', href: 'https://docs.google.com/spreadsheets/d/1u-Q2vNS_JQsSluwf71-QQup2nc6VbD1fyWs6H0dEzs4/edit?gid=0#gid=0' },
         { label: 'Email Best Practices', icon: 'fa-book alpaca-fa-regular', href: 'https://info.vanta.com/hubfs/mops-internal/email-ready-room/email-standards/email-best-practices.html' },
+      ],
+      quickLinksPM: [
         { label: 'Email Calendar', icon: 'fa-clock-rotate-left alpaca-fa-regular', href: 'https://vanta.atlassian.net/jira/software/c/projects/EMAIL/boards/2551/calendar?filter=type%20%3D%20Task' },
         { label: 'Email Intake', icon: 'fa-inbox-full alpaca-fa-regular', href: 'https://vanta.atlassian.net/jira/software/c/projects/EMAIL/form/599' },
         { label: 'Email Brief Template', icon: 'fa-clipboard-list alpaca-fa-regular', href: 'https://docs.google.com/document/d/1E3DaN7jVQrBs156zv-BCERYAjjtmA_d2taUEGIL51gw/edit?tab=t.0' },
+      ],
+      quickLinksTools: [
         { label: 'Email Metrics Analyzer', icon: 'fa-magnifying-glass-chart alpaca-fa-regular', href: 'https://claude.ai/customize/skills?selectedId=skill_016cHAv1oGQJz9g7seMHGjD2' },
       ],
       attentionEmpty: !this.state.conflictsLoading && !this.state.anomaliesLoading && attentionItems.length === 0,
