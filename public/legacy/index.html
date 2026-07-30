@@ -942,8 +942,11 @@ class Component extends DCLogic {
 
     return (data.scanned || []).map(e => {
       const isFallbackId = (name) => /^List \d+$/.test(name);
-      const mkLine = (text) => ({ text, fontSize: isFallbackId(text) ? '0.6125rem' : '0.875rem' });
-      const audienceLines = (e.lists || []).map(l => mkLine(l.name));
+      const mkLine = (text, size) => ({
+        text: text + (typeof size === 'number' ? ' (' + size.toLocaleString() + ')' : ''),
+        fontSize: isFallbackId(text) ? '0.6125rem' : '0.875rem',
+      });
+      const audienceLines = (e.lists || []).map(l => mkLine(l.name, l.size));
       if (audienceLines.length === 0) audienceLines.push(mkLine('No list target resolved'));
 
       if (e.status === 'conflict') {

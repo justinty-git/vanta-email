@@ -56,12 +56,22 @@ async function resolveListInfo(listIds: string[]): Promise<Map<string, ListInfo>
   // since it's deduped across all scheduled emails, not once per email.
   for (const id of listIds) {
     try {
-      const data = await hubspotFetch(`/crm/v3/lists/${id}`);
-      const list = data.list ?? data;
+      // Name and size come from two different calls: GET /crm/v3/lists/{id}
+      // for the name, and GET /crm/v3/lists/{id}/memberships?limit=1 for a
+      // REAL size (its `total` field). The plain GET's own `size` property
+      // was never confirmed reliable — everywhere else in this app
+      // (Segment Sizing, Region Tracking) the only field confirmed to
+      // actually return a real, live count is memberships.total, so this
+      // uses the same proven pattern rather than trust an unverified field.
+      const [listData, membershipsData] = await Promise.all([
+        hubspotFetch(`/crm/v3/lists/${id}`),
+        hubspotFetch(`/crm/v3/lists/${id}/memberships?limit=1`),
+      ]);
+      const list = listData.list ?? listData;
       map.set(id, {
         id,
         name: list.name || `List ${id}`,
-        size: typeof list.size === "number" ? list.size : null,
+        size: typeof membershipsData.total === "number" ? membershipsData.total : null,
       });
     } catch {
       // List may be deleted/inaccessible — still show the conflict, just
