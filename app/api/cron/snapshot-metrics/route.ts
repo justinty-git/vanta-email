@@ -4,7 +4,10 @@ import { ensureSchema, getPool } from "@/lib/db";
 
 // GET /api/cron/snapshot-metrics
 //
-// Runs daily via Vercel Cron (see vercel.json). Writes one row per
+// Runs twice daily via Vercel Cron (see vercel.json — 10AM and 10PM
+// Eastern, currently EDT/UTC-4; cron times are fixed UTC and don't
+// auto-adjust for daylight saving, so this will need a one-hour nudge
+// when DST changes in November). Writes one row per
 // tracked metric into metric_snapshots (Aurora PostgreSQL) — this is
 // what turns "right now" panels into an actual trend over time, and
 // (as of this version) also what the 3 slow-moving Health panels read
