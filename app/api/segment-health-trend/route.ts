@@ -60,6 +60,8 @@ export async function GET(request: Request) {
       metricType,
       trailingDays: TRAILING_DAYS,
       segments: bySegment,
+    }, {
+      headers: { "Cache-Control": "no-store, max-age=0" },
     });
   } catch (error) {
     return NextResponse.json(

@@ -68,6 +68,8 @@ export async function GET() {
       status: "ok",
       segments,
       checkedAt: mostRecentCheckedAt,
+    }, {
+      headers: { "Cache-Control": "no-store, max-age=0" },
     });
   } catch (error) {
     return NextResponse.json(

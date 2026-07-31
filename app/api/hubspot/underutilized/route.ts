@@ -48,6 +48,8 @@ export async function GET() {
         coveragePct: null,
         checkedAt: null,
         pending: true, // no snapshot written yet — cron hasn't run
+      }, {
+        headers: { "Cache-Control": "no-store, max-age=0" },
       });
     }
 
@@ -63,6 +65,8 @@ export async function GET() {
       underutilized,
       coveragePct: row.rate !== null ? Number(row.rate) : null,
       checkedAt: row.created_at,
+    }, {
+      headers: { "Cache-Control": "no-store, max-age=0" },
     });
   } catch (error) {
     return NextResponse.json(

@@ -38,6 +38,8 @@ export async function GET() {
         fatiguedPct: null,
         checkedAt: null,
         pending: true,
+      }, {
+        headers: { "Cache-Control": "no-store, max-age=0" },
       });
     }
 
@@ -54,6 +56,8 @@ export async function GET() {
       fatigued,
       fatiguedPct,
       checkedAt: row.created_at,
+    }, {
+      headers: { "Cache-Control": "no-store, max-age=0" },
     });
   } catch (error) {
     return NextResponse.json(
