@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { ensureSchema, getPool } from "@/lib/db";
 
+// Force dynamic — see app/api/hubspot/audience-status/route.ts for the
+// full reasoning. Without this, Next.js can serve a cached/stale
+// response instead of re-querying Postgres on every request.
+export const dynamic = "force-dynamic";
 // GET /api/segment-health-trend?metricType=segment_health|underutilized
 //
 // Reads a stored metric's time series from Aurora PostgreSQL (written

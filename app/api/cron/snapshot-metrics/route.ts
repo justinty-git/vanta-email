@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { computeSegmentHealth, computeUnderutilized, computeSegmentSizing, computeSourceHealth, computeFatigue } from "@/lib/hubspot";
 import { ensureSchema, getPool } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/cron/snapshot-metrics
 //
 // Runs twice daily via Vercel Cron (see vercel.json — 10AM and 10PM

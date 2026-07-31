@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { SEGMENT_SIZING_CONFIG } from "@/lib/hubspot";
 import { ensureSchema, getPool } from "@/lib/db";
 
+// Force dynamic — without this, Next.js can treat a GET route with no
+// explicit dynamic-data hints as cacheable and serve a stale response
+// instead of re-querying Postgres on every request. Confirmed via a
+// real staleness bug: this route was showing a snapshot from a full
+// day earlier than what was actually stored, and Vercel's own runtime
+// logs showed cache=HIT/STALE annotations on this exact route.
+export const dynamic = "force-dynamic";
+
 // GET /api/hubspot/audience-status ("Segment Sizing")
 //
 // CHANGED: this used to resolve every segment's real size live from

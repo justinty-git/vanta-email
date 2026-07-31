@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { SEGMENT_HEALTH_CONFIG } from "@/lib/hubspot";
 import { ensureSchema, getPool } from "@/lib/db";
 
+// Force dynamic — see audience-status/route.ts for the full reasoning.
+// Without this, Next.js can serve a cached/stale response instead of
+// re-querying Postgres on every request.
+export const dynamic = "force-dynamic";
+
 // GET /api/hubspot/segment-health ("Audience Tracking")
 //
 // CHANGED: this used to compute live from HubSpot on every page load —

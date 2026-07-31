@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { SOURCE_VALUES } from "@/lib/hubspot";
 import { ensureSchema, getPool } from "@/lib/db";
 
+// Force dynamic — see audience-status/route.ts for the full reasoning.
+// Without this, Next.js can serve a cached/stale response instead of
+// re-querying Postgres on every request.
+export const dynamic = "force-dynamic";
+
 // GET /api/hubspot/source-health
 //
 // Reads the latest daily snapshot for each hs_analytics_source value —
