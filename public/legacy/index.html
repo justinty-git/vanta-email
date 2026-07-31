@@ -101,6 +101,14 @@
     .pillar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
     @media (max-width: 980px) { .pillar-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 560px) { .pillar-grid { grid-template-columns: 1fr; } }
+    /* Lightweight glossary tooltips — pure CSS hover, no JS state needed.
+       Small "?" badge (no question-mark icon available in this app's
+       icon set, so a styled text badge instead) that reveals an
+       explanation bubble on hover. */
+    .info-tip { position: relative; display: inline-flex; vertical-align: middle; cursor: help; }
+    .info-tip .tip-badge { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-card-alt); color: var(--text-tertiary); font-size: 0.625rem; font-weight: 700; line-height: 1; }
+    .info-tip .tip-bubble { visibility: hidden; opacity: 0; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); width: 220px; background: var(--tab-bg); border: 1px solid var(--border-card); border-radius: var(--r-sm); padding: 9px 11px; font-size: 0.75rem; font-weight: 400; line-height: 1.45; color: var(--text-secondary); text-align: left; white-space: normal; box-shadow: 0 4px 16px rgba(0,0,0,0.18); z-index: 30; transition: opacity 0.12s ease; pointer-events: none; }
+    .info-tip:hover .tip-bubble { visibility: visible; opacity: 1; }
   </style>
 </helmet>
 
@@ -656,7 +664,9 @@
           <sc-if value="{{ underutilizedHasData }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
               <span style="font-size:2rem; font-weight:700; color:var(--text-primary);">{{ underutilizedCoveragePct }}</span>
-              <span style="font-size:0.8125rem; color:var(--text-secondary);">reached in the last {{ underutilizedWindowDays }} days</span>
+              <span style="font-size:0.8125rem; color:var(--text-secondary); display:flex; align-items:center; gap:5px;">reached in the last {{ underutilizedWindowDays }} days
+                <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">"Reach" = the share of healthy marketing contacts who received at least one marketing email in this window. Low reach can mean an audience isn't being emailed enough, not that anything is broken.</span></span>
+              </span>
             </div>
             <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
           </sc-if>
@@ -669,6 +679,7 @@
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
               <i class="fa-grid-2 alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Segment Sizing</span>
+              <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Region = geography (NAMER, EMEA, APAC, etc). Type = audience category (Prospects, Customers) rather than a place. Same segments, two different ways to slice the same database.</span></span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ audienceStatusBadgeBg }}; color:{{ audienceStatusBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ audienceStatusBadgeLabel }}</span>
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:18px;">{{ audienceStatusCaption }}</div>
@@ -705,6 +716,7 @@
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
               <i class="fa-arrows-up-down alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Audience Tracking</span>
+              <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Health rate = healthy contacts ÷ total contacts in that segment's base list. Healthy means marketable, never hard-bounced, not unsubscribed, and under 3 bounces. The arrow below each row shows whether that segment's own size grew or shrank since yesterday.</span></span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ segmentHealthBadgeBg }}; color:{{ segmentHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ segmentHealthBadgeLabel }}</span>
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:18px;">{{ segmentHealthCaption }}</div>
