@@ -222,7 +222,7 @@
             <div>
               <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px;">Design</div>
               <div style="display:flex; flex-direction:column; gap:8px;">
-                <sc-for list="{{ quickLinksDesign }}" as="q" hint-placeholder-count="2">
+                <sc-for list="{{ quickLinksDesign }}" as="q" hint-placeholder-count="3">
                   <a href="{{ q.href }}" target="_blank" style="display:flex; align-items:center; gap:7px; text-decoration:none; font-size:0.8125rem; color:var(--text-secondary);">
                     <i class="{{ q.icon }}" style="color:var(--icon-accent); font-size:11px; flex-shrink:0;"></i>{{ q.label }}
                   </a>
@@ -1670,6 +1670,7 @@ class Component extends DCLogic {
       quickLinksDesign: [
         { label: 'Email Gallery', icon: 'fa-images alpaca-fa-regular', href: 'https://info.vanta.com/hubfs/mops-internal/email-inventory/fy27/vanta-fy27-email-gallery.html' },
         { label: 'Component Library', icon: 'fa-hammer alpaca-fa-regular', href: 'https://www.figma.com/design/MlE32aFvK37j0N86n7RYnx/Vanta-Email-Components?node-id=19-2&m=dev' },
+        { label: 'Design System Reference', icon: 'fa-eye alpaca-fa-regular', href: 'https://info.vanta.com/hubfs/mops-internal/email-ready-room/email-design/Vanta%20Design%20System%20Reference%20(standalone).html' },
       ],
       quickLinksReference: [
         { label: 'HubSpot Common Segments', icon: 'fa-grid-2 alpaca-fa-regular', href: 'https://docs.google.com/spreadsheets/d/1u-Q2vNS_JQsSluwf71-QQup2nc6VbD1fyWs6H0dEzs4/edit?gid=0#gid=0' },
