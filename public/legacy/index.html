@@ -1703,11 +1703,13 @@ class Component extends DCLogic {
         ? 'Checking marketing contact coverage…'
         : this.state.underutilizedError
         ? this.state.underutilizedError
-        : 'Checked against HubSpot\'s "[GLOBAL] Marketing Contacts" list' + (this.state.underutilizedData ? ' · Last updated ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
+        : (this.state.underutilizedData && this.state.underutilizedData.pending)
+        ? 'Waiting on the first daily snapshot — check back after the next scheduled run'
+        : 'Checked against HubSpot\'s "[GLOBAL] Marketing Contacts" list' + (this.state.underutilizedData && this.state.underutilizedData.checkedAt ? ' · Last updated ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
       underutilizedHasData: !!(this.state.underutilizedData && this.state.underutilizedData.totalMarketable > 0),
       underutilizedCoveragePct: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(1) + '%' : '—',
-      underutilizedCount: this.state.underutilizedData ? this.state.underutilizedData.underutilized.toLocaleString() : '—',
-      underutilizedTotal: this.state.underutilizedData ? this.state.underutilizedData.totalMarketable.toLocaleString() : '—',
+      underutilizedCount: (this.state.underutilizedData && this.state.underutilizedData.underutilized !== null) ? this.state.underutilizedData.underutilized.toLocaleString() : '—',
+      underutilizedTotal: (this.state.underutilizedData && this.state.underutilizedData.totalMarketable !== null) ? this.state.underutilizedData.totalMarketable.toLocaleString() : '—',
       underutilizedWindowDays: this.state.underutilizedData ? this.state.underutilizedData.windowDays : 7,
 
       audienceStatusBadgeLabel: this.state.audienceStatusLoading ? 'Loading · HubSpot' : (this.state.audienceStatusError ? 'Error · HubSpot' : 'Live · HubSpot'),

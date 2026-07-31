@@ -1,79 +1,58 @@
 import { NextResponse } from "next/server";
-import { hubspotFetch } from "@/lib/hubspot";
+import { SEGMENT_SIZING_CONFIG } from "@/lib/hubspot";
+import { ensureSchema, getPool } from "@/lib/db";
 
-// GET /api/hubspot/audience-status
+// GET /api/hubspot/audience-status ("Segment Sizing")
 //
-// "Segment Sizing" (renamed from "Audience Status") — a list of all
-// segment totals as of today. Justin defines the segments (label +
-// HubSpot list ID) — this route resolves each to its real name and
-// size. Same list-resolution pattern already proven reliable in the
-// conflicts route (list name via GET /crm/v3/lists/{listId}) and
-// confirmed for size via GET /crm/v3/lists/{listId}/memberships (the
-// memberships.total field is explicitly documented). This is a plain
-// contact list lookup, not the Workflows/Flows-platform issue that
-// broke Workflow Watchdog's contactListIds — that was a different,
-// automation-specific API problem, not a general problem with list
-// resolution.
+// CHANGED: this used to resolve every segment's real size live from
+// HubSpot on every page load (2 API calls per segment, every time
+// anyone opened the Health tab). Segment sizes only meaningfully move
+// day to day — hitting HubSpot live on every load was real,
+// unnecessary cost. Now reads the latest daily snapshot already
+// written by the cron job (app/api/cron/snapshot-metrics), same
+// Postgres table used everywhere else. Still effectively instant on
+// page load and still genuinely current.
 //
-// group distinguishes REGIONS from AUDIENCE TYPES (Prospects/Customers)
-// — Justin flagged that Prospects/Customers aren't regions and
-// shouldn't be lumped into the same panel, so the UI splits into two
-// separate panel pairs based on this tag.
-
-const SEGMENTS: Array<{ label: string; group: "region" | "audience"; listId: number }> = [
-  { label: "Global", group: "region", listId: 30565 },
-  { label: "NAMER", group: "region", listId: 31109 },
-  { label: "EMEA", group: "region", listId: 31133 },
-  { label: "APAC", group: "region", listId: 31134 },
-  { label: "Other", group: "region", listId: 31136 },
-  { label: "Prospects", group: "audience", listId: 31139 },
-  { label: "Customers", group: "audience", listId: 31140 },
-];
-
-async function resolveSegment(listId: number): Promise<{
-  label: string;
-  listId: number;
-  name: string | null;
-  size: number | null;
-  error: string | null;
-}> {
-  try {
-    const [listData, membershipsData] = await Promise.all([
-      hubspotFetch(`/crm/v3/lists/${listId}`),
-      hubspotFetch(`/crm/v3/lists/${listId}/memberships?limit=1`),
-    ]);
-    const list = listData.list ?? listData;
-    return {
-      label: "",
-      listId,
-      name: list.name || null,
-      size: typeof membershipsData.total === "number" ? membershipsData.total : null,
-      error: null,
-    };
-  } catch (error) {
-    return {
-      label: "",
-      listId,
-      name: null,
-      size: null,
-      error: (error as Error).message,
-    };
-  }
-}
+// The UI only ever used `label` (from config) and `size` (resolved) —
+// never the HubSpot list's own raw name — so nothing is lost by
+// sourcing size from the snapshot instead of a live list-name lookup.
 
 export async function GET() {
   try {
-    const resolved = await Promise.all(
-      SEGMENTS.map(async (s) => {
-        const r = await resolveSegment(s.listId);
-        return { ...r, label: s.label, group: s.group };
-      })
+    await ensureSchema();
+    const db = getPool();
+
+    const result = await db.query(
+      `SELECT DISTINCT ON (segment_label) segment_label, total_count, created_at
+       FROM metric_snapshots
+       WHERE metric_type = 'segment_sizing'
+       ORDER BY segment_label, snapshot_date DESC`
     );
+
+    const sizeByLabel = new Map<string, { size: number | null; checkedAt: string }>();
+    for (const row of result.rows) {
+      sizeByLabel.set(row.segment_label, { size: row.total_count, checkedAt: row.created_at });
+    }
+
+    const segments = SEGMENT_SIZING_CONFIG.map((s: { label: string; group: "region" | "audience"; listId: number }) => {
+      const snap = sizeByLabel.get(s.label);
+      return {
+        label: s.label,
+        group: s.group,
+        listId: s.listId,
+        size: snap ? snap.size : null,
+        error: snap ? null : "No snapshot yet",
+      };
+    });
+
+    const mostRecentCheckedAt = result.rows.length > 0
+      ? result.rows.reduce((latest: string, r: any) => (r.created_at > latest ? r.created_at : latest), result.rows[0].created_at)
+      : null;
 
     return NextResponse.json({
       status: "ok",
-      segments: resolved,
-      checkedAt: new Date().toISOString(),
+      segments,
+      checkedAt: mostRecentCheckedAt,
     });
   } catch (error) {
     return NextResponse.json(

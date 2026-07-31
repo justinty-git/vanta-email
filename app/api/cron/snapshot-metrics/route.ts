@@ -1,18 +1,25 @@
 import { NextResponse } from "next/server";
-import { computeSegmentHealth } from "@/lib/hubspot";
+import { computeSegmentHealth, computeUnderutilized, computeSegmentSizing } from "@/lib/hubspot";
 import { ensureSchema, getPool } from "@/lib/db";
 
 // GET /api/cron/snapshot-metrics
 //
-// Runs daily via Vercel Cron (see vercel.json). Computes today's
-// Segment Health for every configured region and writes one row per
-// segment into metric_snapshots (Aurora PostgreSQL). This is what turns
-// the "right now" Segment Health panel into an actual trend over time —
-// nothing charts until snapshots start accumulating here.
+// Runs daily via Vercel Cron (see vercel.json). Writes one row per
+// tracked metric into metric_snapshots (Aurora PostgreSQL) — this is
+// what turns "right now" panels into an actual trend over time, and
+// (as of this version) also what the 3 slow-moving Health panels read
+// from instead of hitting HubSpot live on every page load.
 //
-// Reuses computeSegmentHealth() from lib/hubspot.ts — the exact same
-// logic the live "/api/hubspot/segment-health" route uses, so the
-// stored history and the live view can never silently diverge.
+// Three metric types now, all sharing the same generic table:
+// - 'segment_health' (Region Tracking / Audience Tracking) — existing
+// - 'underutilized' (Underutilized Audience) — new
+// - 'segment_sizing' (Segment Sizing) — new
+//
+// Reuses the exact same compute functions the live routes used to call
+// directly — computeSegmentHealth(), computeUnderutilized(),
+// computeSegmentSizing() all live in lib/hubspot.ts, so the stored
+// snapshot and what the old live-HubSpot call would have returned can
+// never silently diverge.
 //
 // UPSERT on (metric_type, segment_label, snapshot_date): if the cron
 // runs more than once on the same day (manual trigger + scheduled, or
@@ -26,6 +33,24 @@ import { ensureSchema, getPool } from "@/lib/db";
 // currently a no-op — added so it's a one-line env var away from being
 // locked down, not because it's protecting anything today.
 
+async function upsertSnapshot(
+  db: any,
+  metricType: string,
+  label: string,
+  totalCount: number,
+  healthyCount: number | null,
+  rate: number | null,
+  snapshotDate: string
+) {
+  await db.query(
+    `INSERT INTO metric_snapshots (metric_type, segment_label, total_count, healthy_count, rate, snapshot_date)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (metric_type, segment_label, snapshot_date)
+     DO UPDATE SET total_count = EXCLUDED.total_count, healthy_count = EXCLUDED.healthy_count, rate = EXCLUDED.rate`,
+    [metricType, label, totalCount, healthyCount, rate, snapshotDate]
+  );
+}
+
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret) {
@@ -37,26 +62,45 @@ export async function GET(request: Request) {
 
   try {
     await ensureSchema();
-    const segments = await computeSegmentHealth();
     const db = getPool();
     const snapshotDate = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
     const written: string[] = [];
     const skipped: string[] = [];
 
+    // Segment Health (Region Tracking / Audience Tracking) — existing.
+    const segments = await computeSegmentHealth();
     for (const s of segments) {
       if (s.totalCount === null || s.healthyCount === null) {
-        skipped.push(s.label + (s.error ? ` (${s.error})` : " (missing data)"));
+        skipped.push(`segment_health:${s.label}` + (s.error ? ` (${s.error})` : " (missing data)"));
         continue;
       }
-      await db.query(
-        `INSERT INTO metric_snapshots (metric_type, segment_label, total_count, healthy_count, rate, snapshot_date)
-         VALUES ('segment_health', $1, $2, $3, $4, $5)
-         ON CONFLICT (metric_type, segment_label, snapshot_date)
-         DO UPDATE SET total_count = EXCLUDED.total_count, healthy_count = EXCLUDED.healthy_count, rate = EXCLUDED.rate`,
-        [s.label, s.totalCount, s.healthyCount, s.healthRate, snapshotDate]
-      );
-      written.push(s.label);
+      await upsertSnapshot(db, "segment_health", s.label, s.totalCount, s.healthyCount, s.healthRate, snapshotDate);
+      written.push(`segment_health:${s.label}`);
+    }
+
+    // Underutilized Audience — new. Single row; "healthy_count" here
+    // means "reached" (the complement of underutilized), matching the
+    // same total/healthy/rate shape as every other metric in this table.
+    try {
+      const u = await computeUnderutilized();
+      const reached = u.totalMarketable - u.underutilized;
+      await upsertSnapshot(db, "underutilized", "Global", u.totalMarketable, reached, u.coveragePct, snapshotDate);
+      written.push("underutilized:Global");
+    } catch (error) {
+      skipped.push(`underutilized:Global (${(error as Error).message})`);
+    }
+
+    // Segment Sizing — new. One row per segment; no healthy/rate
+    // concept here (it's a raw size list), so those columns stay null.
+    const sizingSegments = await computeSegmentSizing();
+    for (const s of sizingSegments) {
+      if (s.size === null) {
+        skipped.push(`segment_sizing:${s.label}` + (s.error ? ` (${s.error})` : " (missing data)"));
+        continue;
+      }
+      await upsertSnapshot(db, "segment_sizing", s.label, s.size, null, null, snapshotDate);
+      written.push(`segment_sizing:${s.label}`);
     }
 
     return NextResponse.json({

@@ -165,3 +165,108 @@ export async function computeSegmentHealth(): Promise<SegmentHealthResult[]> {
   );
 }
 
+
+// --- Underutilized Audience ---
+// Shared between the daily cron snapshot and (indirectly, via the
+// stored snapshot) the live-read route — same compute logic used to
+// live here, now runs once a day in the cron instead of on every page
+// load. See app/api/hubspot/underutilized/route.ts history for the
+// full reasoning on the property-filter/null-handling approach.
+const MARKETABLE_LIST_ID = 30565;
+const UNDERUTILIZED_WINDOW_DAYS = 7;
+
+async function searchContactCount(filterGroups: any[]): Promise<number> {
+  const data = await hubspotFetch("/crm/v3/objects/contacts/search", {
+    method: "POST",
+    body: JSON.stringify({
+      filterGroups,
+      limit: 1,
+      properties: ["hs_object_id"],
+    }),
+  });
+  return data.total ?? 0;
+}
+
+const marketableFilter = { propertyName: "hs_marketable_status", operator: "EQ", value: "true" };
+const noHardBounceFilter = { propertyName: "hs_email_hard_bounce_reason_enum", operator: "NOT_HAS_PROPERTY" };
+const notOptedOutFilter = { propertyName: "hs_email_optout", operator: "NOT_HAS_PROPERTY" };
+
+export type UnderutilizedResult = {
+  windowDays: number;
+  totalMarketable: number;
+  underutilized: number;
+  coveragePct: number | null;
+};
+
+export async function computeUnderutilized(): Promise<UnderutilizedResult> {
+  const cutoffMs = Date.now() - UNDERUTILIZED_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  const commonFilters = [marketableFilter, noHardBounceFilter, notOptedOutFilter];
+
+  const underutilizedBounceUnder3Promise = searchContactCount([
+    { filters: [...commonFilters, { propertyName: "hs_email_bounce", operator: "LT", value: "3" }, { propertyName: "hs_email_last_send_date", operator: "LT", value: String(cutoffMs) }] },
+    { filters: [...commonFilters, { propertyName: "hs_email_bounce", operator: "LT", value: "3" }, { propertyName: "hs_email_last_send_date", operator: "NOT_HAS_PROPERTY" }] },
+  ]);
+  const underutilizedBounceUnsetPromise = searchContactCount([
+    { filters: [...commonFilters, { propertyName: "hs_email_bounce", operator: "NOT_HAS_PROPERTY" }, { propertyName: "hs_email_last_send_date", operator: "LT", value: String(cutoffMs) }] },
+    { filters: [...commonFilters, { propertyName: "hs_email_bounce", operator: "NOT_HAS_PROPERTY" }, { propertyName: "hs_email_last_send_date", operator: "NOT_HAS_PROPERTY" }] },
+  ]);
+  const totalMarketablePromise = hubspotFetch(`/crm/v3/lists/${MARKETABLE_LIST_ID}/memberships?limit=1`)
+    .then((d: any) => (typeof d.total === "number" ? d.total : 0));
+
+  const [totalMarketable, underutilizedA, underutilizedB] = await Promise.all([
+    totalMarketablePromise,
+    underutilizedBounceUnder3Promise,
+    underutilizedBounceUnsetPromise,
+  ]);
+  const underutilized = underutilizedA + underutilizedB;
+  const coveragePct = totalMarketable > 0 ? 1 - underutilized / totalMarketable : null;
+
+  return { windowDays: UNDERUTILIZED_WINDOW_DAYS, totalMarketable, underutilized, coveragePct };
+}
+
+// --- Segment Sizing ---
+// Same SEGMENTS list used for the live view and the daily snapshot.
+export const SEGMENT_SIZING_CONFIG: Array<{ label: string; group: "region" | "audience"; listId: number }> = [
+  { label: "Global", group: "region", listId: 30565 },
+  { label: "NAMER", group: "region", listId: 31109 },
+  { label: "EMEA", group: "region", listId: 31133 },
+  { label: "APAC", group: "region", listId: 31134 },
+  { label: "Other", group: "region", listId: 31136 },
+  { label: "Prospects", group: "audience", listId: 31139 },
+  { label: "Customers", group: "audience", listId: 31140 },
+];
+
+export type SegmentSizingResult = {
+  label: string;
+  group: "region" | "audience";
+  listId: number;
+  name: string | null;
+  size: number | null;
+  error: string | null;
+};
+
+async function resolveSegmentSizing(listId: number): Promise<{ name: string | null; size: number | null; error: string | null }> {
+  try {
+    const [listData, membershipsData] = await Promise.all([
+      hubspotFetch(`/crm/v3/lists/${listId}`),
+      hubspotFetch(`/crm/v3/lists/${listId}/memberships?limit=1`),
+    ]);
+    const list = listData.list ?? listData;
+    return {
+      name: list.name || null,
+      size: typeof membershipsData.total === "number" ? membershipsData.total : null,
+      error: null,
+    };
+  } catch (error) {
+    return { name: null, size: null, error: (error as Error).message };
+  }
+}
+
+export async function computeSegmentSizing(): Promise<SegmentSizingResult[]> {
+  return Promise.all(
+    SEGMENT_SIZING_CONFIG.map(async (s) => {
+      const r = await resolveSegmentSizing(s.listId);
+      return { label: s.label, group: s.group, listId: s.listId, ...r };
+    })
+  );
+}
