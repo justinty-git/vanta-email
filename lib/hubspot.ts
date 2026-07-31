@@ -307,12 +307,16 @@ async function computeOneSourceHealth(source: { value: string; label: string }):
   try {
     const sourceFilter = { propertyName: "hs_analytics_source", operator: "EQ", value: source.value };
 
-    const [totalCount, healthyCount] = await Promise.all([
-      searchContactCount([{ filters: [sourceFilter] }]),
-      searchContactCount([
-        { filters: [sourceFilter, marketableFilter, noHardBounceFilter, notOptedOutFilter, { propertyName: "hs_email_bounce", operator: "LT", value: "3" }] },
-        { filters: [sourceFilter, marketableFilter, noHardBounceFilter, notOptedOutFilter, { propertyName: "hs_email_bounce", operator: "NOT_HAS_PROPERTY" }] },
-      ]),
+    // Sequential, not Promise.all — confirmed via a real cron run that
+    // this account's actual rate limit is a strict per-second bucket;
+    // even 2 concurrent calls per source, times 10 sources run in
+    // parallel (see computeSourceHealth below), was enough to trip a
+    // 429 RATE_LIMIT on 9 of 10 sources in one real run. Reliability
+    // matters far more than speed for a twice-daily cron.
+    const totalCount = await searchContactCount([{ filters: [sourceFilter] }]);
+    const healthyCount = await searchContactCount([
+      { filters: [sourceFilter, marketableFilter, noHardBounceFilter, notOptedOutFilter, { propertyName: "hs_email_bounce", operator: "LT", value: "3" }] },
+      { filters: [sourceFilter, marketableFilter, noHardBounceFilter, notOptedOutFilter, { propertyName: "hs_email_bounce", operator: "NOT_HAS_PROPERTY" }] },
     ]);
 
     return {
@@ -328,14 +332,17 @@ async function computeOneSourceHealth(source: { value: string; label: string }):
 }
 
 export async function computeSourceHealth(): Promise<SourceHealthResult[]> {
-  // Parallel across sources (not sequential) — this cron already does
-  // real work for segment_health/underutilized/segment_sizing, and
-  // adding 30 more sequential calls (10 sources x 3 calls each) risked
-  // pushing total execution time close to Vercel's function timeout.
-  // HubSpot's burst rate limit is per-second-bucket, not a hard cap on
-  // concurrency, so 10 parallel operations (each internally 2-3 calls)
-  // should stay well within it for an enterprise-tier app.
-  return Promise.all(SOURCE_VALUES.map((source) => computeOneSourceHealth(source)));
+  // Sequential across sources too — see computeOneSourceHealth's
+  // comment. A real cron run confirmed 429 RATE_LIMIT errors on 9 of
+  // 10 sources when this ran in parallel; reverted the earlier
+  // "optimize for execution time" choice, since it was solving a risk
+  // (timeout) that never actually materialized while causing one that
+  // did (rate limiting).
+  const results: SourceHealthResult[] = [];
+  for (const source of SOURCE_VALUES) {
+    results.push(await computeOneSourceHealth(source));
+  }
+  return results;
 }
 
 // --- Send Frequency / Fatigue Tracking ---
