@@ -51,7 +51,7 @@ async function upsertSnapshot(
     `INSERT INTO metric_snapshots (metric_type, segment_label, total_count, healthy_count, rate, snapshot_date)
      VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (metric_type, segment_label, snapshot_date)
-     DO UPDATE SET total_count = EXCLUDED.total_count, healthy_count = EXCLUDED.healthy_count, rate = EXCLUDED.rate`,
+     DO UPDATE SET total_count = EXCLUDED.total_count, healthy_count = EXCLUDED.healthy_count, rate = EXCLUDED.rate, created_at = NOW()`,
     [metricType, label, totalCount, healthyCount, rate, snapshotDate]
   );
 }
