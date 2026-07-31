@@ -669,6 +669,7 @@
               </span>
             </div>
             <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
+            <div style="font-size:0.75rem; color:{{ underutilizedTrendColor }}; margin-top:6px; font-weight:500;">{{ underutilizedTrendStatus }}</div>
           </sc-if>
         </div>
 
@@ -776,7 +777,7 @@ class Component extends DCLogic {
     anomaliesLoading: true, anomaliesError: null, anomaliesData: null, anomaliesCheckedAt: null,
     performanceLoading: true, performanceError: null, performanceData: null, performanceCheckedAt: null,
     workflowsLoading: true, workflowsError: null, workflowsData: null,
-    underutilizedLoading: true, underutilizedError: null, underutilizedData: null,
+    underutilizedLoading: true, underutilizedError: null, underutilizedData: null, underutilizedTrendData: null,
     hoveredCtorIndex: null,
     audienceStatusLoading: true, audienceStatusError: null, audienceStatusData: null,
     segmentHealthLoading: true, segmentHealthError: null, segmentHealthData: null,
@@ -793,6 +794,7 @@ class Component extends DCLogic {
     this.loadPerformance();
     this.loadWorkflows();
     this.loadUnderutilized();
+    this.loadUnderutilizedTrend();
     this.loadAudienceStatus();
     this.loadSegmentHealth();
     this.loadSegmentHealthTrend();
@@ -815,6 +817,7 @@ class Component extends DCLogic {
     // lighter-load compromise.
     this._underutilizedInterval = setInterval(() => {
       this.loadUnderutilized();
+      this.loadUnderutilizedTrend();
     }, 24 * 60 * 60 * 1000);
 
     // Segment Health's underlying metric (region health rate) doesn't
@@ -848,6 +851,19 @@ class Component extends DCLogic {
       this.setState({ underutilizedError: "Couldn't reach the coverage service. Try again." });
     } finally {
       this.setState({ underutilizedLoading: false });
+    }
+  }
+
+  async loadUnderutilizedTrend() {
+    try {
+      const res = await fetch('/api/segment-health-trend?metricType=underutilized');
+      const data = await res.json();
+      if (data.status !== 'error') {
+        this.setState({ underutilizedTrendData: data });
+      }
+    } catch (err) {
+      // Silent — trend is supplementary context, not worth its own error
+      // state on top of underutilizedError.
     }
   }
 
@@ -1711,6 +1727,25 @@ class Component extends DCLogic {
       underutilizedCount: (this.state.underutilizedData && this.state.underutilizedData.underutilized !== null) ? this.state.underutilizedData.underutilized.toLocaleString() : '—',
       underutilizedTotal: (this.state.underutilizedData && this.state.underutilizedData.totalMarketable !== null) ? this.state.underutilizedData.totalMarketable.toLocaleString() : '—',
       underutilizedWindowDays: this.state.underutilizedData ? this.state.underutilizedData.windowDays : 7,
+      underutilizedTrendStatus: (() => {
+        const trendPoints = (this.state.underutilizedTrendData && this.state.underutilizedTrendData.segments && this.state.underutilizedTrendData.segments['Global']) || [];
+        if (trendPoints.length < 2) return '';
+        const latest = trendPoints[trendPoints.length - 1];
+        const prev = trendPoints[trendPoints.length - 2];
+        if (latest.rate === null || prev.rate === null) return '';
+        const ptsDelta = (latest.rate - prev.rate) * 100;
+        const arrow = ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—';
+        return arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + ' pts reach since ' + prev.date;
+      })(),
+      underutilizedTrendColor: (() => {
+        const trendPoints = (this.state.underutilizedTrendData && this.state.underutilizedTrendData.segments && this.state.underutilizedTrendData.segments['Global']) || [];
+        if (trendPoints.length < 2) return 'var(--text-tertiary)';
+        const latest = trendPoints[trendPoints.length - 1];
+        const prev = trendPoints[trendPoints.length - 2];
+        if (latest.rate === null || prev.rate === null) return 'var(--text-tertiary)';
+        const ptsDelta = latest.rate - prev.rate;
+        return ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+      })(),
 
       audienceStatusBadgeLabel: this.state.audienceStatusLoading ? 'Loading · HubSpot' : (this.state.audienceStatusError ? 'Error · HubSpot' : 'Live · HubSpot'),
       audienceStatusBadgeBg: this.state.audienceStatusError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
