@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { computeSegmentHealth, computeUnderutilized, computeSegmentSizing } from "@/lib/hubspot";
+import { computeSegmentHealth, computeUnderutilized, computeSegmentSizing, computeSourceHealth, computeFatigue } from "@/lib/hubspot";
 import { ensureSchema, getPool } from "@/lib/db";
 
 // GET /api/cron/snapshot-metrics
@@ -104,6 +104,34 @@ export async function GET(request: Request) {
       }
       await upsertSnapshot(db, "segment_sizing", s.label, s.size, null, null, snapshotDate);
       written.push(`segment_sizing:${s.label}`);
+    }
+
+    // Source Health — new. One row per hs_analytics_source value.
+    const sourceHealthResults = await computeSourceHealth();
+    for (const s of sourceHealthResults) {
+      if (s.totalCount === null || s.healthyCount === null) {
+        skipped.push(`source_health:${s.label}` + (s.error ? ` (${s.error})` : " (missing data)"));
+        continue;
+      }
+      await upsertSnapshot(db, "source_health", s.label, s.totalCount, s.healthyCount, s.healthRate, snapshotDate);
+      written.push(`source_health:${s.label}`);
+    }
+
+    // Fatigue — new. Single row; "healthy_count" here means "NOT
+    // fatigued" (the complement), matching the same total/healthy/rate
+    // shape as every other metric in this table.
+    try {
+      const f = await computeFatigue();
+      if (f.totalMarketable === null || f.fatigued === null) {
+        skipped.push("fatigue:Global" + (f.error ? ` (${f.error})` : " (missing data)"));
+      } else {
+        const notFatigued = f.totalMarketable - f.fatigued;
+        const notFatiguedRate = f.totalMarketable > 0 ? notFatigued / f.totalMarketable : null;
+        await upsertSnapshot(db, "fatigue", "Global", f.totalMarketable, notFatigued, notFatiguedRate, snapshotDate);
+        written.push("fatigue:Global");
+      }
+    } catch (error) {
+      skipped.push(`fatigue:Global (${(error as Error).message})`);
     }
 
     return NextResponse.json({

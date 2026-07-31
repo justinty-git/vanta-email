@@ -270,3 +270,110 @@ export async function computeSegmentSizing(): Promise<SegmentSizingResult[]> {
     })
   );
 }
+
+// --- Source Health (contact source × health rate) ---
+// New per Justin — same healthy definition already proven for
+// Underutilized Audience / Other-No-Location, sliced by
+// hs_analytics_source instead of region or "no country". Verified
+// live before building: Paid Search source = 24,100 healthy / 38,214
+// total = 63.1%, a real, sensible number.
+//
+// "Base" here means ALL contacts with that source (any marketability
+// status), matching how Region Tracking's own base lists work — a
+// broad population, not pre-filtered to marketable — so health RATE is
+// computed the same way as every other segment in this app.
+export const SOURCE_VALUES: Array<{ value: string; label: string }> = [
+  { value: "ORGANIC_SEARCH", label: "Organic Search" },
+  { value: "PAID_SEARCH", label: "Paid Search" },
+  { value: "EMAIL_MARKETING", label: "Email Marketing" },
+  { value: "SOCIAL_MEDIA", label: "Organic Social" },
+  { value: "REFERRALS", label: "Referrals" },
+  { value: "OTHER_CAMPAIGNS", label: "Other Campaigns" },
+  { value: "DIRECT_TRAFFIC", label: "Direct Traffic" },
+  { value: "OFFLINE", label: "Offline Sources" },
+  { value: "PAID_SOCIAL", label: "Paid Social" },
+  { value: "AI_REFERRALS", label: "AI Referrals" },
+];
+
+export type SourceHealthResult = {
+  label: string;
+  totalCount: number | null;
+  healthyCount: number | null;
+  healthRate: number | null;
+  error: string | null;
+};
+
+async function computeOneSourceHealth(source: { value: string; label: string }): Promise<SourceHealthResult> {
+  try {
+    const sourceFilter = { propertyName: "hs_analytics_source", operator: "EQ", value: source.value };
+
+    const [totalCount, healthyCount] = await Promise.all([
+      searchContactCount([{ filters: [sourceFilter] }]),
+      searchContactCount([
+        { filters: [sourceFilter, marketableFilter, noHardBounceFilter, notOptedOutFilter, { propertyName: "hs_email_bounce", operator: "LT", value: "3" }] },
+        { filters: [sourceFilter, marketableFilter, noHardBounceFilter, notOptedOutFilter, { propertyName: "hs_email_bounce", operator: "NOT_HAS_PROPERTY" }] },
+      ]),
+    ]);
+
+    return {
+      label: source.label,
+      totalCount,
+      healthyCount,
+      healthRate: totalCount > 0 ? healthyCount / totalCount : null,
+      error: null,
+    };
+  } catch (error) {
+    return { label: source.label, totalCount: null, healthyCount: null, healthRate: null, error: (error as Error).message };
+  }
+}
+
+export async function computeSourceHealth(): Promise<SourceHealthResult[]> {
+  // Parallel across sources (not sequential) — this cron already does
+  // real work for segment_health/underutilized/segment_sizing, and
+  // adding 30 more sequential calls (10 sources x 3 calls each) risked
+  // pushing total execution time close to Vercel's function timeout.
+  // HubSpot's burst rate limit is per-second-bucket, not a hard cap on
+  // concurrency, so 10 parallel operations (each internally 2-3 calls)
+  // should stay well within it for an enterprise-tier app.
+  return Promise.all(SOURCE_VALUES.map((source) => computeOneSourceHealth(source)));
+}
+
+// --- Send Frequency / Fatigue Tracking ---
+// New per Justin — the mirror image of Underutilized Audience (who's
+// getting too much email, not too little). Uses
+// hs_email_sends_since_last_engagement, a real HubSpot property
+// confirmed populated: 182,590 marketable contacts currently sit above
+// 10 sends since their last open/click. Arguably a better fatigue
+// signal than a raw rolling send-count would be, since it directly
+// captures "we keep sending, they keep not engaging" rather than just
+// volume.
+const FATIGUE_THRESHOLD = 10;
+
+export type FatigueResult = {
+  totalMarketable: number | null;
+  fatigued: number | null;
+  fatiguedPct: number | null;
+  threshold: number;
+  error: string | null;
+};
+
+export async function computeFatigue(): Promise<FatigueResult> {
+  try {
+    const [totalMarketable, fatigued] = await Promise.all([
+      searchContactCount([{ filters: [marketableFilter] }]),
+      searchContactCount([
+        { filters: [marketableFilter, { propertyName: "hs_email_sends_since_last_engagement", operator: "GT", value: String(FATIGUE_THRESHOLD) }] },
+      ]),
+    ]);
+
+    return {
+      totalMarketable,
+      fatigued,
+      fatiguedPct: totalMarketable > 0 ? fatigued / totalMarketable : null,
+      threshold: FATIGUE_THRESHOLD,
+      error: null,
+    };
+  } catch (error) {
+    return { totalMarketable: null, fatigued: null, fatiguedPct: null, threshold: FATIGUE_THRESHOLD, error: (error as Error).message };
+  }
+}

@@ -673,6 +673,24 @@
           </sc-if>
         </div>
 
+        <!-- Fatigue — mirror image of Underutilized Audience: who's getting too much email, not too little -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+            <i class="fa-triangle-exclamation alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Fatigue</span>
+            <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Contacts who've received more than {{ fatigueThreshold }} marketing emails since their last open or click. High fatigue can mean an audience is being emailed too often relative to how engaged they actually are.</span></span>
+            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ fatigueBadgeBg }}; color:{{ fatigueBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ fatigueBadgeLabel }}</span>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ fatigueCaption }}</div>
+          <sc-if value="{{ fatigueHasData }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
+              <span style="font-size:2rem; font-weight:700; color:{{ fatigueColor }};">{{ fatiguePctLabel }}</span>
+              <span style="font-size:0.8125rem; color:var(--text-secondary);">of marketing contacts show signs of fatigue</span>
+            </div>
+            <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ fatigueCount }} of {{ fatigueTotal }} marketing contacts have {{ fatigueThreshold }}+ sends since their last engagement.</div>
+          </sc-if>
+        </div>
+
         <!-- Segment Sizing + Audience Tracking — one panel per metric, each with Region/Type sections instead of 4 separate boxes -->
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
           <!-- Segment Sizing (formerly "Audience Status") — Region section, then Type section -->
@@ -752,6 +770,28 @@
           </div>
         </div>
 
+        <!-- Source Health — health rate by original contact acquisition source -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+            <i class="fa-magnifying-glass-chart alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Source Health</span>
+            <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Health rate broken down by each contact's original acquisition source (Paid Search, Organic Social, Referrals, etc.) instead of by region — helps identify whether certain channels are bringing in lower-quality or riskier contacts.</span></span>
+            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ sourceHealthBadgeBg }}; color:{{ sourceHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ sourceHealthBadgeLabel }}</span>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:18px;">{{ sourceHealthCaption }}</div>
+          <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0 24px;">
+            <sc-for list="{{ sourceHealthRows }}" as="s" hint-placeholder-count="10">
+              <div style="padding:11px 0; border-top:{{ s.rowBorder }};">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
+                  <span style="font-size:1.125rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
       </div>
     </sc-if>
 
@@ -778,6 +818,8 @@ class Component extends DCLogic {
     performanceLoading: true, performanceError: null, performanceData: null, performanceCheckedAt: null,
     workflowsLoading: true, workflowsError: null, workflowsData: null,
     underutilizedLoading: true, underutilizedError: null, underutilizedData: null, underutilizedTrendData: null,
+    fatigueLoading: true, fatigueError: null, fatigueData: null,
+    sourceHealthLoading: true, sourceHealthError: null, sourceHealthData: null,
     hoveredCtorIndex: null,
     audienceStatusLoading: true, audienceStatusError: null, audienceStatusData: null,
     segmentHealthLoading: true, segmentHealthError: null, segmentHealthData: null,
@@ -798,6 +840,8 @@ class Component extends DCLogic {
     this.loadAudienceStatus();
     this.loadSegmentHealth();
     this.loadSegmentHealthTrend();
+    this.loadFatigue();
+    this.loadSourceHealth();
 
     // Auto-refresh on top of the manual Refresh buttons — re-checks hourly
     // so the data doesn't go stale on a screen left open, without
@@ -818,6 +862,8 @@ class Component extends DCLogic {
     this._underutilizedInterval = setInterval(() => {
       this.loadUnderutilized();
       this.loadUnderutilizedTrend();
+      this.loadFatigue();
+      this.loadSourceHealth();
     }, 24 * 60 * 60 * 1000);
 
     // Segment Health's underlying metric (region health rate) doesn't
@@ -864,6 +910,40 @@ class Component extends DCLogic {
     } catch (err) {
       // Silent — trend is supplementary context, not worth its own error
       // state on top of underutilizedError.
+    }
+  }
+
+  async loadFatigue() {
+    this.setState({ fatigueLoading: true, fatigueError: null });
+    try {
+      const res = await fetch('/api/hubspot/fatigue');
+      const data = await res.json();
+      if (data.status === 'error') {
+        this.setState({ fatigueError: data.message, fatigueData: null });
+      } else {
+        this.setState({ fatigueData: data });
+      }
+    } catch (err) {
+      this.setState({ fatigueError: "Couldn't reach the fatigue-tracking service. Try again." });
+    } finally {
+      this.setState({ fatigueLoading: false });
+    }
+  }
+
+  async loadSourceHealth() {
+    this.setState({ sourceHealthLoading: true, sourceHealthError: null });
+    try {
+      const res = await fetch('/api/hubspot/source-health');
+      const data = await res.json();
+      if (data.status === 'error') {
+        this.setState({ sourceHealthError: data.message, sourceHealthData: null });
+      } else {
+        this.setState({ sourceHealthData: data });
+      }
+    } catch (err) {
+      this.setState({ sourceHealthError: "Couldn't reach the source-health service. Try again." });
+    } finally {
+      this.setState({ sourceHealthLoading: false });
     }
   }
 
@@ -1746,6 +1826,40 @@ class Component extends DCLogic {
         const ptsDelta = latest.rate - prev.rate;
         return ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
       })(),
+
+      fatigueBadgeLabel: this.state.fatigueLoading ? 'Loading · HubSpot' : (this.state.fatigueError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      fatigueBadgeBg: this.state.fatigueError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
+      fatigueBadgeColor: this.state.fatigueError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
+      fatigueCaption: this.state.fatigueLoading
+        ? 'Checking send fatigue…'
+        : this.state.fatigueError
+        ? this.state.fatigueError
+        : (this.state.fatigueData && this.state.fatigueData.pending)
+        ? 'Waiting on the first daily snapshot — check back after the next scheduled run'
+        : (this.state.fatigueData && this.state.fatigueData.checkedAt ? 'Last updated ' + new Date(this.state.fatigueData.checkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + new Date(this.state.fatigueData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
+      fatigueHasData: !!(this.state.fatigueData && this.state.fatigueData.totalMarketable !== null && this.state.fatigueData.totalMarketable > 0),
+      fatiguePctLabel: (this.state.fatigueData && this.state.fatigueData.fatiguedPct !== null) ? (this.state.fatigueData.fatiguedPct * 100).toFixed(1) + '%' : '—',
+      fatigueColor: (this.state.fatigueData && this.state.fatigueData.fatiguedPct !== null && this.state.fatigueData.fatiguedPct > 0.3) ? 'var(--badge-warning-text)' : 'var(--text-primary)',
+      fatigueCount: (this.state.fatigueData && this.state.fatigueData.fatigued !== null) ? this.state.fatigueData.fatigued.toLocaleString() : '—',
+      fatigueTotal: (this.state.fatigueData && this.state.fatigueData.totalMarketable !== null) ? this.state.fatigueData.totalMarketable.toLocaleString() : '—',
+      fatigueThreshold: this.state.fatigueData ? this.state.fatigueData.threshold : 10,
+
+      sourceHealthBadgeLabel: this.state.sourceHealthLoading ? 'Loading · HubSpot' : (this.state.sourceHealthError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      sourceHealthBadgeBg: this.state.sourceHealthError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
+      sourceHealthBadgeColor: this.state.sourceHealthError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
+      sourceHealthCaption: this.state.sourceHealthLoading
+        ? 'Checking source health…'
+        : this.state.sourceHealthError
+        ? this.state.sourceHealthError
+        : (this.state.sourceHealthData && this.state.sourceHealthData.checkedAt ? 'Last updated ' + new Date(this.state.sourceHealthData.checkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + new Date(this.state.sourceHealthData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
+      sourceHealthRows: (this.state.sourceHealthData ? this.state.sourceHealthData.sources : []).map((s, i) => {
+        const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
+        const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
+        const detail = s.error
+          ? 'Lookup failed: ' + s.error
+          : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
+        return { label: s.label, rateLabel: rate, rateColor, detail, rowBorder: i < 2 ? 'none' : '1px solid var(--border-table)' };
+      }),
 
       audienceStatusBadgeLabel: this.state.audienceStatusLoading ? 'Loading · HubSpot' : (this.state.audienceStatusError ? 'Error · HubSpot' : 'Live · HubSpot'),
       audienceStatusBadgeBg: this.state.audienceStatusError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
