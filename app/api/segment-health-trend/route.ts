@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { ensureSchema, getPool } from "@/lib/db";
 
-// GET /api/segment-health-trend
+// GET /api/segment-health-trend?metricType=segment_health|underutilized
 //
-// Reads the stored Segment Health time series from Aurora PostgreSQL
-// (written daily by app/api/cron/snapshot-metrics). Returns one array
-// per segment_label, ordered oldest-to-newest, for charting.
+// Reads a stored metric's time series from Aurora PostgreSQL (written
+// daily by app/api/cron/snapshot-metrics). Returns one array per
+// segment_label, ordered oldest-to-newest, for charting.
+//
+// Generalized from segment_health-only to accept any metric_type via
+// query param (defaults to 'segment_health' — existing callers with no
+// param keep working unchanged) so Underutilized Audience's new daily
+// snapshots (added alongside this) can reuse the exact same read logic
+// instead of a duplicated route.
 //
 // Will return an empty series for any segment until the cron job has
 // actually run at least once — this is historical data, not a live
@@ -13,18 +19,20 @@ import { ensureSchema, getPool } from "@/lib/db";
 
 const TRAILING_DAYS = 90;
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await ensureSchema();
     const db = getPool();
+    const { searchParams } = new URL(request.url);
+    const metricType = searchParams.get("metricType") || "segment_health";
 
     const result = await db.query(
       `SELECT segment_label, total_count, healthy_count, rate, snapshot_date
        FROM metric_snapshots
-       WHERE metric_type = 'segment_health'
-         AND snapshot_date >= (CURRENT_DATE - $1::int)
+       WHERE metric_type = $1
+         AND snapshot_date >= (CURRENT_DATE - $2::int)
        ORDER BY segment_label, snapshot_date ASC`,
-      [TRAILING_DAYS]
+      [metricType, TRAILING_DAYS]
     );
 
     const bySegment: Record<
@@ -45,6 +53,7 @@ export async function GET() {
 
     return NextResponse.json({
       status: "ok",
+      metricType,
       trailingDays: TRAILING_DAYS,
       segments: bySegment,
     });
