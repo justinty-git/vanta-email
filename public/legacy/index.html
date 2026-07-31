@@ -688,6 +688,7 @@
               <span style="font-size:0.8125rem; color:var(--text-secondary);">of marketing contacts show signs of fatigue</span>
             </div>
             <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ fatigueCount }} of {{ fatigueTotal }} marketing contacts have {{ fatigueThreshold }}+ sends since their last engagement.</div>
+            <div style="font-size:0.75rem; color:{{ fatigueTrendColor }}; margin-top:6px; font-weight:500;">{{ fatigueTrendStatus }}</div>
           </sc-if>
         </div>
 
@@ -706,12 +707,15 @@
             <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin-bottom:6px;">Region</div>
             <div style="display:flex; flex-direction:column;">
               <sc-for list="{{ audienceStatusRegionRows }}" as="a" hint-placeholder-count="5">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:{{ a.rowBorder }};">
-                  <div style="min-width:0;">
-                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
+                <div style="padding:11px 0; border-top:{{ a.rowBorder }};">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                    <div style="min-width:0;">
+                      <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
+                      <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
+                    </div>
+                    <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ a.sizeLabel }}</span>
                   </div>
-                  <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ a.sizeLabel }}</span>
+                  <div style="font-size:0.6875rem; color:{{ a.trendColor }}; margin-top:4px; font-weight:500;">{{ a.trendStatus }}</div>
                 </div>
               </sc-for>
             </div>
@@ -719,12 +723,15 @@
             <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin:18px 0 6px;">Type</div>
             <div style="display:flex; flex-direction:column;">
               <sc-for list="{{ audienceStatusAudienceRows }}" as="a" hint-placeholder-count="2">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:{{ a.rowBorder }};">
-                  <div style="min-width:0;">
-                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
+                <div style="padding:11px 0; border-top:{{ a.rowBorder }};">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                    <div style="min-width:0;">
+                      <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
+                      <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
+                    </div>
+                    <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ a.sizeLabel }}</span>
                   </div>
-                  <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ a.sizeLabel }}</span>
+                  <div style="font-size:0.6875rem; color:{{ a.trendColor }}; margin-top:4px; font-weight:500;">{{ a.trendStatus }}</div>
                 </div>
               </sc-for>
             </div>
@@ -787,6 +794,7 @@
                   <span style="font-size:1.125rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
                 </div>
                 <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
+                <div style="font-size:0.6875rem; color:{{ s.trendColor }}; margin-top:4px; font-weight:500;">{{ s.trendStatus }}</div>
               </div>
             </sc-for>
           </div>
@@ -818,6 +826,9 @@ class Component extends DCLogic {
     performanceLoading: true, performanceError: null, performanceData: null, performanceCheckedAt: null,
     workflowsLoading: true, workflowsError: null, workflowsData: null,
     underutilizedLoading: true, underutilizedError: null, underutilizedData: null, underutilizedTrendData: null,
+    audienceStatusTrendData: null,
+    sourceHealthTrendData: null,
+    fatigueTrendData: null,
     fatigueLoading: true, fatigueError: null, fatigueData: null,
     sourceHealthLoading: true, sourceHealthError: null, sourceHealthData: null,
     hoveredCtorIndex: null,
@@ -838,10 +849,13 @@ class Component extends DCLogic {
     this.loadUnderutilized();
     this.loadUnderutilizedTrend();
     this.loadAudienceStatus();
+    this.loadAudienceStatusTrend();
     this.loadSegmentHealth();
     this.loadSegmentHealthTrend();
     this.loadFatigue();
+    this.loadFatigueTrend();
     this.loadSourceHealth();
+    this.loadSourceHealthTrend();
 
     // Auto-refresh on top of the manual Refresh buttons — re-checks hourly
     // so the data doesn't go stale on a screen left open, without
@@ -862,8 +876,11 @@ class Component extends DCLogic {
     this._underutilizedInterval = setInterval(() => {
       this.loadUnderutilized();
       this.loadUnderutilizedTrend();
+      this.loadAudienceStatusTrend();
       this.loadFatigue();
+      this.loadFatigueTrend();
       this.loadSourceHealth();
+      this.loadSourceHealthTrend();
     }, 24 * 60 * 60 * 1000);
 
     // Segment Health's underlying metric (region health rate) doesn't
@@ -944,6 +961,42 @@ class Component extends DCLogic {
       this.setState({ sourceHealthError: "Couldn't reach the source-health service. Try again." });
     } finally {
       this.setState({ sourceHealthLoading: false });
+    }
+  }
+
+  async loadAudienceStatusTrend() {
+    try {
+      const res = await fetch('/api/segment-health-trend?metricType=segment_sizing');
+      const data = await res.json();
+      if (data.status !== 'error') {
+        this.setState({ audienceStatusTrendData: data });
+      }
+    } catch (err) {
+      // Silent — trend is supplementary context.
+    }
+  }
+
+  async loadSourceHealthTrend() {
+    try {
+      const res = await fetch('/api/segment-health-trend?metricType=source_health');
+      const data = await res.json();
+      if (data.status !== 'error') {
+        this.setState({ sourceHealthTrendData: data });
+      }
+    } catch (err) {
+      // Silent — trend is supplementary context.
+    }
+  }
+
+  async loadFatigueTrend() {
+    try {
+      const res = await fetch('/api/segment-health-trend?metricType=fatigue');
+      const data = await res.json();
+      if (data.status !== 'error') {
+        this.setState({ fatigueTrendData: data });
+      }
+    } catch (err) {
+      // Silent — trend is supplementary context.
     }
   }
 
@@ -1844,6 +1897,29 @@ class Component extends DCLogic {
       fatigueCount: (this.state.fatigueData && this.state.fatigueData.fatigued !== null) ? this.state.fatigueData.fatigued.toLocaleString() : '—',
       fatigueTotal: (this.state.fatigueData && this.state.fatigueData.totalMarketable !== null) ? this.state.fatigueData.totalMarketable.toLocaleString() : '—',
       fatigueThreshold: this.state.fatigueData ? this.state.fatigueData.threshold : 10,
+      fatigueTrendStatus: (() => {
+        const trendPoints = (this.state.fatigueTrendData && this.state.fatigueTrendData.segments && this.state.fatigueTrendData.segments['Global']) || [];
+        if (trendPoints.length < 2) return '';
+        const latest = trendPoints[trendPoints.length - 1];
+        const prev = trendPoints[trendPoints.length - 2];
+        if (latest.rate === null || prev.rate === null) return '';
+        // Stored rate is "not fatigued" — invert both to get the fatigued% change
+        const latestFatiguedPct = (1 - latest.rate) * 100;
+        const prevFatiguedPct = (1 - prev.rate) * 100;
+        const ptsDelta = latestFatiguedPct - prevFatiguedPct;
+        const arrow = ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—';
+        return arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + ' pts fatigued since ' + prev.date;
+      })(),
+      fatigueTrendColor: (() => {
+        const trendPoints = (this.state.fatigueTrendData && this.state.fatigueTrendData.segments && this.state.fatigueTrendData.segments['Global']) || [];
+        if (trendPoints.length < 2) return 'var(--text-tertiary)';
+        const latest = trendPoints[trendPoints.length - 1];
+        const prev = trendPoints[trendPoints.length - 2];
+        if (latest.rate === null || prev.rate === null) return 'var(--text-tertiary)';
+        const ptsDelta = (1 - latest.rate) - (1 - prev.rate);
+        // Rising fatigue is bad (red), falling fatigue is good (green) — opposite polarity from most other trends in this app
+        return ptsDelta > 0 ? 'var(--badge-danger-text)' : ptsDelta < 0 ? 'var(--badge-success-text)' : 'var(--text-tertiary)';
+      })(),
 
       sourceHealthBadgeLabel: this.state.sourceHealthLoading ? 'Loading · HubSpot' : (this.state.sourceHealthError ? 'Error · HubSpot' : 'Live · HubSpot'),
       sourceHealthBadgeBg: this.state.sourceHealthError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
@@ -1859,7 +1935,19 @@ class Component extends DCLogic {
         const detail = s.error
           ? 'Lookup failed: ' + s.error
           : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
-        return { label: s.label, rateLabel: rate, rateColor, detail, rowBorder: i < 2 ? 'none' : '1px solid var(--border-table)' };
+        const trendPoints = (this.state.sourceHealthTrendData && this.state.sourceHealthTrendData.segments && this.state.sourceHealthTrendData.segments[s.label]) || [];
+        let trendStatus = '', trendColor = 'var(--text-tertiary)';
+        if (trendPoints.length >= 2) {
+          const latest = trendPoints[trendPoints.length - 1];
+          const prev = trendPoints[trendPoints.length - 2];
+          if (latest.rate !== null && prev.rate !== null) {
+            const ptsDelta = (latest.rate - prev.rate) * 100;
+            const arrow = ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—';
+            trendColor = ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+            trendStatus = arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + 'pts since ' + prev.date;
+          }
+        }
+        return { label: s.label, rateLabel: rate, rateColor, detail, rowBorder: i < 2 ? 'none' : '1px solid var(--border-table)', trendStatus, trendColor };
       }),
 
       audienceStatusBadgeLabel: this.state.audienceStatusLoading ? 'Loading · HubSpot' : (this.state.audienceStatusError ? 'Error · HubSpot' : 'Live · HubSpot'),
@@ -1870,18 +1958,44 @@ class Component extends DCLogic {
         : this.state.audienceStatusError
         ? this.state.audienceStatusError
         : (this.state.audienceStatusData && this.state.audienceStatusData.checkedAt ? 'Last updated ' + new Date(this.state.audienceStatusData.checkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + new Date(this.state.audienceStatusData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
-      audienceStatusRegionRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group !== 'audience').map((s, i) => ({
-        label: s.label,
-        detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
-        sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
-        rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)',
-      })),
-      audienceStatusAudienceRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group === 'audience').map((s, i) => ({
-        label: s.label,
-        detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
-        sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
-        rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)',
-      })),
+      audienceStatusRegionRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group !== 'audience').map((s, i) => {
+        const trendPoints = (this.state.audienceStatusTrendData && this.state.audienceStatusTrendData.segments && this.state.audienceStatusTrendData.segments[s.label]) || [];
+        let trendStatus = '', trendColor = 'var(--text-tertiary)';
+        if (trendPoints.length >= 2) {
+          const latest = trendPoints[trendPoints.length - 1];
+          const prev = trendPoints[trendPoints.length - 2];
+          const delta = latest.totalCount - prev.totalCount;
+          const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '—';
+          trendColor = delta > 0 ? 'var(--badge-success-text)' : delta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+          trendStatus = arrow + ' ' + (delta > 0 ? '+' : '') + delta.toLocaleString() + ' since ' + prev.date;
+        }
+        return {
+          label: s.label,
+          detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
+          sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
+          rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)',
+          trendStatus, trendColor,
+        };
+      }),
+      audienceStatusAudienceRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group === 'audience').map((s, i) => {
+        const trendPoints = (this.state.audienceStatusTrendData && this.state.audienceStatusTrendData.segments && this.state.audienceStatusTrendData.segments[s.label]) || [];
+        let trendStatus = '', trendColor = 'var(--text-tertiary)';
+        if (trendPoints.length >= 2) {
+          const latest = trendPoints[trendPoints.length - 1];
+          const prev = trendPoints[trendPoints.length - 2];
+          const delta = latest.totalCount - prev.totalCount;
+          const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '—';
+          trendColor = delta > 0 ? 'var(--badge-success-text)' : delta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+          trendStatus = arrow + ' ' + (delta > 0 ? '+' : '') + delta.toLocaleString() + ' since ' + prev.date;
+        }
+        return {
+          label: s.label,
+          detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
+          sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
+          rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)',
+          trendStatus, trendColor,
+        };
+      }),
 
       segmentHealthBadgeLabel: this.state.segmentHealthLoading ? 'Loading · HubSpot' : (this.state.segmentHealthError ? 'Error · HubSpot' : 'Live · HubSpot'),
       segmentHealthBadgeBg: this.state.segmentHealthError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
