@@ -314,6 +314,7 @@ async function computeOneSourceHealth(source: { value: string; label: string }):
     // 429 RATE_LIMIT on 9 of 10 sources in one real run. Reliability
     // matters far more than speed for a twice-daily cron.
     const totalCount = await searchContactCount([{ filters: [sourceFilter] }]);
+    await sleep(150);
     const healthyCount = await searchContactCount([
       { filters: [sourceFilter, marketableFilter, noHardBounceFilter, notOptedOutFilter, { propertyName: "hs_email_bounce", operator: "LT", value: "3" }] },
       { filters: [sourceFilter, marketableFilter, noHardBounceFilter, notOptedOutFilter, { propertyName: "hs_email_bounce", operator: "NOT_HAS_PROPERTY" }] },
@@ -331,16 +332,26 @@ async function computeOneSourceHealth(source: { value: string; label: string }):
   }
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function computeSourceHealth(): Promise<SourceHealthResult[]> {
   // Sequential across sources too — see computeOneSourceHealth's
-  // comment. A real cron run confirmed 429 RATE_LIMIT errors on 9 of
-  // 10 sources when this ran in parallel; reverted the earlier
-  // "optimize for execution time" choice, since it was solving a risk
-  // (timeout) that never actually materialized while causing one that
-  // did (rate limiting).
+  // comment. A real cron run confirmed 429 RATE_LIMIT errors when this
+  // ran in parallel; reverted to sequential. A SECOND real run then
+  // showed sequential alone still wasn't quite enough — 9 of 10
+  // sources succeeded, but the very last one (whichever source runs
+  // last) still tripped the same limit, because by that point the
+  // CUMULATIVE calls from everything earlier in this same cron run
+  // (segment_health, segment_sizing, then 9 sources) were still dense
+  // enough to bump HubSpot's secondly bucket. Added an explicit small
+  // delay between each source's calls to create real breathing room,
+  // rather than relying on network latency alone to space things out.
   const results: SourceHealthResult[] = [];
-  for (const source of SOURCE_VALUES) {
-    results.push(await computeOneSourceHealth(source));
+  for (let i = 0; i < SOURCE_VALUES.length; i++) {
+    if (i > 0) await sleep(350);
+    results.push(await computeOneSourceHealth(SOURCE_VALUES[i]));
   }
   return results;
 }
