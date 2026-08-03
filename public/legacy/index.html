@@ -1657,7 +1657,7 @@ class Component extends DCLogic {
 
     const x = i => raw.length > 1 ? X0 + (i / (raw.length - 1)) * W : X0 + W / 2;
     const y = v => Y0 + ((vmax - v) / (vmax - vmin)) * H;
-    const color = v => v < avg * 0.85 ? 'var(--badge-danger-text)' : v < avg * 0.97 ? 'var(--badge-warning-text)' : 'var(--dataviz-primary)';
+    const color = v => v < avg * 0.85 ? 'var(--badge-danger-text)' : v < avg * 0.97 ? 'var(--badge-warning-text)' : 'var(--badge-success-text)';
     const points = raw.map((d, i) => ({
       week: d.week,
       valueLabel: d.v.toFixed(2) + '%',
