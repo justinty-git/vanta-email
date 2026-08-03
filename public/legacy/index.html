@@ -664,7 +664,7 @@
           <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ underutilizedCaption }}</div>
           <sc-if value="{{ underutilizedHasData }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
-              <span style="font-size:2rem; font-weight:700; color:var(--text-primary);">{{ underutilizedCoveragePct }}</span>
+              <span style="font-size:2rem; font-weight:700; color:{{ underutilizedCoveragePctColor }};">{{ underutilizedCoveragePct }}</span>
               <span style="font-size:0.8125rem; color:var(--text-secondary); display:flex; align-items:center; gap:5px;">reached in the last {{ underutilizedWindowDays }} days
                 <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">"Reach" = the share of healthy marketing contacts who received at least one marketing email in this window. Low reach can mean an audience isn't being emailed enough, not that anything is broken.</span></span>
               </span>
@@ -714,7 +714,7 @@
                       <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
                       <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
                     </div>
-                    <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ a.sizeLabel }}</span>
+                    <span style="font-size:1.25rem; font-weight:600; color:{{ a.sizeColor }}; flex-shrink:0;">{{ a.sizeLabel }}</span>
                   </div>
                   <div style="font-size:0.6875rem; color:{{ a.trendColor }}; margin-top:4px; font-weight:500;">{{ a.trendStatus }}</div>
                 </div>
@@ -730,7 +730,7 @@
                       <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
                       <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
                     </div>
-                    <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary); flex-shrink:0;">{{ a.sizeLabel }}</span>
+                    <span style="font-size:1.25rem; font-weight:600; color:{{ a.sizeColor }}; flex-shrink:0;">{{ a.sizeLabel }}</span>
                   </div>
                   <div style="font-size:0.6875rem; color:{{ a.trendColor }}; margin-top:4px; font-weight:500;">{{ a.trendStatus }}</div>
                 </div>
@@ -1875,6 +1875,12 @@ class Component extends DCLogic {
         : 'Checked against HubSpot\'s "[GLOBAL] Marketing Contacts" list' + (this.state.underutilizedData && this.state.underutilizedData.checkedAt ? ' · Last updated ' + new Date(this.state.underutilizedData.checkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
       underutilizedHasData: !!(this.state.underutilizedData && this.state.underutilizedData.totalMarketable > 0),
       underutilizedCoveragePct: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(1) + '%' : '—',
+      underutilizedCoveragePctColor: (() => {
+        const trendPoints = (this.state.underutilizedTrendData && this.state.underutilizedTrendData.segments && this.state.underutilizedTrendData.segments['Global']) || [];
+        const pair = widestComparisonPair(trendPoints);
+        if (!pair || pair.latest.rate === null || pair.compare.rate === null) return 'var(--text-primary)';
+        return pair.latest.rate > pair.compare.rate ? 'var(--badge-success-text)' : pair.latest.rate < pair.compare.rate ? 'var(--badge-danger-text)' : 'var(--text-primary)';
+      })(),
       underutilizedCount: (this.state.underutilizedData && this.state.underutilizedData.underutilized !== null) ? this.state.underutilizedData.underutilized.toLocaleString() : '—',
       underutilizedTotal: (this.state.underutilizedData && this.state.underutilizedData.totalMarketable !== null) ? this.state.underutilizedData.totalMarketable.toLocaleString() : '—',
       underutilizedWindowDays: this.state.underutilizedData ? this.state.underutilizedData.windowDays : 7,
@@ -1906,7 +1912,13 @@ class Component extends DCLogic {
         : (this.state.fatigueData && this.state.fatigueData.checkedAt ? 'Last updated ' + new Date(this.state.fatigueData.checkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + new Date(this.state.fatigueData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
       fatigueHasData: !!(this.state.fatigueData && this.state.fatigueData.totalMarketable !== null && this.state.fatigueData.totalMarketable > 0),
       fatiguePctLabel: (this.state.fatigueData && this.state.fatigueData.fatiguedPct !== null) ? (this.state.fatigueData.fatiguedPct * 100).toFixed(1) + '%' : '—',
-      fatigueColor: (this.state.fatigueData && this.state.fatigueData.fatiguedPct !== null && this.state.fatigueData.fatiguedPct > 0.3) ? 'var(--badge-warning-text)' : 'var(--text-primary)',
+      fatigueColor: (() => {
+        const trendPoints = (this.state.fatigueTrendData && this.state.fatigueTrendData.segments && this.state.fatigueTrendData.segments['Global']) || [];
+        const pair = widestComparisonPair(trendPoints);
+        if (!pair || pair.latest.rate === null || pair.compare.rate === null) return 'var(--text-primary)';
+        const ptsDelta = (1 - pair.latest.rate) - (1 - pair.compare.rate);
+        return ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-primary)';
+      })(),
       fatigueCount: (this.state.fatigueData && this.state.fatigueData.fatigued !== null) ? this.state.fatigueData.fatigued.toLocaleString() : '—',
       fatigueTotal: (this.state.fatigueData && this.state.fatigueData.totalMarketable !== null) ? this.state.fatigueData.totalMarketable.toLocaleString() : '—',
       fatigueThreshold: this.state.fatigueData ? this.state.fatigueData.threshold : 10,
@@ -1947,7 +1959,6 @@ class Component extends DCLogic {
         : (this.state.sourceHealthData && this.state.sourceHealthData.checkedAt ? 'Last updated ' + new Date(this.state.sourceHealthData.checkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + new Date(this.state.sourceHealthData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
       sourceHealthRows: (this.state.sourceHealthData ? this.state.sourceHealthData.sources : []).map((s, i) => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
-        const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
         const detail = s.error
           ? 'Lookup failed: ' + s.error
           : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
@@ -1960,7 +1971,7 @@ class Component extends DCLogic {
           trendColor = ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
           trendStatus = arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + '% since ' + pair.compare.date;
         }
-        return { label: s.label, rateLabel: rate, rateColor, detail, rowBorder: i < 2 ? 'none' : '1px solid var(--border-table)', trendStatus, trendColor };
+        return { label: s.label, rateLabel: rate, rateColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor, detail, rowBorder: i < 2 ? 'none' : '1px solid var(--border-table)', trendStatus, trendColor };
       }),
 
       audienceStatusBadgeLabel: this.state.audienceStatusLoading ? 'Loading · HubSpot' : (this.state.audienceStatusError ? 'Error · HubSpot' : 'Live · HubSpot'),
@@ -1986,6 +1997,7 @@ class Component extends DCLogic {
           label: s.label,
           detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
           sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
+          sizeColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor,
           rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)',
           trendStatus, trendColor,
         };
@@ -2005,6 +2017,7 @@ class Component extends DCLogic {
           label: s.label,
           detail: s.error ? 'Lookup failed: ' + s.error : 'Marketing contacts',
           sizeLabel: s.size !== null ? s.size.toLocaleString() : '—',
+          sizeColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor,
           rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)',
           trendStatus, trendColor,
         };
@@ -2020,7 +2033,6 @@ class Component extends DCLogic {
         : (this.state.segmentHealthData && this.state.segmentHealthData.checkedAt ? 'Last updated ' + new Date(this.state.segmentHealthData.checkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + new Date(this.state.segmentHealthData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
       segmentHealthRegionRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group !== 'audience').map((s, i) => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
-        const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
         const detail = s.healthyListId === null
           ? "Waiting on the '- Healthy' clone list to be built in HubSpot — base segment is " + (s.totalCount !== null ? s.totalCount.toLocaleString() : '—') + ' contacts'
           : s.error
@@ -2039,11 +2051,14 @@ class Component extends DCLogic {
         } else {
           trendStatus = '';
         }
-        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor, rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)' };
+        // Big number now matches the trend color directly (green when
+        // trending up, red when down, neutral gray when no trend yet)
+        // instead of an independent health-threshold color — per
+        // Justin, the number should visually agree with its own arrow.
+        return { label: s.label, rateLabel: rate, rateColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor, detail, trendStatus, trendColor, rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)' };
       }),
       segmentHealthAudienceRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group === 'audience').map((s, i) => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
-        const rateColor = s.healthRate !== null && s.healthRate < 0.85 ? 'var(--badge-warning-text)' : 'var(--text-primary)';
         const detail = s.healthyListId === null
           ? "Waiting on the '- Healthy' clone list to be built in HubSpot — base segment is " + (s.totalCount !== null ? s.totalCount.toLocaleString() : '—') + ' contacts'
           : s.error
@@ -2062,7 +2077,7 @@ class Component extends DCLogic {
         } else {
           trendStatus = '';
         }
-        return { label: s.label, rateLabel: rate, rateColor, detail, trendStatus, trendColor, rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)' };
+        return { label: s.label, rateLabel: rate, rateColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor, detail, trendStatus, trendColor, rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)' };
       }),
 
       onLookupSearch: (e) => this.runLookupSearch(e.target.value),
