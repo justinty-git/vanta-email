@@ -672,6 +672,21 @@
               </div>
               <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
               <div style="font-size:0.75rem; color:{{ underutilizedTrendColor }}; margin-top:6px; font-weight:500;">{{ underutilizedTrendStatus }}</div>
+              <sc-if value="{{ reachHasData }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:14px;">
+                  <svg viewBox="{{ reachViewBox }}" style="width:100%; height:120px; display:block; overflow:visible;">
+                    <polyline points="{{ reachPoly }}" fill="none" stroke="var(--text-primary)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                    <sc-for list="{{ reachPoints }}" as="p" hint-placeholder-count="5">
+                      <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="4.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="1.5"></circle>
+                    </sc-for>
+                  </svg>
+                  <div style="display:flex; justify-content:space-between; gap:4px; margin-top:6px; padding:0 4px;">
+                    <sc-for list="{{ reachPoints }}" as="p" hint-placeholder-count="5">
+                      <span style="font-size:0.625rem; color:var(--text-tertiary);">{{ p.week }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
             </sc-if>
           </div>
 
@@ -690,6 +705,21 @@
               </div>
               <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ fatigueCount }} of {{ fatigueTotal }} marketing contacts have {{ fatigueThreshold }}+ sends since their last engagement.</div>
               <div style="font-size:0.75rem; color:{{ fatigueTrendColor }}; margin-top:6px; font-weight:500;">{{ fatigueTrendStatus }}</div>
+              <sc-if value="{{ fatigueChartHasData }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:14px;">
+                  <svg viewBox="{{ fatigueChartViewBox }}" style="width:100%; height:120px; display:block; overflow:visible;">
+                    <polyline points="{{ fatigueChartPoly }}" fill="none" stroke="var(--text-primary)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                    <sc-for list="{{ fatigueChartPoints }}" as="p" hint-placeholder-count="5">
+                      <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="4.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="1.5"></circle>
+                    </sc-for>
+                  </svg>
+                  <div style="display:flex; justify-content:space-between; gap:4px; margin-top:6px; padding:0 4px;">
+                    <sc-for list="{{ fatigueChartPoints }}" as="p" hint-placeholder-count="5">
+                      <span style="font-size:0.625rem; color:var(--text-tertiary);">{{ p.week }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
             </sc-if>
           </div>
         </div>
@@ -1632,6 +1662,63 @@ class Component extends DCLogic {
     }
   }
 
+  underutilizedChart() {
+    // Half-width card (paired with Fatigue), so a narrower aspect ratio
+    // than Click Rate Trend's full-width chart — same X0/W/Y0/H values
+    // Click Rate Trend itself used before it went full-width, since a
+    // half-width card lands at almost exactly the same real aspect
+    // ratio (~4.4:1).
+    const X0 = 10, W = 780, Y0 = 20, H = 140;
+    const emptyReturn = { reachPoints: [], reachPoly: '', reachViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), reachX0: X0, reachX1: X0 + W, reachEmpty: true, reachHasData: false };
+
+    const trendPoints = (this.state.underutilizedTrendData && this.state.underutilizedTrendData.segments && this.state.underutilizedTrendData.segments['Global']) || [];
+    const raw = trendPoints.filter(d => d.rate !== null).map(d => ({ date: d.date, v: d.rate * 100 }));
+    if (raw.length === 0) return emptyReturn;
+
+    const vmin = Math.max(0, Math.floor(Math.min(...raw.map(d => d.v)) - 2));
+    const vmax = Math.ceil(Math.max(...raw.map(d => d.v)) + 2);
+    const x = i => raw.length > 1 ? X0 + (i / (raw.length - 1)) * W : X0 + W / 2;
+    const y = v => Y0 + ((vmax - v) / (Math.max(vmax - vmin, 0.01))) * H;
+    // Up is good here (more reach) — standard green-up/red-down, same as Click Rate Trend
+    const color = (v, prev) => prev === undefined ? 'var(--dataviz-primary)' : v > prev ? 'var(--badge-success-text)' : v < prev ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+    const points = raw.map((d, i) => ({
+      week: d.date,
+      valueLabel: d.v.toFixed(1) + '%',
+      cx: +x(i).toFixed(1), cy: +y(d.v).toFixed(1),
+      color: color(d.v, i > 0 ? raw[i - 1].v : undefined),
+      onMouseEnter: () => this.setState({ hoveredReachIndex: i }),
+      onMouseLeave: () => this.setState({ hoveredReachIndex: null }),
+    }));
+    return { reachPoints: points, reachPoly: points.map(p => p.cx + ',' + p.cy).join(' '), reachViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), reachX0: X0, reachX1: X0 + W, reachEmpty: false, reachHasData: true };
+  }
+
+  fatigueChart() {
+    // Same half-width proportions as underutilizedChart (these two cards are paired side by side).
+    const X0 = 10, W = 780, Y0 = 20, H = 140;
+    const emptyReturn = { fatigueChartPoints: [], fatigueChartPoly: '', fatigueChartViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), fatigueChartX0: X0, fatigueChartX1: X0 + W, fatigueChartEmpty: true, fatigueChartHasData: false };
+
+    const trendPoints = (this.state.fatigueTrendData && this.state.fatigueTrendData.segments && this.state.fatigueTrendData.segments['Global']) || [];
+    // Stored rate is "not fatigued" — invert to plot the fatigued% itself, matching the headline stat.
+    const raw = trendPoints.filter(d => d.rate !== null).map(d => ({ date: d.date, v: (1 - d.rate) * 100 }));
+    if (raw.length === 0) return emptyReturn;
+
+    const vmin = Math.max(0, Math.floor(Math.min(...raw.map(d => d.v)) - 2));
+    const vmax = Math.ceil(Math.max(...raw.map(d => d.v)) + 2);
+    const x = i => raw.length > 1 ? X0 + (i / (raw.length - 1)) * W : X0 + W / 2;
+    const y = v => Y0 + ((vmax - v) / (Math.max(vmax - vmin, 0.01))) * H;
+    // Fatigue is the deliberate exception — up is BAD here (more fatigue), so red-up/green-down, reversed from every other chart.
+    const color = (v, prev) => prev === undefined ? 'var(--dataviz-primary)' : v > prev ? 'var(--badge-danger-text)' : v < prev ? 'var(--badge-success-text)' : 'var(--text-tertiary)';
+    const points = raw.map((d, i) => ({
+      week: d.date,
+      valueLabel: d.v.toFixed(1) + '%',
+      cx: +x(i).toFixed(1), cy: +y(d.v).toFixed(1),
+      color: color(d.v, i > 0 ? raw[i - 1].v : undefined),
+      onMouseEnter: () => this.setState({ hoveredFatigueChartIndex: i }),
+      onMouseLeave: () => this.setState({ hoveredFatigueChartIndex: null }),
+    }));
+    return { fatigueChartPoints: points, fatigueChartPoly: points.map(p => p.cx + ',' + p.cy).join(' '), fatigueChartViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), fatigueChartX0: X0, fatigueChartX1: X0 + W, fatigueChartEmpty: false, fatigueChartHasData: true };
+  }
+
   ctorChart() {
     const data = this.state.performanceData;
     // X0/W sized to approximate this chart's real rendered aspect ratio
@@ -1723,6 +1810,8 @@ class Component extends DCLogic {
       return { latest, compare };
     };
     const ctorChartData = this.ctorChart();
+    const reachChartData = this.underutilizedChart();
+    const fatigueChartData = this.fatigueChart();
 
     const vals = {
       greeting: this.greeting(),
@@ -2117,6 +2206,8 @@ class Component extends DCLogic {
       ...this.lookupDetailVals(),
 
       ...ctorChartData,
+      ...reachChartData,
+      ...fatigueChartData,
       ctorTooltip: (() => {
         const idx = this.state.hoveredCtorIndex;
         if (idx === null || idx === undefined) return null;
