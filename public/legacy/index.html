@@ -479,6 +479,38 @@
           </sc-for>
         </div>
 
+        <!-- Flagged Anomalies — moved above Click Rate Trend: actionable/urgent content surfaces before the passive trend chart -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+            <i class="fa-radar alpaca-fa-regular" style="color:var(--badge-danger-text); font-size:15px;"></i>
+            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Flagged Anomalies</span>
+            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ anomaliesBadgeBg }}; color:{{ anomaliesBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ anomaliesBadgeLabel }}</span>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ anomaliesCaption }}</div>
+          <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
+            <div style="display:grid; grid-template-columns: 2.6fr 0.7fr 1fr 0.7fr 1.8fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
+              <sc-for list="{{ anomalyHeaders }}" as="h" hint-placeholder-count="5">
+                <button onClick="{{ h.onClick }}" style="{{ h.style }}"><span>{{ h.label }}</span><i class="{{ h.icon }}" style="font-size:9px; opacity:{{ h.iconOpacity }};"></i></button>
+              </sc-for>
+            </div>
+            <sc-for list="{{ sortedAnomalies }}" as="a" hint-placeholder-count="4">
+              <div style="display:grid; grid-template-columns: 2.6fr 0.7fr 1fr 0.7fr 1.8fr; gap:12px; padding:12px 14px; align-items:center; background:{{ a.rowBg }}; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ a.accent }};">
+                <span style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ a.workflow }}</span>
+                <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ a.metric }}</span>
+                <span style="font-size:0.875rem; font-weight:500; color:{{ a.changeColor }};">{{ a.change }}</span>
+                <span style="display:inline-flex; align-items:center; gap:6px;">
+                  <span style="width:8px; height:8px; border-radius:50%; background:{{ a.riskColor }};"></span>
+                  <span style="font-size:0.8125rem; color:{{ a.riskColor }}; font-weight:500;">{{ a.riskLabel }}</span>
+                </span>
+                <span style="font-size:0.8125rem; color:var(--text-secondary);">{{ a.cause }}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ anomaliesEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center;">No anomalies in the recent send batch.</div>
+            </sc-if>
+          </div>
+        </div>
+
         <!-- Click Rate Trend — full-width, benefits from the extra horizontal room for an 8-week line chart -->
         <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:8px; flex-wrap:wrap;">
@@ -611,38 +643,6 @@
                   <span style="font-size:0.8125rem; font-weight:600; color:var(--badge-danger-text); flex-shrink:0;">{{ t.clickRate }}</span>
                 </div>
               </sc-for>
-            </sc-if>
-          </div>
-        </div>
-
-        <!-- Flagged Anomalies -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-            <i class="fa-radar alpaca-fa-regular" style="color:var(--badge-danger-text); font-size:15px;"></i>
-            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Flagged Anomalies</span>
-            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ anomaliesBadgeBg }}; color:{{ anomaliesBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ anomaliesBadgeLabel }}</span>
-          </div>
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ anomaliesCaption }}</div>
-          <div style="display:flex; flex-direction:column; border:1px solid var(--border-table); border-radius:var(--r-md); overflow:hidden;">
-            <div style="display:grid; grid-template-columns: 2.6fr 0.7fr 1fr 0.7fr 1.8fr; gap:12px; padding:10px 14px; background:var(--table-header-bg); border-bottom:1px solid var(--border-table-strong);">
-              <sc-for list="{{ anomalyHeaders }}" as="h" hint-placeholder-count="5">
-                <button onClick="{{ h.onClick }}" style="{{ h.style }}"><span>{{ h.label }}</span><i class="{{ h.icon }}" style="font-size:9px; opacity:{{ h.iconOpacity }};"></i></button>
-              </sc-for>
-            </div>
-            <sc-for list="{{ sortedAnomalies }}" as="a" hint-placeholder-count="4">
-              <div style="display:grid; grid-template-columns: 2.6fr 0.7fr 1fr 0.7fr 1.8fr; gap:12px; padding:12px 14px; align-items:center; background:{{ a.rowBg }}; border-top:1px solid var(--border-table); box-shadow:inset 3px 0 0 0 {{ a.accent }};">
-                <span style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ a.workflow }}</span>
-                <span style="font-size:0.875rem; color:var(--text-tertiary);">{{ a.metric }}</span>
-                <span style="font-size:0.875rem; font-weight:500; color:{{ a.changeColor }};">{{ a.change }}</span>
-                <span style="display:inline-flex; align-items:center; gap:6px;">
-                  <span style="width:8px; height:8px; border-radius:50%; background:{{ a.riskColor }};"></span>
-                  <span style="font-size:0.8125rem; color:{{ a.riskColor }}; font-weight:500;">{{ a.riskLabel }}</span>
-                </span>
-                <span style="font-size:0.8125rem; color:var(--text-secondary);">{{ a.cause }}</span>
-              </div>
-            </sc-for>
-            <sc-if value="{{ anomaliesEmpty }}" hint-placeholder-val="{{ false }}">
-              <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center;">No anomalies in the recent send batch.</div>
             </sc-if>
           </div>
         </div>
