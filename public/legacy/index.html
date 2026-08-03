@@ -1918,7 +1918,11 @@ class Component extends DCLogic {
         const pair = widestComparisonPair(trendPoints);
         if (!pair || pair.latest.rate === null || pair.compare.rate === null) return 'var(--text-primary)';
         const ptsDelta = (1 - pair.latest.rate) - (1 - pair.compare.rate);
-        return ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-primary)';
+        // Fatigue is the one deliberate exception to the up=green
+        // convention used everywhere else — rising fatigue is bad
+        // (red), falling is good (green), since "up" here means "more
+        // people over-emailed," not an improvement.
+        return ptsDelta > 0 ? 'var(--badge-danger-text)' : ptsDelta < 0 ? 'var(--badge-success-text)' : 'var(--text-primary)';
       })(),
       fatigueCount: (this.state.fatigueData && this.state.fatigueData.fatigued !== null) ? this.state.fatigueData.fatigued.toLocaleString() : '—',
       fatigueTotal: (this.state.fatigueData && this.state.fatigueData.totalMarketable !== null) ? this.state.fatigueData.totalMarketable.toLocaleString() : '—',
@@ -1939,15 +1943,15 @@ class Component extends DCLogic {
         const pair = widestComparisonPair(trendPoints);
         if (!pair || pair.latest.rate === null || pair.compare.rate === null) return 'var(--text-tertiary)';
         const ptsDelta = (1 - pair.latest.rate) - (1 - pair.compare.rate);
-        // Standardized to the same up=green/down=red convention as every
-        // other trend in this app — previously reversed (rising fatigue
-        // = red) since that's technically "bad," but that made color
-        // meaning inconsistent across panels depending on which metric
-        // you were looking at. Simpler and less confusing to keep color
-        // meaning constant everywhere and let the label text ("X%
-        // fatigued") carry whether up is good or bad for this specific
-        // metric.
-        return ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+        // Fatigue is the one deliberate exception to the up=green
+        // convention used everywhere else in this app — rising fatigue
+        // is bad (red), falling is good (green). Reverted back after
+        // briefly "standardizing" this to match everything else, which
+        // was wrong: the earlier bug report was about the headline
+        // number not matching its OWN trend arrow's color, not about
+        // whether fatigue's up/down polarity itself was correct — it
+        // already was.
+        return ptsDelta > 0 ? 'var(--badge-danger-text)' : ptsDelta < 0 ? 'var(--badge-success-text)' : 'var(--text-tertiary)';
       })(),
 
       sourceHealthBadgeLabel: this.state.sourceHealthLoading ? 'Loading · HubSpot' : (this.state.sourceHealthError ? 'Error · HubSpot' : 'Live · HubSpot'),
