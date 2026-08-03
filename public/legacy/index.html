@@ -479,100 +479,101 @@
           </sc-for>
         </div>
 
-        <!-- Email Performance Lookup (typeahead) — full-width for prominence, it's the most actively-used tool on this tab -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:24px; box-shadow:var(--shadow-card);">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
-            <i class="fa-magnifying-glass-chart alpaca-fa-regular" style="color:var(--icon-accent); font-size:17px;"></i>
-            <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary);">Email Performance Lookup</span>
-            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ lookupBadgeBg }}; color:{{ lookupBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ lookupBadgeLabel }}</span>
-          </div>
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:10px;">Searches the ~500 most recently touched emails, not a fixed date window</div>
-          <div style="position:relative; max-width:640px;">
-            <i class="fa-magnifying-glass alpaca-fa-regular" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-tertiary); font-size:13px;"></i>
-            <input type="text" onInput="{{ onLookupSearch }}" onChange="{{ onLookupSearch }}" defaultValue="{{ lookupQuery }}" placeholder="Search sent emails by name…" style="width:100%; padding:12px 14px 12px 38px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.9375rem;">
-          </div>
-          <div style="margin-top:8px; max-width:640px; max-height:220px; overflow-y:auto; border:1px solid var(--border-table); border-radius:var(--r-sm);">
-            <sc-if value="{{ lookupLoadingState }}" hint-placeholder-val="{{ false }}">
-              <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center;">Searching…</div>
-            </sc-if>
-            <sc-if value="{{ lookupErrorState }}" hint-placeholder-val="{{ false }}">
-              <div style="padding:14px; font-size:0.8125rem; color:var(--badge-danger-text); text-align:center;">{{ lookupErrorState }}</div>
-            </sc-if>
-            <sc-for list="{{ lookupResults }}" as="r" hint-placeholder-count="4">
-              <button onClick="{{ r.onClick }}" style="{{ r.style }}">
-                <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.name }}</span>
-                <span style="font-size:0.6875rem; color:var(--text-tertiary); flex-shrink:0;">{{ r.meta }}</span>
-              </button>
-            </sc-for>
-            <sc-if value="{{ lookupEmpty }}" hint-placeholder-val="{{ false }}">
-              <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center;">No sent emails match “{{ lookupQuery }}”.</div>
+        <!-- Click Rate Trend — full-width, benefits from the extra horizontal room for an 8-week line chart -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:8px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <i class="fa-chart-line alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Click Rate Trend</span>
+            </div>
+            <sc-if value="{{ ctorHasData }}" hint-placeholder-val="{{ false }}">
+              <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--text-secondary);">
+                <span style="width:16px; height:0; border-top:2px dashed var(--badge-danger-text); display:inline-block;"></span>Trailing avg {{ ctorAvgLabel }}
+              </span>
             </sc-if>
           </div>
-          <sc-if value="{{ lookupSelected }}" hint-placeholder-val="{{ true }}">
-            <div style="margin-top:14px;">
-              <div style="font-size:0.8125rem; font-weight:600; color:var(--text-primary); margin-bottom:8px;">{{ selName }} <span style="font-weight:400; color:var(--text-tertiary);">· {{ selMeta }}</span></div>
-              <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-width:800px;">
-                <sc-for list="{{ lookupMetrics }}" as="m" hint-placeholder-count="4">
-                  <div style="background:var(--bg-card-alt); border-radius:var(--r-md); padding:12px;">
-                    <div style="font-size:0.6875rem; color:var(--text-secondary); margin-bottom:4px;">{{ m.label }}</div>
-                    <div style="font-size:1.125rem; font-weight:600; color:{{ m.color }};">{{ m.value }}</div>
-                    <div style="font-size:0.6875rem; color:var(--text-tertiary); margin-top:2px;">{{ m.bench }}</div>
-                  </div>
+          <sc-if value="{{ performanceCheckedAt }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:0.6875rem; color:var(--text-tertiary); margin-bottom:6px;">Last updated {{ performanceCheckedAt }}</div>
+          </sc-if>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px;">Trailing 8 weeks · points turn red when notably below the trailing average</div>
+          <sc-if value="{{ ctorEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="height:220px; display:flex; align-items:center; justify-content:center; font-size:0.8125rem; color:var(--text-tertiary);">Not enough recent send data with opens yet to chart a trend.</div>
+          </sc-if>
+          <sc-if value="{{ ctorHasData }}" hint-placeholder-val="{{ false }}">
+            <div style="position:relative;">
+              <svg viewBox="{{ ctorViewBox }}" style="width:100%; height:190px; display:block; overflow:visible;">
+                <line x1="{{ ctorX0 }}" y1="{{ ctorFloorY }}" x2="{{ ctorX1 }}" y2="{{ ctorFloorY }}" stroke="var(--badge-danger-text)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"></line>
+                <polyline points="{{ ctorPoly }}" fill="none" stroke="var(--dataviz-primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                <sc-for list="{{ ctorPoints }}" as="p" hint-placeholder-count="8">
+                  <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="10" fill="transparent" onMouseEnter="{{ p.onMouseEnter }}" onMouseLeave="{{ p.onMouseLeave }}" style="cursor:pointer;"></circle>
+                  <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="5.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="2" style="pointer-events:none;"></circle>
                 </sc-for>
-              </div>
-              <div style="display:flex; align-items:flex-start; gap:9px; margin-top:12px; padding:10px 12px; background:{{ lookupNote.bg }}; border-radius:var(--r-md); max-width:800px;">
-                <i class="{{ lookupNote.icon }}" style="color:{{ lookupNote.color }}; font-size:12px; margin-top:2px;"></i>
-                <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">{{ lookupNote.text }}</div>
-              </div>
+              </svg>
+              <sc-if value="{{ ctorTooltip }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute; left:{{ ctorTooltip.leftPct }}%; top:{{ ctorTooltip.topPct }}%; transform:translate(-50%, calc(-100% - 14px)); background:var(--tab-bg); border:1px solid var(--border-card); border-radius:var(--r-sm); padding:8px 12px; box-shadow:0 4px 16px rgba(0,0,0,0.18); white-space:nowrap; pointer-events:none; z-index:10;">
+                  <div style="font-size:0.75rem; font-weight:600; color:var(--text-primary);">{{ ctorTooltip.week }}</div>
+                  <div style="font-size:0.8125rem; font-weight:700; color:{{ ctorTooltip.color }}; margin-top:1px;">{{ ctorTooltip.valueLabel }} click rate</div>
+                  <div style="font-size:0.6875rem; color:var(--text-secondary); margin-top:2px;">{{ ctorTooltip.detail }}</div>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display:flex; justify-content:space-between; gap:4px; margin-top:8px; padding:0 4px;">
+              <sc-for list="{{ ctorPoints }}" as="p" hint-placeholder-count="8">
+                <div style="display:flex; flex-direction:column; align-items:center; min-width:0;">
+                  <span style="font-size:0.8125rem; font-weight:700; color:{{ p.color }};">{{ p.valueLabel }}</span>
+                  <span style="font-size:0.6875rem; color:var(--text-tertiary); margin-top:1px;">{{ p.week }}</span>
+                </div>
+              </sc-for>
             </div>
           </sc-if>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:20px;">
-          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:8px; flex-wrap:wrap;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <i class="fa-chart-line alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-                <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Click Rate Trend</span>
-              </div>
-              <sc-if value="{{ ctorHasData }}" hint-placeholder-val="{{ false }}">
-                <span style="display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--text-secondary);">
-                  <span style="width:16px; height:0; border-top:2px dashed var(--badge-danger-text); display:inline-block;"></span>Trailing avg {{ ctorAvgLabel }}
-                </span>
+        <!-- Email Performance Lookup + Weekly Performers — paired side by side -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:24px; box-shadow:var(--shadow-card);">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+              <i class="fa-magnifying-glass-chart alpaca-fa-regular" style="color:var(--icon-accent); font-size:17px;"></i>
+              <span style="font-size:1.25rem; font-weight:600; color:var(--text-primary);">Email Performance Lookup</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ lookupBadgeBg }}; color:{{ lookupBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ lookupBadgeLabel }}</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:10px;">Searches the ~500 most recently touched emails, not a fixed date window</div>
+            <div style="position:relative;">
+              <i class="fa-magnifying-glass alpaca-fa-regular" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-tertiary); font-size:13px;"></i>
+              <input type="text" onInput="{{ onLookupSearch }}" onChange="{{ onLookupSearch }}" defaultValue="{{ lookupQuery }}" placeholder="Search sent emails by name…" style="width:100%; padding:12px 14px 12px 38px; border-radius:var(--r-sm); border:1px solid var(--border-card); background:var(--input-bg); color:var(--text-primary); font-size:0.9375rem;">
+            </div>
+            <div style="margin-top:8px; max-height:220px; overflow-y:auto; border:1px solid var(--border-table); border-radius:var(--r-sm);">
+              <sc-if value="{{ lookupLoadingState }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center;">Searching…</div>
+              </sc-if>
+              <sc-if value="{{ lookupErrorState }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px; font-size:0.8125rem; color:var(--badge-danger-text); text-align:center;">{{ lookupErrorState }}</div>
+              </sc-if>
+              <sc-for list="{{ lookupResults }}" as="r" hint-placeholder-count="4">
+                <button onClick="{{ r.onClick }}" style="{{ r.style }}">
+                  <span style="font-size:0.8125rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.name }}</span>
+                  <span style="font-size:0.6875rem; color:var(--text-tertiary); flex-shrink:0;">{{ r.meta }}</span>
+                </button>
+              </sc-for>
+              <sc-if value="{{ lookupEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px; font-size:0.8125rem; color:var(--text-tertiary); text-align:center;">No sent emails match “{{ lookupQuery }}”.</div>
               </sc-if>
             </div>
-            <sc-if value="{{ performanceCheckedAt }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:0.6875rem; color:var(--text-tertiary); margin-bottom:6px;">Last updated {{ performanceCheckedAt }}</div>
-            </sc-if>
-            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:12px;">Trailing 8 weeks · points turn red when notably below the trailing average</div>
-            <sc-if value="{{ ctorEmpty }}" hint-placeholder-val="{{ false }}">
-              <div style="height:220px; display:flex; align-items:center; justify-content:center; font-size:0.8125rem; color:var(--text-tertiary);">Not enough recent send data with opens yet to chart a trend.</div>
-            </sc-if>
-            <sc-if value="{{ ctorHasData }}" hint-placeholder-val="{{ false }}">
-              <div style="position:relative;">
-                <svg viewBox="{{ ctorViewBox }}" style="width:100%; height:190px; display:block; overflow:visible;">
-                  <line x1="{{ ctorX0 }}" y1="{{ ctorFloorY }}" x2="{{ ctorX1 }}" y2="{{ ctorFloorY }}" stroke="var(--badge-danger-text)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"></line>
-                  <polyline points="{{ ctorPoly }}" fill="none" stroke="var(--dataviz-primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
-                  <sc-for list="{{ ctorPoints }}" as="p" hint-placeholder-count="8">
-                    <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="10" fill="transparent" onMouseEnter="{{ p.onMouseEnter }}" onMouseLeave="{{ p.onMouseLeave }}" style="cursor:pointer;"></circle>
-                    <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="5.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="2" style="pointer-events:none;"></circle>
+            <sc-if value="{{ lookupSelected }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:14px;">
+                <div style="font-size:0.8125rem; font-weight:600; color:var(--text-primary); margin-bottom:8px;">{{ selName }} <span style="font-weight:400; color:var(--text-tertiary);">· {{ selMeta }}</span></div>
+                <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;">
+                  <sc-for list="{{ lookupMetrics }}" as="m" hint-placeholder-count="4">
+                    <div style="background:var(--bg-card-alt); border-radius:var(--r-md); padding:12px;">
+                      <div style="font-size:0.6875rem; color:var(--text-secondary); margin-bottom:4px;">{{ m.label }}</div>
+                      <div style="font-size:1.125rem; font-weight:600; color:{{ m.color }};">{{ m.value }}</div>
+                      <div style="font-size:0.6875rem; color:var(--text-tertiary); margin-top:2px;">{{ m.bench }}</div>
+                    </div>
                   </sc-for>
-                </svg>
-                <sc-if value="{{ ctorTooltip }}" hint-placeholder-val="{{ false }}">
-                  <div style="position:absolute; left:{{ ctorTooltip.leftPct }}%; top:{{ ctorTooltip.topPct }}%; transform:translate(-50%, calc(-100% - 14px)); background:var(--tab-bg); border:1px solid var(--border-card); border-radius:var(--r-sm); padding:8px 12px; box-shadow:0 4px 16px rgba(0,0,0,0.18); white-space:nowrap; pointer-events:none; z-index:10;">
-                    <div style="font-size:0.75rem; font-weight:600; color:var(--text-primary);">{{ ctorTooltip.week }}</div>
-                    <div style="font-size:0.8125rem; font-weight:700; color:{{ ctorTooltip.color }}; margin-top:1px;">{{ ctorTooltip.valueLabel }} click rate</div>
-                    <div style="font-size:0.6875rem; color:var(--text-secondary); margin-top:2px;">{{ ctorTooltip.detail }}</div>
-                  </div>
-                </sc-if>
-              </div>
-              <div style="display:flex; justify-content:space-between; gap:4px; margin-top:8px; padding:0 4px;">
-                <sc-for list="{{ ctorPoints }}" as="p" hint-placeholder-count="8">
-                  <div style="display:flex; flex-direction:column; align-items:center; min-width:0;">
-                    <span style="font-size:0.8125rem; font-weight:700; color:{{ p.color }};">{{ p.valueLabel }}</span>
-                    <span style="font-size:0.6875rem; color:var(--text-tertiary); margin-top:1px;">{{ p.week }}</span>
-                  </div>
-                </sc-for>
+                </div>
+                <div style="display:flex; align-items:flex-start; gap:9px; margin-top:12px; padding:10px 12px; background:{{ lookupNote.bg }}; border-radius:var(--r-md);">
+                  <i class="{{ lookupNote.icon }}" style="color:{{ lookupNote.color }}; font-size:12px; margin-top:2px;"></i>
+                  <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.5;">{{ lookupNote.text }}</div>
+                </div>
               </div>
             </sc-if>
           </div>
