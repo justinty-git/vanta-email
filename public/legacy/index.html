@@ -654,43 +654,44 @@
     <sc-if value="{{ isHealth }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex; flex-direction:column; gap:20px; max-width:1400px; margin:0 auto;">
 
-        <!-- Underutilized Audience — full-width; one big stat reads better wide than squeezed into a half-column -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-            <i class="fa-inbox-full alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Underutilized Audience</span>
-            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ underutilizedBadgeBg }}; color:{{ underutilizedBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ underutilizedBadgeLabel }}</span>
-          </div>
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ underutilizedCaption }}</div>
-          <sc-if value="{{ underutilizedHasData }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
-              <span style="font-size:2rem; font-weight:700; color:{{ underutilizedCoveragePctColor }};">{{ underutilizedCoveragePct }}</span>
-              <span style="font-size:0.8125rem; color:var(--text-secondary); display:flex; align-items:center; gap:5px;">reached in the last {{ underutilizedWindowDays }} days
-                <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">"Reach" = the share of healthy marketing contacts who received at least one marketing email in this window. Low reach can mean an audience isn't being emailed enough, not that anything is broken.</span></span>
-              </span>
+        <!-- Underutilized Audience + Fatigue — paired side by side, mirror-image metrics -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+              <i class="fa-inbox-full alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Underutilized Audience</span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ underutilizedBadgeBg }}; color:{{ underutilizedBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ underutilizedBadgeLabel }}</span>
             </div>
-            <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
-            <div style="font-size:0.75rem; color:{{ underutilizedTrendColor }}; margin-top:6px; font-weight:500;">{{ underutilizedTrendStatus }}</div>
-          </sc-if>
-        </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ underutilizedCaption }}</div>
+            <sc-if value="{{ underutilizedHasData }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px; flex-wrap:wrap;">
+                <span style="font-size:2rem; font-weight:700; color:{{ underutilizedCoveragePctColor }};">{{ underutilizedCoveragePct }}</span>
+                <span style="font-size:0.8125rem; color:var(--text-secondary); display:flex; align-items:center; gap:5px;">reached in the last {{ underutilizedWindowDays }} days
+                  <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">"Reach" = the share of healthy marketing contacts who received at least one marketing email in this window. Low reach can mean an audience isn't being emailed enough, not that anything is broken.</span></span>
+                </span>
+              </div>
+              <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
+              <div style="font-size:0.75rem; color:{{ underutilizedTrendColor }}; margin-top:6px; font-weight:500;">{{ underutilizedTrendStatus }}</div>
+            </sc-if>
+          </div>
 
-        <!-- Fatigue — mirror image of Underutilized Audience: who's getting too much email, not too little -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-            <i class="fa-triangle-exclamation alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
-            <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Fatigue</span>
-            <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Contacts who've received more than {{ fatigueThreshold }} marketing emails since their last open or click. High fatigue can mean an audience is being emailed too often relative to how engaged they actually are.</span></span>
-            <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ fatigueBadgeBg }}; color:{{ fatigueBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ fatigueBadgeLabel }}</span>
-          </div>
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ fatigueCaption }}</div>
-          <sc-if value="{{ fatigueHasData }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
-              <span style="font-size:2rem; font-weight:700; color:{{ fatigueColor }};">{{ fatiguePctLabel }}</span>
-              <span style="font-size:0.8125rem; color:var(--text-secondary);">of marketing contacts show signs of fatigue</span>
+          <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+              <i class="fa-triangle-exclamation alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
+              <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Fatigue</span>
+              <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Contacts who've received more than {{ fatigueThreshold }} marketing emails since their last open or click. High fatigue can mean an audience is being emailed too often relative to how engaged they actually are.</span></span>
+              <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ fatigueBadgeBg }}; color:{{ fatigueBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ fatigueBadgeLabel }}</span>
             </div>
-            <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ fatigueCount }} of {{ fatigueTotal }} marketing contacts have {{ fatigueThreshold }}+ sends since their last engagement.</div>
-            <div style="font-size:0.75rem; color:{{ fatigueTrendColor }}; margin-top:6px; font-weight:500;">{{ fatigueTrendStatus }}</div>
-          </sc-if>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ fatigueCaption }}</div>
+            <sc-if value="{{ fatigueHasData }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
+                <span style="font-size:2rem; font-weight:700; color:{{ fatigueColor }};">{{ fatiguePctLabel }}</span>
+                <span style="font-size:0.8125rem; color:var(--text-secondary);">of marketing contacts show signs of fatigue</span>
+              </div>
+              <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ fatigueCount }} of {{ fatigueTotal }} marketing contacts have {{ fatigueThreshold }}+ sends since their last engagement.</div>
+              <div style="font-size:0.75rem; color:{{ fatigueTrendColor }}; margin-top:6px; font-weight:500;">{{ fatigueTrendStatus }}</div>
+            </sc-if>
+          </div>
         </div>
 
         <!-- Segment Sizing + Audience Tracking — one panel per metric, each with Region/Type sections instead of 4 separate boxes -->
