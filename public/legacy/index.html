@@ -533,7 +533,7 @@
           </sc-if>
           <sc-if value="{{ ctorHasData }}" hint-placeholder-val="{{ false }}">
             <div style="position:relative;">
-              <svg viewBox="{{ ctorViewBox }}" preserveAspectRatio="none" style="width:100%; height:190px; display:block; overflow:visible;">
+              <svg viewBox="{{ ctorViewBox }}" style="width:100%; height:190px; display:block; overflow:visible;">
                 <line x1="{{ ctorX0 }}" y1="{{ ctorFloorY }}" x2="{{ ctorX1 }}" y2="{{ ctorFloorY }}" stroke="var(--badge-danger-text)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"></line>
                 <polyline points="{{ ctorPoly }}" fill="none" stroke="var(--text-primary)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
                 <sc-for list="{{ ctorPoints }}" as="p" hint-placeholder-count="8">
@@ -1634,7 +1634,18 @@ class Component extends DCLogic {
 
   ctorChart() {
     const data = this.state.performanceData;
-    const X0 = 10, W = 780, Y0 = 20, H = 140;
+    // X0/W sized to approximate this chart's real rendered aspect ratio
+    // (roughly 7:1 at the page's 1400px max-width, accounting for card
+    // padding) rather than an arbitrary 800-unit width. The previous
+    // 800x180 viewBox (~4.4:1) was nowhere close to the actual ~7:1
+    // rendered box, which meant preserveAspectRatio='none' had to force
+    // a heavy, visibly distorting stretch to make dots align with their
+    // date labels. Matching the real ratio here means the chart can
+    // preserve its own aspect ratio (no forced stretch) while still
+    // aligning correctly — the two goals were only in conflict because
+    // the coordinate system didn't match reality, not because they're
+    // actually incompatible.
+    const X0 = 10, W = 1250, Y0 = 20, H = 140;
 
     if (!data || !data.trend) return { ctorPoints: [], ctorPoly: '', ctorViewBox: '0 0 ' + (X0 + W + 10) + ' ' + (Y0 + H + 20), ctorX0: X0, ctorX1: X0 + W, ctorFloorY: Y0 + H / 2, ctorEmpty: true, ctorHasData: false };
 
