@@ -62,4 +62,19 @@ export async function ensureSchema(): Promise<void> {
       UNIQUE (metric_type, segment_label, snapshot_date)
     )
   `);
+  // Tracks which anomalies/conflicts have already been posted to Slack,
+  // so a Critical anomaly that's still showing up 12 hours later
+  // doesn't get re-posted as if it were new. item_key is a stable
+  // identifier built from the underlying email/pair IDs — NOT the
+  // display text (which can change slightly run to run, e.g. a
+  // recomputed percentage).
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS slack_alerts_sent (
+      id SERIAL PRIMARY KEY,
+      item_type TEXT NOT NULL,
+      item_key TEXT NOT NULL,
+      first_alerted_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (item_type, item_key)
+    )
+  `);
 }

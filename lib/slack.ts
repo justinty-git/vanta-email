@@ -1,0 +1,124 @@
+import { getPool } from "@/lib/db";
+
+// Slack alerting — posts to the webhook in SLACK_WEBHOOK_URL only when
+// Ready Room's own detection (Flagged Anomalies, Send Conflict
+// Detector) finds something that actually needs a look. This is
+// deliberately NOT a duplicate of the existing Dust/Zapier per-send
+// reporting in Slack — that already reports every send unconditionally.
+// This is the analytical layer on top: signal, not volume.
+//
+// Runs as part of the existing twice-daily snapshot cron (not a
+// separate cron schedule) — see app/api/cron/snapshot-metrics/route.ts.
+//
+// Dedup: each anomaly/conflict gets a stable key built from the
+// underlying email ID(s), not the display text (which can shift
+// slightly run to run as percentages recompute). A key is only ever
+// alerted once — see slack_alerts_sent in lib/db.ts.
+
+// Known, stable production URL for this app — used for internal
+// server-to-server calls to its own API routes, avoiding the need to
+// duplicate the anomaly/conflict detection logic in a second place.
+const APP_BASE_URL = "https://vanta-email.vercel.app";
+
+async function postToSlack(text: string): Promise<void> {
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+  if (!webhookUrl) return; // not configured yet — silently skip, don't fail the whole cron over this
+
+  await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+}
+
+async function alreadyAlerted(db: any, itemType: string, itemKey: string): Promise<boolean> {
+  const result = await db.query(
+    `SELECT 1 FROM slack_alerts_sent WHERE item_type = $1 AND item_key = $2`,
+    [itemType, itemKey]
+  );
+  return result.rows.length > 0;
+}
+
+async function markAlerted(db: any, itemType: string, itemKey: string): Promise<void> {
+  await db.query(
+    `INSERT INTO slack_alerts_sent (item_type, item_key) VALUES ($1, $2)
+     ON CONFLICT (item_type, item_key) DO NOTHING`,
+    [itemType, itemKey]
+  );
+}
+
+export async function checkAndPostSlackAlerts(): Promise<{ posted: string[]; skipped: string[] }> {
+  const db = getPool();
+  const posted: string[] = [];
+  const skipped: string[] = [];
+
+  if (!process.env.SLACK_WEBHOOK_URL) {
+    skipped.push("all (SLACK_WEBHOOK_URL not configured)");
+    return { posted, skipped };
+  }
+
+  // --- Anomalies ---
+  try {
+    const res = await fetch(`${APP_BASE_URL}/api/hubspot/anomalies`);
+    const data = await res.json();
+    if (data.status === "ok") {
+      const criticalOrHigh = (data.flags || []).filter(
+        (f: any) => f.riskLabel === "Critical" || f.riskLabel === "High"
+      );
+      for (const f of criticalOrHigh) {
+        const key = `${f.emailId}:${f.metric}`;
+        if (await alreadyAlerted(db, "anomaly", key)) {
+          skipped.push(`anomaly:${key} (already alerted)`);
+          continue;
+        }
+        const emoji = f.riskLabel === "Critical" ? "🚨" : "⚠️";
+        const text =
+          `${emoji} *${f.riskLabel} anomaly flagged* — ${f.emailName}\n` +
+          `${f.cause}\n` +
+          `<${APP_BASE_URL}|View in Ready Room →>`;
+        await postToSlack(text);
+        await markAlerted(db, "anomaly", key);
+        posted.push(`anomaly:${key}`);
+      }
+    } else {
+      skipped.push("anomalies (fetch error: " + data.message + ")");
+    }
+  } catch (error) {
+    skipped.push("anomalies (fetch error: " + (error as Error).message + ")");
+  }
+
+  // --- Send conflicts ---
+  try {
+    const res = await fetch(`${APP_BASE_URL}/api/hubspot/conflicts`);
+    const data = await res.json();
+    if (data.status === "ok") {
+      for (const c of data.conflicts || []) {
+        // Order-independent key — same pair flagged either direction is the same conflict
+        const ids = [c.emailA.id, c.emailB.id].sort();
+        const key = `${ids[0]}:${ids[1]}`;
+        if (await alreadyAlerted(db, "conflict", key)) {
+          skipped.push(`conflict:${key} (already alerted)`);
+          continue;
+        }
+        const overlapText =
+          c.contactsAtRiskEstimate !== null
+            ? `~${c.contactsAtRiskEstimate.toLocaleString()} contacts at risk`
+            : "shared audience, size unknown";
+        const whenText = c.daysApart === 0 ? "same day" : `${c.daysApart}d apart`;
+        const text =
+          `⚠️ *Send conflict* — "${c.emailA.name}" and "${c.emailB.name}"\n` +
+          `${whenText}, ${overlapText}\n` +
+          `<${APP_BASE_URL}|View in Ready Room →>`;
+        await postToSlack(text);
+        await markAlerted(db, "conflict", key);
+        posted.push(`conflict:${key}`);
+      }
+    } else {
+      skipped.push("conflicts (fetch error: " + data.message + ")");
+    }
+  } catch (error) {
+    skipped.push("conflicts (fetch error: " + (error as Error).message + ")");
+  }
+
+  return { posted, skipped };
+}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { computeSegmentHealth, computeUnderutilized, computeSegmentSizing, computeSourceHealth, computeFatigue } from "@/lib/hubspot";
 import { ensureSchema, getPool } from "@/lib/db";
+import { checkAndPostSlackAlerts } from "@/lib/slack";
 
 export const dynamic = "force-dynamic";
 
@@ -136,11 +137,22 @@ export async function GET(request: Request) {
       skipped.push(`fatigue:Global (${(error as Error).message})`);
     }
 
+    // Slack alerts — checks Flagged Anomalies (Critical/High only) and
+    // Send Conflict Detector for anything genuinely new, posts only
+    // those. See lib/slack.ts for the full reasoning and dedup logic.
+    let slackAlerts: { posted: string[]; skipped: string[] } = { posted: [], skipped: [] };
+    try {
+      slackAlerts = await checkAndPostSlackAlerts();
+    } catch (error) {
+      slackAlerts = { posted: [], skipped: [`slack check failed: ${(error as Error).message}`] };
+    }
+
     return NextResponse.json({
       status: "ok",
       snapshotDate,
       written,
       skipped,
+      slackAlerts,
     });
   } catch (error) {
     return NextResponse.json(
