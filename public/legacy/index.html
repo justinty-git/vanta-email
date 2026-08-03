@@ -1693,6 +1693,22 @@ class Component extends DCLogic {
     const performanceData = this.state.performanceData;
     const attentionItems = this.buildAttentionItems();
     const watchdogRows = this.buildWatchdogRows();
+
+    // Shared by the rate-based trends (Source Health, Fatigue,
+    // Underutilized Audience) — these track slow-moving rates over
+    // large populations, so day-over-day almost always shows a
+    // meaningless "+0.0pts". Rather than remove the trend or wait for
+    // a fixed 7-day mark, this progressively widens the comparison to
+    // the OLDEST point available, capped at 7 days back — always the
+    // widest, most meaningful comparison possible right now, instead of
+    // being stuck on 1-day noise while history builds up.
+    const widestComparisonPair = (trendPoints) => {
+      if (!trendPoints || trendPoints.length < 2) return null;
+      const latest = trendPoints[trendPoints.length - 1];
+      const oldestIndex = Math.max(0, trendPoints.length - 1 - 7);
+      const compare = trendPoints[oldestIndex];
+      return { latest, compare };
+    };
     const ctorChartData = this.ctorChart();
 
     const vals = {
@@ -1863,21 +1879,17 @@ class Component extends DCLogic {
       underutilizedWindowDays: this.state.underutilizedData ? this.state.underutilizedData.windowDays : 7,
       underutilizedTrendStatus: (() => {
         const trendPoints = (this.state.underutilizedTrendData && this.state.underutilizedTrendData.segments && this.state.underutilizedTrendData.segments['Global']) || [];
-        if (trendPoints.length < 2) return '';
-        const latest = trendPoints[trendPoints.length - 1];
-        const prev = trendPoints[trendPoints.length - 2];
-        if (latest.rate === null || prev.rate === null) return '';
-        const ptsDelta = (latest.rate - prev.rate) * 100;
+        const pair = widestComparisonPair(trendPoints);
+        if (!pair || pair.latest.rate === null || pair.compare.rate === null) return '';
+        const ptsDelta = (pair.latest.rate - pair.compare.rate) * 100;
         const arrow = ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—';
-        return arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + ' pts reach since ' + prev.date;
+        return arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + ' pts reach since ' + pair.compare.date;
       })(),
       underutilizedTrendColor: (() => {
         const trendPoints = (this.state.underutilizedTrendData && this.state.underutilizedTrendData.segments && this.state.underutilizedTrendData.segments['Global']) || [];
-        if (trendPoints.length < 2) return 'var(--text-tertiary)';
-        const latest = trendPoints[trendPoints.length - 1];
-        const prev = trendPoints[trendPoints.length - 2];
-        if (latest.rate === null || prev.rate === null) return 'var(--text-tertiary)';
-        const ptsDelta = latest.rate - prev.rate;
+        const pair = widestComparisonPair(trendPoints);
+        if (!pair || pair.latest.rate === null || pair.compare.rate === null) return 'var(--text-tertiary)';
+        const ptsDelta = pair.latest.rate - pair.compare.rate;
         return ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
       })(),
 
@@ -1899,24 +1911,20 @@ class Component extends DCLogic {
       fatigueThreshold: this.state.fatigueData ? this.state.fatigueData.threshold : 10,
       fatigueTrendStatus: (() => {
         const trendPoints = (this.state.fatigueTrendData && this.state.fatigueTrendData.segments && this.state.fatigueTrendData.segments['Global']) || [];
-        if (trendPoints.length < 2) return '';
-        const latest = trendPoints[trendPoints.length - 1];
-        const prev = trendPoints[trendPoints.length - 2];
-        if (latest.rate === null || prev.rate === null) return '';
+        const pair = widestComparisonPair(trendPoints);
+        if (!pair || pair.latest.rate === null || pair.compare.rate === null) return '';
         // Stored rate is "not fatigued" — invert both to get the fatigued% change
-        const latestFatiguedPct = (1 - latest.rate) * 100;
-        const prevFatiguedPct = (1 - prev.rate) * 100;
-        const ptsDelta = latestFatiguedPct - prevFatiguedPct;
+        const latestFatiguedPct = (1 - pair.latest.rate) * 100;
+        const compareFatiguedPct = (1 - pair.compare.rate) * 100;
+        const ptsDelta = latestFatiguedPct - compareFatiguedPct;
         const arrow = ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—';
-        return arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + ' pts fatigued since ' + prev.date;
+        return arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + ' pts fatigued since ' + pair.compare.date;
       })(),
       fatigueTrendColor: (() => {
         const trendPoints = (this.state.fatigueTrendData && this.state.fatigueTrendData.segments && this.state.fatigueTrendData.segments['Global']) || [];
-        if (trendPoints.length < 2) return 'var(--text-tertiary)';
-        const latest = trendPoints[trendPoints.length - 1];
-        const prev = trendPoints[trendPoints.length - 2];
-        if (latest.rate === null || prev.rate === null) return 'var(--text-tertiary)';
-        const ptsDelta = (1 - latest.rate) - (1 - prev.rate);
+        const pair = widestComparisonPair(trendPoints);
+        if (!pair || pair.latest.rate === null || pair.compare.rate === null) return 'var(--text-tertiary)';
+        const ptsDelta = (1 - pair.latest.rate) - (1 - pair.compare.rate);
         // Rising fatigue is bad (red), falling fatigue is good (green) — opposite polarity from most other trends in this app
         return ptsDelta > 0 ? 'var(--badge-danger-text)' : ptsDelta < 0 ? 'var(--badge-success-text)' : 'var(--text-tertiary)';
       })(),
@@ -1937,15 +1945,12 @@ class Component extends DCLogic {
           : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
         const trendPoints = (this.state.sourceHealthTrendData && this.state.sourceHealthTrendData.segments && this.state.sourceHealthTrendData.segments[s.label]) || [];
         let trendStatus = '', trendColor = 'var(--text-tertiary)';
-        if (trendPoints.length >= 2) {
-          const latest = trendPoints[trendPoints.length - 1];
-          const prev = trendPoints[trendPoints.length - 2];
-          if (latest.rate !== null && prev.rate !== null) {
-            const ptsDelta = (latest.rate - prev.rate) * 100;
-            const arrow = ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—';
-            trendColor = ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
-            trendStatus = arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + 'pts since ' + prev.date;
-          }
+        const pair = widestComparisonPair(trendPoints);
+        if (pair && pair.latest.rate !== null && pair.compare.rate !== null) {
+          const ptsDelta = (pair.latest.rate - pair.compare.rate) * 100;
+          const arrow = ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—';
+          trendColor = ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
+          trendStatus = arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + 'pts since ' + pair.compare.date;
         }
         return { label: s.label, rateLabel: rate, rateColor, detail, rowBorder: i < 2 ? 'none' : '1px solid var(--border-table)', trendStatus, trendColor };
       }),
