@@ -1883,7 +1883,7 @@ class Component extends DCLogic {
         if (!pair || pair.latest.rate === null || pair.compare.rate === null) return '';
         const ptsDelta = (pair.latest.rate - pair.compare.rate) * 100;
         const arrow = ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—';
-        return arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + ' pts reach since ' + pair.compare.date;
+        return arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + '% reach since ' + pair.compare.date;
       })(),
       underutilizedTrendColor: (() => {
         const trendPoints = (this.state.underutilizedTrendData && this.state.underutilizedTrendData.segments && this.state.underutilizedTrendData.segments['Global']) || [];
@@ -1918,15 +1918,22 @@ class Component extends DCLogic {
         const compareFatiguedPct = (1 - pair.compare.rate) * 100;
         const ptsDelta = latestFatiguedPct - compareFatiguedPct;
         const arrow = ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—';
-        return arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + ' pts fatigued since ' + pair.compare.date;
+        return arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + '% fatigued since ' + pair.compare.date;
       })(),
       fatigueTrendColor: (() => {
         const trendPoints = (this.state.fatigueTrendData && this.state.fatigueTrendData.segments && this.state.fatigueTrendData.segments['Global']) || [];
         const pair = widestComparisonPair(trendPoints);
         if (!pair || pair.latest.rate === null || pair.compare.rate === null) return 'var(--text-tertiary)';
         const ptsDelta = (1 - pair.latest.rate) - (1 - pair.compare.rate);
-        // Rising fatigue is bad (red), falling fatigue is good (green) — opposite polarity from most other trends in this app
-        return ptsDelta > 0 ? 'var(--badge-danger-text)' : ptsDelta < 0 ? 'var(--badge-success-text)' : 'var(--text-tertiary)';
+        // Standardized to the same up=green/down=red convention as every
+        // other trend in this app — previously reversed (rising fatigue
+        // = red) since that's technically "bad," but that made color
+        // meaning inconsistent across panels depending on which metric
+        // you were looking at. Simpler and less confusing to keep color
+        // meaning constant everywhere and let the label text ("X%
+        // fatigued") carry whether up is good or bad for this specific
+        // metric.
+        return ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
       })(),
 
       sourceHealthBadgeLabel: this.state.sourceHealthLoading ? 'Loading · HubSpot' : (this.state.sourceHealthError ? 'Error · HubSpot' : 'Live · HubSpot'),
@@ -1950,7 +1957,7 @@ class Component extends DCLogic {
           const ptsDelta = (pair.latest.rate - pair.compare.rate) * 100;
           const arrow = ptsDelta > 0 ? '▲' : ptsDelta < 0 ? '▼' : '—';
           trendColor = ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
-          trendStatus = arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + 'pts since ' + pair.compare.date;
+          trendStatus = arrow + ' ' + (ptsDelta > 0 ? '+' : '') + ptsDelta.toFixed(1) + '% since ' + pair.compare.date;
         }
         return { label: s.label, rateLabel: rate, rateColor, detail, rowBorder: i < 2 ? 'none' : '1px solid var(--border-table)', trendStatus, trendColor };
       }),
