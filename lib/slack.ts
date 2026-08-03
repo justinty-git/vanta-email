@@ -20,6 +20,17 @@ import { getPool } from "@/lib/db";
 // duplicate the anomaly/conflict detection logic in a second place.
 const APP_BASE_URL = "https://vanta-email.vercel.app";
 
+// This whole domain sits behind Vercel SSO — confirmed directly, a
+// server-to-server call without this header gets back the login page
+// HTML instead of JSON. VERCEL_AUTOMATION_BYPASS_SECRET is Vercel's own
+// mechanism for exactly this case (auto-injected once "Protection
+// Bypass for Automation" is configured in Deployment Protection
+// settings) — sent as a request header, not a query param.
+function internalFetchHeaders(): Record<string, string> {
+  const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  return secret ? { "x-vercel-protection-bypass": secret } : {};
+}
+
 async function postToSlack(text: string): Promise<void> {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
   if (!webhookUrl) return; // not configured yet — silently skip, don't fail the whole cron over this
@@ -59,7 +70,7 @@ export async function checkAndPostSlackAlerts(): Promise<{ posted: string[]; ski
 
   // --- Anomalies ---
   try {
-    const res = await fetch(`${APP_BASE_URL}/api/hubspot/anomalies`);
+    const res = await fetch(`${APP_BASE_URL}/api/hubspot/anomalies`, { headers: internalFetchHeaders() });
     const data = await res.json();
     if (data.status === "ok") {
       const criticalOrHigh = (data.flags || []).filter(
@@ -89,7 +100,7 @@ export async function checkAndPostSlackAlerts(): Promise<{ posted: string[]; ski
 
   // --- Send conflicts ---
   try {
-    const res = await fetch(`${APP_BASE_URL}/api/hubspot/conflicts`);
+    const res = await fetch(`${APP_BASE_URL}/api/hubspot/conflicts`, { headers: internalFetchHeaders() });
     const data = await res.json();
     if (data.status === "ok") {
       for (const c of data.conflicts || []) {
