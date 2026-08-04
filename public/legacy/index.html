@@ -673,16 +673,26 @@
               <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ underutilizedCount }} of {{ underutilizedTotal }} marketing contacts received no marketing email from HubSpot in the last {{ underutilizedWindowDays }} days.</div>
               <div style="font-size:0.75rem; color:{{ underutilizedTrendColor }}; margin-top:6px; font-weight:500;">{{ underutilizedTrendStatus }}</div>
               <sc-if value="{{ reachHasData }}" hint-placeholder-val="{{ false }}">
-                <div style="margin-top:14px;">
+                <div style="margin-top:14px; position:relative;">
                   <svg viewBox="{{ reachViewBox }}" style="width:100%; height:120px; display:block; overflow:visible;">
                     <polyline points="{{ reachPoly }}" fill="none" stroke="var(--text-primary)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
                     <sc-for list="{{ reachPoints }}" as="p" hint-placeholder-count="5">
-                      <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="4.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="1.5"></circle>
+                      <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="10" fill="transparent" onMouseEnter="{{ p.onMouseEnter }}" onMouseLeave="{{ p.onMouseLeave }}" style="cursor:pointer;"></circle>
+                      <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="4.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="1.5" style="pointer-events:none;"></circle>
                     </sc-for>
                   </svg>
+                  <sc-if value="{{ reachTooltip }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute; left:{{ reachTooltip.leftPct }}%; top:{{ reachTooltip.topPct }}%; transform:translate(-50%, calc(-100% - 14px)); background:var(--tab-bg); border:1px solid var(--border-card); border-radius:var(--r-sm); padding:8px 12px; box-shadow:0 4px 16px rgba(0,0,0,0.18); white-space:nowrap; pointer-events:none; z-index:10;">
+                      <div style="font-size:0.75rem; font-weight:600; color:var(--text-primary);">{{ reachTooltip.week }}</div>
+                      <div style="font-size:0.8125rem; font-weight:700; color:{{ reachTooltip.color }};">{{ reachTooltip.valueLabel }} reach</div>
+                    </div>
+                  </sc-if>
                   <div style="display:flex; justify-content:space-between; gap:4px; margin-top:6px; padding:0 4px;">
                     <sc-for list="{{ reachPoints }}" as="p" hint-placeholder-count="5">
-                      <span style="font-size:0.625rem; color:var(--text-tertiary);">{{ p.week }}</span>
+                      <div style="display:flex; flex-direction:column; align-items:center; min-width:0;">
+                        <span style="font-size:0.6875rem; font-weight:700; color:{{ p.color }};">{{ p.valueLabel }}</span>
+                        <span style="font-size:0.625rem; color:var(--text-tertiary); margin-top:1px;">{{ p.week }}</span>
+                      </div>
                     </sc-for>
                   </div>
                 </div>
@@ -706,16 +716,26 @@
               <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ fatigueCount }} of {{ fatigueTotal }} marketing contacts have {{ fatigueThreshold }}+ sends since their last engagement.</div>
               <div style="font-size:0.75rem; color:{{ fatigueTrendColor }}; margin-top:6px; font-weight:500;">{{ fatigueTrendStatus }}</div>
               <sc-if value="{{ fatigueChartHasData }}" hint-placeholder-val="{{ false }}">
-                <div style="margin-top:14px;">
+                <div style="margin-top:14px; position:relative;">
                   <svg viewBox="{{ fatigueChartViewBox }}" style="width:100%; height:120px; display:block; overflow:visible;">
                     <polyline points="{{ fatigueChartPoly }}" fill="none" stroke="var(--text-primary)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
                     <sc-for list="{{ fatigueChartPoints }}" as="p" hint-placeholder-count="5">
-                      <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="4.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="1.5"></circle>
+                      <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="10" fill="transparent" onMouseEnter="{{ p.onMouseEnter }}" onMouseLeave="{{ p.onMouseLeave }}" style="cursor:pointer;"></circle>
+                      <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="4.5" fill="{{ p.color }}" stroke="var(--bg-card)" stroke-width="1.5" style="pointer-events:none;"></circle>
                     </sc-for>
                   </svg>
+                  <sc-if value="{{ fatigueChartTooltip }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute; left:{{ fatigueChartTooltip.leftPct }}%; top:{{ fatigueChartTooltip.topPct }}%; transform:translate(-50%, calc(-100% - 14px)); background:var(--tab-bg); border:1px solid var(--border-card); border-radius:var(--r-sm); padding:8px 12px; box-shadow:0 4px 16px rgba(0,0,0,0.18); white-space:nowrap; pointer-events:none; z-index:10;">
+                      <div style="font-size:0.75rem; font-weight:600; color:var(--text-primary);">{{ fatigueChartTooltip.week }}</div>
+                      <div style="font-size:0.8125rem; font-weight:700; color:{{ fatigueChartTooltip.color }};">{{ fatigueChartTooltip.valueLabel }} fatigued</div>
+                    </div>
+                  </sc-if>
                   <div style="display:flex; justify-content:space-between; gap:4px; margin-top:6px; padding:0 4px;">
                     <sc-for list="{{ fatigueChartPoints }}" as="p" hint-placeholder-count="5">
-                      <span style="font-size:0.625rem; color:var(--text-tertiary);">{{ p.week }}</span>
+                      <div style="display:flex; flex-direction:column; align-items:center; min-width:0;">
+                        <span style="font-size:0.6875rem; font-weight:700; color:{{ p.color }};">{{ p.valueLabel }}</span>
+                        <span style="font-size:0.625rem; color:var(--text-tertiary); margin-top:1px;">{{ p.week }}</span>
+                      </div>
                     </sc-for>
                   </div>
                 </div>
@@ -864,6 +884,8 @@ class Component extends DCLogic {
     fatigueLoading: true, fatigueError: null, fatigueData: null,
     sourceHealthLoading: true, sourceHealthError: null, sourceHealthData: null,
     hoveredCtorIndex: null,
+    hoveredReachIndex: null,
+    hoveredFatigueChartIndex: null,
     audienceStatusLoading: true, audienceStatusError: null, audienceStatusData: null,
     segmentHealthLoading: true, segmentHealthError: null, segmentHealthData: null,
     segmentHealthTrendData: null,
@@ -2225,6 +2247,22 @@ class Component extends DCLogic {
           color: p.color,
           detail: p.tooltip,
         };
+      })(),
+      reachTooltip: (() => {
+        const idx = this.state.hoveredReachIndex;
+        if (idx === null || idx === undefined) return null;
+        const p = (reachChartData.reachPoints || [])[idx];
+        if (!p) return null;
+        const [, , vbW, vbH] = reachChartData.reachViewBox.split(' ').map(Number);
+        return { leftPct: (p.cx / vbW) * 100, topPct: (p.cy / vbH) * 100, week: p.week, valueLabel: p.valueLabel, color: p.color };
+      })(),
+      fatigueChartTooltip: (() => {
+        const idx = this.state.hoveredFatigueChartIndex;
+        if (idx === null || idx === undefined) return null;
+        const p = (fatigueChartData.fatigueChartPoints || [])[idx];
+        if (!p) return null;
+        const [, , vbW, vbH] = fatigueChartData.fatigueChartViewBox.split(' ').map(Number);
+        return { leftPct: (p.cx / vbW) * 100, topPct: (p.cy / vbH) * 100, week: p.week, valueLabel: p.valueLabel, color: p.color };
       })(),
     };
 
