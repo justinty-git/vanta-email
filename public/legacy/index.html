@@ -704,14 +704,15 @@
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
               <i class="fa-triangle-exclamation alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Fatigue</span>
-              <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Contacts who've received more than {{ fatigueThreshold }} marketing emails since their last open or click. High fatigue can mean an audience is being emailed too often relative to how engaged they actually are.</span></span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ fatigueBadgeBg }}; color:{{ fatigueBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ fatigueBadgeLabel }}</span>
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:14px;">{{ fatigueCaption }}</div>
             <sc-if value="{{ fatigueHasData }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px;">
+              <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:4px; flex-wrap:wrap;">
                 <span style="font-size:2rem; font-weight:700; color:{{ fatigueColor }};">{{ fatiguePctLabel }}</span>
-                <span style="font-size:0.8125rem; color:var(--text-secondary);">of marketing contacts show signs of fatigue</span>
+                <span style="font-size:0.8125rem; color:var(--text-secondary); display:flex; align-items:center; gap:5px;">of marketing contacts show signs of fatigue
+                  <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Contacts who've received more than {{ fatigueThreshold }} marketing emails since their last open or click. High fatigue can mean an audience is being emailed too often relative to how engaged they actually are.</span></span>
+                </span>
               </div>
               <div style="font-size:0.8125rem; color:var(--text-secondary);">{{ fatigueCount }} of {{ fatigueTotal }} marketing contacts have {{ fatigueThreshold }}+ sends since their last engagement.</div>
               <div style="font-size:0.75rem; color:{{ fatigueTrendColor }}; margin-top:6px; font-weight:500;">{{ fatigueTrendStatus }}</div>
@@ -794,7 +795,7 @@
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
               <i class="fa-arrows-up-down alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
               <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Audience Tracking</span>
-              <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Health rate = healthy contacts ÷ total contacts in that segment's base list. Healthy means marketable, never hard-bounced, not unsubscribed, and under 3 bounces. The arrow below each row shows whether that segment's own size grew or shrank since yesterday.</span></span>
+              <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Health rate = healthy contacts ÷ total contacts in that segment's base list. Healthy means marketable, never hard-bounced, not unsubscribed, and under 3 bounces. The arrow below each row shows whether that segment's own size grew or shrank recently — the exact comparison window widens toward 7 days as more history accumulates.</span></span>
               <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ segmentHealthBadgeBg }}; color:{{ segmentHealthBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ segmentHealthBadgeLabel }}</span>
             </div>
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:18px;">{{ segmentHealthCaption }}</div>
@@ -1986,7 +1987,7 @@ class Component extends DCLogic {
       watchdogEmpty: !this.state.workflowsLoading && !this.state.workflowsError && watchdogRows.length === 0,
       watchdogEmptyMessage: 'No nurture workflows listed yet.',
 
-      underutilizedBadgeLabel: this.state.underutilizedLoading ? 'Loading · HubSpot' : (this.state.underutilizedError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      underutilizedBadgeLabel: this.state.underutilizedLoading ? 'Loading · HubSpot' : (this.state.underutilizedError ? 'Error · HubSpot' : 'Daily · HubSpot'),
       underutilizedBadgeBg: this.state.underutilizedError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
       underutilizedBadgeColor: this.state.underutilizedError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
       underutilizedCaption: this.state.underutilizedLoading
@@ -2023,7 +2024,7 @@ class Component extends DCLogic {
         return ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
       })(),
 
-      fatigueBadgeLabel: this.state.fatigueLoading ? 'Loading · HubSpot' : (this.state.fatigueError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      fatigueBadgeLabel: this.state.fatigueLoading ? 'Loading · HubSpot' : (this.state.fatigueError ? 'Error · HubSpot' : 'Daily · HubSpot'),
       fatigueBadgeBg: this.state.fatigueError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
       fatigueBadgeColor: this.state.fatigueError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
       fatigueCaption: this.state.fatigueLoading
@@ -2076,7 +2077,7 @@ class Component extends DCLogic {
         return ptsDelta > 0 ? 'var(--badge-danger-text)' : ptsDelta < 0 ? 'var(--badge-success-text)' : 'var(--text-tertiary)';
       })(),
 
-      sourceHealthBadgeLabel: this.state.sourceHealthLoading ? 'Loading · HubSpot' : (this.state.sourceHealthError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      sourceHealthBadgeLabel: this.state.sourceHealthLoading ? 'Loading · HubSpot' : (this.state.sourceHealthError ? 'Error · HubSpot' : 'Daily · HubSpot'),
       sourceHealthBadgeBg: this.state.sourceHealthError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
       sourceHealthBadgeColor: this.state.sourceHealthError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
       sourceHealthCaption: this.state.sourceHealthLoading
@@ -2101,7 +2102,7 @@ class Component extends DCLogic {
         return { label: s.label, rateLabel: rate, rateColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor, detail, rowBorder: i < 2 ? 'none' : '1px solid var(--border-table)', trendStatus, trendColor };
       }),
 
-      audienceStatusBadgeLabel: this.state.audienceStatusLoading ? 'Loading · HubSpot' : (this.state.audienceStatusError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      audienceStatusBadgeLabel: this.state.audienceStatusLoading ? 'Loading · HubSpot' : (this.state.audienceStatusError ? 'Error · HubSpot' : 'Daily · HubSpot'),
       audienceStatusBadgeBg: this.state.audienceStatusError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
       audienceStatusBadgeColor: this.state.audienceStatusError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
       audienceStatusCaption: this.state.audienceStatusLoading
@@ -2152,7 +2153,7 @@ class Component extends DCLogic {
         };
       }),
 
-      segmentHealthBadgeLabel: this.state.segmentHealthLoading ? 'Loading · HubSpot' : (this.state.segmentHealthError ? 'Error · HubSpot' : 'Live · HubSpot'),
+      segmentHealthBadgeLabel: this.state.segmentHealthLoading ? 'Loading · HubSpot' : (this.state.segmentHealthError ? 'Error · HubSpot' : 'Daily · HubSpot'),
       segmentHealthBadgeBg: this.state.segmentHealthError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
       segmentHealthBadgeColor: this.state.segmentHealthError ? 'var(--badge-danger-text)' : 'var(--badge-success-text)',
       segmentHealthCaption: this.state.segmentHealthLoading
