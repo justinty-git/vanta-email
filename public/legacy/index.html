@@ -762,7 +762,7 @@
                 <div style="padding:11px 0; border-top:{{ a.rowBorder }};">
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
                     <div style="min-width:0;">
-                      <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
+                      <a href="{{ a.href }}" target="_blank" style="display:block; font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-decoration:none; pointer-events:{{ a.linkEnabled }};">{{ a.label }}</a>
                       <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
                     </div>
                     <span style="font-size:1.25rem; font-weight:600; color:{{ a.sizeColor }}; flex-shrink:0;">{{ a.sizeLabel }}</span>
@@ -778,7 +778,7 @@
                 <div style="padding:11px 0; border-top:{{ a.rowBorder }};">
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
                     <div style="min-width:0;">
-                      <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.label }}</div>
+                      <a href="{{ a.href }}" target="_blank" style="display:block; font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-decoration:none; pointer-events:{{ a.linkEnabled }};">{{ a.label }}</a>
                       <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ a.detail }}</div>
                     </div>
                     <span style="font-size:1.25rem; font-weight:600; color:{{ a.sizeColor }}; flex-shrink:0;">{{ a.sizeLabel }}</span>
@@ -804,7 +804,7 @@
               <sc-for list="{{ segmentHealthRegionRows }}" as="s" hint-placeholder-count="5">
                 <div style="padding:11px 0; border-top:{{ s.rowBorder }};">
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
+                    <a href="{{ s.href }}" target="_blank" style="display:block; font-size:0.875rem; font-weight:500; color:var(--text-primary); text-decoration:none; pointer-events:{{ s.linkEnabled }};">{{ s.label }}</a>
                     <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
                   </div>
                   <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
@@ -818,7 +818,7 @@
               <sc-for list="{{ segmentHealthAudienceRows }}" as="s" hint-placeholder-count="2">
                 <div style="padding:11px 0; border-top:{{ s.rowBorder }};">
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-                    <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ s.label }}</div>
+                    <a href="{{ s.href }}" target="_blank" style="display:block; font-size:0.875rem; font-weight:500; color:var(--text-primary); text-decoration:none; pointer-events:{{ s.linkEnabled }};">{{ s.label }}</a>
                     <span style="font-size:1.25rem; font-weight:600; color:{{ s.rateColor }};">{{ s.rateLabel }}</span>
                   </div>
                   <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">{{ s.detail }}</div>
@@ -2112,13 +2112,12 @@ class Component extends DCLogic {
       audienceStatusRegionRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group !== 'audience').map((s, i) => {
         const trendPoints = (this.state.audienceStatusTrendData && this.state.audienceStatusTrendData.segments && this.state.audienceStatusTrendData.segments[s.label]) || [];
         let trendStatus = '', trendColor = 'var(--text-tertiary)';
-        if (trendPoints.length >= 2) {
-          const latest = trendPoints[trendPoints.length - 1];
-          const prev = trendPoints[trendPoints.length - 2];
-          const delta = latest.totalCount - prev.totalCount;
+        const pair = widestComparisonPair(trendPoints);
+        if (pair) {
+          const delta = pair.latest.totalCount - pair.compare.totalCount;
           const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '—';
           trendColor = delta > 0 ? 'var(--badge-success-text)' : delta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
-          trendStatus = arrow + ' ' + (delta > 0 ? '+' : '') + delta.toLocaleString() + ' since ' + prev.date;
+          trendStatus = arrow + ' ' + (delta > 0 ? '+' : '') + delta.toLocaleString() + ' since ' + pair.compare.date;
         }
         return {
           label: s.label,
@@ -2127,18 +2126,19 @@ class Component extends DCLogic {
           sizeColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor,
           rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)',
           trendStatus, trendColor,
+          href: s.listId ? ('https://app.hubspot.com/contacts/8588479/objectLists/' + s.listId + '/filters') : '#',
+          linkEnabled: s.listId ? 'auto' : 'none',
         };
       }),
       audienceStatusAudienceRows: (this.state.audienceStatusData ? this.state.audienceStatusData.segments : []).filter(s => s.group === 'audience').map((s, i) => {
         const trendPoints = (this.state.audienceStatusTrendData && this.state.audienceStatusTrendData.segments && this.state.audienceStatusTrendData.segments[s.label]) || [];
         let trendStatus = '', trendColor = 'var(--text-tertiary)';
-        if (trendPoints.length >= 2) {
-          const latest = trendPoints[trendPoints.length - 1];
-          const prev = trendPoints[trendPoints.length - 2];
-          const delta = latest.totalCount - prev.totalCount;
+        const pair = widestComparisonPair(trendPoints);
+        if (pair) {
+          const delta = pair.latest.totalCount - pair.compare.totalCount;
           const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '—';
           trendColor = delta > 0 ? 'var(--badge-success-text)' : delta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
-          trendStatus = arrow + ' ' + (delta > 0 ? '+' : '') + delta.toLocaleString() + ' since ' + prev.date;
+          trendStatus = arrow + ' ' + (delta > 0 ? '+' : '') + delta.toLocaleString() + ' since ' + pair.compare.date;
         }
         return {
           label: s.label,
@@ -2147,6 +2147,8 @@ class Component extends DCLogic {
           sizeColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor,
           rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)',
           trendStatus, trendColor,
+          href: s.listId ? ('https://app.hubspot.com/contacts/8588479/objectLists/' + s.listId + '/filters') : '#',
+          linkEnabled: s.listId ? 'auto' : 'none',
         };
       }),
 
@@ -2166,23 +2168,20 @@ class Component extends DCLogic {
           ? 'Lookup failed: ' + s.error
           : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
         const trendPoints = (this.state.segmentHealthTrendData && this.state.segmentHealthTrendData.segments[s.label]) || [];
-        let trendStatus, trendColor = 'var(--text-tertiary)';
-        if (trendPoints.length >= 2) {
-          const latest = trendPoints[trendPoints.length - 1];
-          const prev = trendPoints[trendPoints.length - 2];
-          const totalDelta = latest.totalCount - prev.totalCount;
-          const pctChange = prev.totalCount > 0 ? (totalDelta / prev.totalCount) * 100 : 0;
+        let trendStatus = '', trendColor = 'var(--text-tertiary)';
+        const pair = widestComparisonPair(trendPoints);
+        if (pair) {
+          const totalDelta = pair.latest.totalCount - pair.compare.totalCount;
+          const pctChange = pair.compare.totalCount > 0 ? (totalDelta / pair.compare.totalCount) * 100 : 0;
           const arrow = totalDelta > 0 ? '▲' : totalDelta < 0 ? '▼' : '—';
           trendColor = totalDelta > 0 ? 'var(--badge-success-text)' : totalDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
-          trendStatus = arrow + ' ' + (pctChange > 0 ? '+' : '') + pctChange.toFixed(2) + '% since ' + prev.date + ' (' + (totalDelta > 0 ? '+' : '') + totalDelta.toLocaleString() + ' contacts)';
-        } else {
-          trendStatus = '';
+          trendStatus = arrow + ' ' + (pctChange > 0 ? '+' : '') + pctChange.toFixed(2) + '% since ' + pair.compare.date + ' (' + (totalDelta > 0 ? '+' : '') + totalDelta.toLocaleString() + ' contacts)';
         }
         // Big number now matches the trend color directly (green when
         // trending up, red when down, neutral gray when no trend yet)
         // instead of an independent health-threshold color — per
         // Justin, the number should visually agree with its own arrow.
-        return { label: s.label, rateLabel: rate, rateColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor, detail, trendStatus, trendColor, rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)' };
+        return { label: s.label, rateLabel: rate, rateColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor, detail, trendStatus, trendColor, rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)', href: s.baseListId ? ('https://app.hubspot.com/contacts/8588479/objectLists/' + s.baseListId + '/filters') : '#', linkEnabled: s.baseListId ? 'auto' : 'none' };
       }),
       segmentHealthAudienceRows: (this.state.segmentHealthData ? this.state.segmentHealthData.segments : []).filter(s => s.group === 'audience').map((s, i) => {
         const rate = s.healthRate !== null ? (s.healthRate * 100).toFixed(1) + '%' : '—';
@@ -2192,19 +2191,16 @@ class Component extends DCLogic {
           ? 'Lookup failed: ' + s.error
           : (s.healthyCount !== null && s.totalCount !== null ? s.healthyCount.toLocaleString() + ' of ' + s.totalCount.toLocaleString() + ' healthy' : '—');
         const trendPoints = (this.state.segmentHealthTrendData && this.state.segmentHealthTrendData.segments[s.label]) || [];
-        let trendStatus, trendColor = 'var(--text-tertiary)';
-        if (trendPoints.length >= 2) {
-          const latest = trendPoints[trendPoints.length - 1];
-          const prev = trendPoints[trendPoints.length - 2];
-          const totalDelta = latest.totalCount - prev.totalCount;
-          const pctChange = prev.totalCount > 0 ? (totalDelta / prev.totalCount) * 100 : 0;
+        let trendStatus = '', trendColor = 'var(--text-tertiary)';
+        const pair = widestComparisonPair(trendPoints);
+        if (pair) {
+          const totalDelta = pair.latest.totalCount - pair.compare.totalCount;
+          const pctChange = pair.compare.totalCount > 0 ? (totalDelta / pair.compare.totalCount) * 100 : 0;
           const arrow = totalDelta > 0 ? '▲' : totalDelta < 0 ? '▼' : '—';
           trendColor = totalDelta > 0 ? 'var(--badge-success-text)' : totalDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
-          trendStatus = arrow + ' ' + (pctChange > 0 ? '+' : '') + pctChange.toFixed(2) + '% since ' + prev.date + ' (' + (totalDelta > 0 ? '+' : '') + totalDelta.toLocaleString() + ' contacts)';
-        } else {
-          trendStatus = '';
+          trendStatus = arrow + ' ' + (pctChange > 0 ? '+' : '') + pctChange.toFixed(2) + '% since ' + pair.compare.date + ' (' + (totalDelta > 0 ? '+' : '') + totalDelta.toLocaleString() + ' contacts)';
         }
-        return { label: s.label, rateLabel: rate, rateColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor, detail, trendStatus, trendColor, rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)' };
+        return { label: s.label, rateLabel: rate, rateColor: trendColor === 'var(--text-tertiary)' ? 'var(--text-primary)' : trendColor, detail, trendStatus, trendColor, rowBorder: i === 0 ? 'none' : '1px solid var(--border-table)', href: s.baseListId ? ('https://app.hubspot.com/contacts/8588479/objectLists/' + s.baseListId + '/filters') : '#', linkEnabled: s.baseListId ? 'auto' : 'none' };
       }),
 
       onLookupSearch: (e) => this.runLookupSearch(e.target.value),
