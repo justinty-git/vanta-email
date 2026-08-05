@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { computeSegmentHealth, computeUnderutilized, computeSegmentSizing, computeSourceHealth, computeFatigue } from "@/lib/hubspot";
+import { computeSegmentHealth, computeUnderutilized, computeSegmentSizing, computeSourceHealth, computeFatigue, AUDIENCE_TYPE_FILTERS } from "@/lib/hubspot";
 import { ensureSchema, getPool } from "@/lib/db";
 import { checkAndPostSlackAlerts } from "@/lib/slack";
 
@@ -85,9 +85,10 @@ export async function GET(request: Request) {
       written.push(`segment_health:${s.label}`);
     }
 
-    // Underutilized Audience — new. Single row; "healthy_count" here
-    // means "reached" (the complement of underutilized), matching the
-    // same total/healthy/rate shape as every other metric in this table.
+    // Underutilized Audience — Global, plus Prospects/Customers split
+    // per Justin (wanting this useful to both audience-focused teams,
+    // not just one blended number). "healthy_count" here means
+    // "reached" (the complement of underutilized).
     try {
       const u = await computeUnderutilized();
       const reached = u.totalMarketable - u.underutilized;
@@ -95,6 +96,16 @@ export async function GET(request: Request) {
       written.push("underutilized:Global");
     } catch (error) {
       skipped.push(`underutilized:Global (${(error as Error).message})`);
+    }
+    for (const label of ["Prospects", "Customers"] as const) {
+      try {
+        const u = await computeUnderutilized(AUDIENCE_TYPE_FILTERS[label]);
+        const reached = u.totalMarketable - u.underutilized;
+        await upsertSnapshot(db, "underutilized", label, u.totalMarketable, reached, u.coveragePct, snapshotDate);
+        written.push(`underutilized:${label}`);
+      } catch (error) {
+        skipped.push(`underutilized:${label} (${(error as Error).message})`);
+      }
     }
 
     // Segment Sizing — new. One row per segment; no healthy/rate
@@ -120,9 +131,9 @@ export async function GET(request: Request) {
       written.push(`source_health:${s.label}`);
     }
 
-    // Fatigue — new. Single row; "healthy_count" here means "NOT
-    // fatigued" (the complement), matching the same total/healthy/rate
-    // shape as every other metric in this table.
+    // Fatigue — Global, plus Prospects/Customers split, same reasoning
+    // as Underutilized Audience above. "healthy_count" here means "NOT
+    // fatigued" (the complement).
     try {
       const f = await computeFatigue();
       if (f.totalMarketable === null || f.fatigued === null) {
@@ -135,6 +146,21 @@ export async function GET(request: Request) {
       }
     } catch (error) {
       skipped.push(`fatigue:Global (${(error as Error).message})`);
+    }
+    for (const label of ["Prospects", "Customers"] as const) {
+      try {
+        const f = await computeFatigue(AUDIENCE_TYPE_FILTERS[label]);
+        if (f.totalMarketable === null || f.fatigued === null) {
+          skipped.push(`fatigue:${label}` + (f.error ? ` (${f.error})` : " (missing data)"));
+        } else {
+          const notFatigued = f.totalMarketable - f.fatigued;
+          const notFatiguedRate = f.totalMarketable > 0 ? notFatigued / f.totalMarketable : null;
+          await upsertSnapshot(db, "fatigue", label, f.totalMarketable, notFatigued, notFatiguedRate, snapshotDate);
+          written.push(`fatigue:${label}`);
+        }
+      } catch (error) {
+        skipped.push(`fatigue:${label} (${(error as Error).message})`);
+      }
     }
 
     // Slack alerts — checks Flagged Anomalies (Critical/High only) and

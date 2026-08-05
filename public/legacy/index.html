@@ -697,6 +697,17 @@
                   </div>
                 </div>
               </sc-if>
+              <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border-table);">
+                <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px; display:flex; align-items:center; gap:5px;">By audience type
+                  <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Prospect/Customer here is based on lifecycle stage, a different (though related) definition than the curated HubSpot lists Segment Sizing uses for its own Prospects/Customers split — the two may not represent exactly the same contacts.</span></span>
+                </div>
+                <sc-for list="{{ underutilizedByType }}" as="t" hint-placeholder-count="2">
+                  <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
+                    <span style="font-size:0.8125rem; color:var(--text-secondary);">{{ t.label }}</span>
+                    <span style="font-size:0.9375rem; font-weight:600; color:var(--text-primary);">{{ t.pctLabel }}</span>
+                  </div>
+                </sc-for>
+              </div>
             </sc-if>
           </div>
 
@@ -741,6 +752,17 @@
                   </div>
                 </div>
               </sc-if>
+              <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border-table);">
+                <div style="font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-tertiary); margin-bottom:8px; display:flex; align-items:center; gap:5px;">By audience type
+                  <span class="info-tip"><span class="tip-badge">?</span><span class="tip-bubble">Prospect/Customer here is based on lifecycle stage, a different (though related) definition than the curated HubSpot lists Segment Sizing uses for its own Prospects/Customers split — the two may not represent exactly the same contacts.</span></span>
+                </div>
+                <sc-for list="{{ fatigueByType }}" as="t" hint-placeholder-count="2">
+                  <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:10px;">
+                    <span style="font-size:0.8125rem; color:var(--text-secondary);">{{ t.label }}</span>
+                    <span style="font-size:0.9375rem; font-weight:600; color:var(--text-primary);">{{ t.pctLabel }}</span>
+                  </div>
+                </sc-for>
+              </div>
             </sc-if>
           </div>
         </div>
@@ -2023,6 +2045,10 @@ class Component extends DCLogic {
         const ptsDelta = pair.latest.rate - pair.compare.rate;
         return ptsDelta > 0 ? 'var(--badge-success-text)' : ptsDelta < 0 ? 'var(--badge-danger-text)' : 'var(--text-tertiary)';
       })(),
+      underutilizedByType: ((this.state.underutilizedData && this.state.underutilizedData.byAudienceType) || []).map(t => ({
+        label: t.label,
+        pctLabel: t.pending ? 'Waiting on first snapshot' : (t.coveragePct !== null ? (t.coveragePct * 100).toFixed(1) + '% reached' : '—'),
+      })),
 
       fatigueBadgeLabel: this.state.fatigueLoading ? 'Loading · HubSpot' : (this.state.fatigueError ? 'Error · HubSpot' : 'Daily · HubSpot'),
       fatigueBadgeBg: this.state.fatigueError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',
@@ -2076,6 +2102,10 @@ class Component extends DCLogic {
         // already was.
         return ptsDelta > 0 ? 'var(--badge-danger-text)' : ptsDelta < 0 ? 'var(--badge-success-text)' : 'var(--text-tertiary)';
       })(),
+      fatigueByType: ((this.state.fatigueData && this.state.fatigueData.byAudienceType) || []).map(t => ({
+        label: t.label,
+        pctLabel: t.pending ? 'Waiting on first snapshot' : (t.fatiguedPct !== null ? (t.fatiguedPct * 100).toFixed(1) + '% fatigued' : '—'),
+      })),
 
       sourceHealthBadgeLabel: this.state.sourceHealthLoading ? 'Loading · HubSpot' : (this.state.sourceHealthError ? 'Error · HubSpot' : 'Daily · HubSpot'),
       sourceHealthBadgeBg: this.state.sourceHealthError ? 'var(--badge-danger-bg)' : 'var(--badge-success-bg)',

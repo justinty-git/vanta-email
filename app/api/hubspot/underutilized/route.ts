@@ -8,21 +8,18 @@ export const dynamic = "force-dynamic";
 
 // GET /api/hubspot/underutilized
 //
-// CHANGED: this used to compute live from HubSpot on every page load
-// (several search API calls + a list-membership lookup, every single
-// time anyone opened the Health tab). Underutilized Audience's number
-// only meaningfully changes once a day at most — hitting HubSpot live
-// on every load was real, unnecessary cost that would only grow as
-// more people have this open. Now reads the latest daily snapshot
-// already written by the cron job (app/api/cron/snapshot-metrics),
-// same Postgres table used for Region/Audience Tracking's trend
-// history. Still effectively instant on page load (a Postgres read,
-// not a HubSpot round-trip) and still genuinely current — updated
-// daily either way.
+// Reads the latest daily snapshot for Global, Prospects, and Customers
+// (three separate metric_snapshots rows, same metric_type). Global
+// stays at the TOP LEVEL of the response, unchanged shape from before —
+// existing frontend code reading totalMarketable/underutilized/
+// coveragePct/checkedAt directly keeps working as-is. Prospects/
+// Customers are new, returned in a separate byAudienceType array, so
+// this is a pure addition, not a breaking change to the existing
+// single-stat view.
 //
-// "checkedAt" now reflects when the snapshot was actually written
-// (the cron's run time), not "just now" — more honest given this is a
-// stored snapshot, not a live check.
+// Per Justin — wanting Underutilized Audience useful to both
+// prospect-focused and customer-focused teams, not just one blended
+// global number.
 
 const WINDOW_DAYS = 7; // matches computeUnderutilized()'s window in lib/hubspot.ts
 
@@ -32,14 +29,42 @@ export async function GET() {
     const db = getPool();
 
     const result = await db.query(
-      `SELECT total_count, healthy_count, rate, snapshot_date, created_at
+      `SELECT DISTINCT ON (segment_label) segment_label, total_count, healthy_count, rate, created_at
        FROM metric_snapshots
-       WHERE metric_type = 'underutilized' AND segment_label = 'Global'
-       ORDER BY snapshot_date DESC
-       LIMIT 1`
+       WHERE metric_type = 'underutilized'
+       ORDER BY segment_label, snapshot_date DESC`
     );
 
-    if (result.rows.length === 0) {
+    const byLabel = new Map<string, any>();
+    for (const row of result.rows) {
+      byLabel.set(row.segment_label, row);
+    }
+
+    const globalRow = byLabel.get("Global");
+    const globalTotalMarketable = globalRow ? globalRow.total_count : null;
+    const globalReached = globalRow ? globalRow.healthy_count : null;
+    const globalUnderutilized =
+      globalTotalMarketable !== null && globalReached !== null ? globalTotalMarketable - globalReached : null;
+    const mostRecentCheckedAt = result.rows.length > 0
+      ? result.rows.reduce((latest: string, r: any) => (r.created_at > latest ? r.created_at : latest), result.rows[0].created_at)
+      : null;
+
+    const byAudienceType = (["Prospects", "Customers"] as const).map((label) => {
+      const row = byLabel.get(label);
+      if (!row) return { label, totalMarketable: null, underutilized: null, coveragePct: null, pending: true };
+      const totalMarketable = row.total_count;
+      const reached = row.healthy_count;
+      const underutilized = totalMarketable !== null && reached !== null ? totalMarketable - reached : null;
+      return {
+        label,
+        totalMarketable,
+        underutilized,
+        coveragePct: row.rate !== null ? Number(row.rate) : null,
+        pending: false,
+      };
+    });
+
+    if (!globalRow) {
       return NextResponse.json({
         status: "ok",
         windowDays: WINDOW_DAYS,
@@ -48,23 +73,20 @@ export async function GET() {
         coveragePct: null,
         checkedAt: null,
         pending: true, // no snapshot written yet — cron hasn't run
+        byAudienceType,
       }, {
         headers: { "Cache-Control": "no-store, max-age=0" },
       });
     }
 
-    const row = result.rows[0];
-    const totalMarketable = row.total_count;
-    const reached = row.healthy_count;
-    const underutilized = totalMarketable !== null && reached !== null ? totalMarketable - reached : null;
-
     return NextResponse.json({
       status: "ok",
       windowDays: WINDOW_DAYS,
-      totalMarketable,
-      underutilized,
-      coveragePct: row.rate !== null ? Number(row.rate) : null,
-      checkedAt: row.created_at,
+      totalMarketable: globalTotalMarketable,
+      underutilized: globalUnderutilized,
+      coveragePct: globalRow.rate !== null ? Number(globalRow.rate) : null,
+      checkedAt: mostRecentCheckedAt,
+      byAudienceType,
     }, {
       headers: { "Cache-Control": "no-store, max-age=0" },
     });

@@ -188,6 +188,21 @@ async function searchContactCount(filterGroups: any[]): Promise<number> {
 }
 
 const marketableFilter = { propertyName: "hs_marketable_status", operator: "EQ", value: "true" };
+
+// Shared Prospects/Customers filters for splitting Underutilized Audience
+// and Fatigue by audience type — per Justin, wanting both metrics
+// broken out for prospect-focused vs. customer-focused teams. Uses
+// lifecyclestage (a real HubSpot property, confirmed ~100% populated —
+// only 5 marketable contacts missing it), NOT the same curated HubSpot
+// lists Segment Sizing/Source Health use for their own Prospects/
+// Customers split (list 26647/17717 etc.) — HubSpot's contact search
+// API can't filter by list membership at all, only by properties, so
+// this is a different, property-based definition of the same concept.
+// Closely related, not guaranteed to be the exact same population.
+export const AUDIENCE_TYPE_FILTERS: Record<"Prospects" | "Customers", { propertyName: string; operator: string; value: string }> = {
+  Customers: { propertyName: "lifecyclestage", operator: "EQ", value: "customer" },
+  Prospects: { propertyName: "lifecyclestage", operator: "NEQ", value: "customer" },
+};
 const noHardBounceFilter = { propertyName: "hs_email_hard_bounce_reason_enum", operator: "NOT_HAS_PROPERTY" };
 const notOptedOutFilter = { propertyName: "hs_email_optout", operator: "NOT_HAS_PROPERTY" };
 
@@ -198,9 +213,11 @@ export type UnderutilizedResult = {
   coveragePct: number | null;
 };
 
-export async function computeUnderutilized(): Promise<UnderutilizedResult> {
+export async function computeUnderutilized(audienceFilter?: { propertyName: string; operator: string; value: string }): Promise<UnderutilizedResult> {
   const cutoffMs = Date.now() - UNDERUTILIZED_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-  const commonFilters = [marketableFilter, noHardBounceFilter, notOptedOutFilter];
+  const commonFilters = audienceFilter
+    ? [marketableFilter, noHardBounceFilter, notOptedOutFilter, audienceFilter]
+    : [marketableFilter, noHardBounceFilter, notOptedOutFilter];
 
   const underutilizedBounceUnder3Promise = searchContactCount([
     { filters: [...commonFilters, { propertyName: "hs_email_bounce", operator: "LT", value: "3" }, { propertyName: "hs_email_last_send_date", operator: "LT", value: String(cutoffMs) }] },
@@ -210,8 +227,16 @@ export async function computeUnderutilized(): Promise<UnderutilizedResult> {
     { filters: [...commonFilters, { propertyName: "hs_email_bounce", operator: "NOT_HAS_PROPERTY" }, { propertyName: "hs_email_last_send_date", operator: "LT", value: String(cutoffMs) }] },
     { filters: [...commonFilters, { propertyName: "hs_email_bounce", operator: "NOT_HAS_PROPERTY" }, { propertyName: "hs_email_last_send_date", operator: "NOT_HAS_PROPERTY" }] },
   ]);
-  const totalMarketablePromise = hubspotFetch(`/crm/v3/lists/${MARKETABLE_LIST_ID}/memberships?limit=1`)
-    .then((d: any) => (typeof d.total === "number" ? d.total : 0));
+  // Global (no audienceFilter) uses the real list's membership total —
+  // more reliable than a search count for the whole marketable
+  // population. Once scoped to Prospects/Customers via lifecyclestage,
+  // there's no equivalent list to read from (this is a different,
+  // property-based definition of Prospect/Customer than the actual
+  // HubSpot lists Segment Sizing/Source Health use), so this falls back
+  // to a search-based count with the same audienceFilter applied.
+  const totalMarketablePromise = audienceFilter
+    ? searchContactCount([{ filters: [marketableFilter, audienceFilter] }])
+    : hubspotFetch(`/crm/v3/lists/${MARKETABLE_LIST_ID}/memberships?limit=1`).then((d: any) => (typeof d.total === "number" ? d.total : 0));
 
   const [totalMarketable, underutilizedA, underutilizedB] = await Promise.all([
     totalMarketablePromise,
@@ -375,12 +400,13 @@ export type FatigueResult = {
   error: string | null;
 };
 
-export async function computeFatigue(): Promise<FatigueResult> {
+export async function computeFatigue(audienceFilter?: { propertyName: string; operator: string; value: string }): Promise<FatigueResult> {
   try {
+    const filters = audienceFilter ? [marketableFilter, audienceFilter] : [marketableFilter];
     const [totalMarketable, fatigued] = await Promise.all([
-      searchContactCount([{ filters: [marketableFilter] }]),
+      searchContactCount([{ filters }]),
       searchContactCount([
-        { filters: [marketableFilter, { propertyName: "hs_email_sends_since_last_engagement", operator: "GT", value: String(FATIGUE_THRESHOLD) }] },
+        { filters: [...filters, { propertyName: "hs_email_sends_since_last_engagement", operator: "GT", value: String(FATIGUE_THRESHOLD) }] },
       ]),
     ]);
 

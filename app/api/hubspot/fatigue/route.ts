@@ -8,11 +8,13 @@ export const dynamic = "force-dynamic";
 
 // GET /api/hubspot/fatigue
 //
-// Reads the latest daily "fatigue" snapshot — contacts with more than
-// 10 marketing sends since their last open/click
-// (hs_email_sends_since_last_engagement), the mirror image of
-// Underutilized Audience. Written by the cron job, same pattern as
-// every other panel.
+// Reads the latest daily "fatigue" snapshots for Global, Prospects, and
+// Customers — the mirror image of Underutilized Audience, same
+// Prospects/Customers split added for the same reason (useful to both
+// audience-focused teams, not just one blended number). Global stays
+// at the top level, unchanged shape from before; Prospects/Customers
+// are new, in a separate byAudienceType array — pure addition, not a
+// breaking change.
 
 const FATIGUE_THRESHOLD = 10;
 
@@ -22,14 +24,38 @@ export async function GET() {
     const db = getPool();
 
     const result = await db.query(
-      `SELECT total_count, healthy_count, rate, created_at
+      `SELECT DISTINCT ON (segment_label) segment_label, total_count, healthy_count, rate, created_at
        FROM metric_snapshots
-       WHERE metric_type = 'fatigue' AND segment_label = 'Global'
-       ORDER BY snapshot_date DESC
-       LIMIT 1`
+       WHERE metric_type = 'fatigue'
+       ORDER BY segment_label, snapshot_date DESC`
     );
 
-    if (result.rows.length === 0) {
+    const byLabel = new Map<string, any>();
+    for (const row of result.rows) {
+      byLabel.set(row.segment_label, row);
+    }
+
+    const globalRow = byLabel.get("Global");
+    const mostRecentCheckedAt = result.rows.length > 0
+      ? result.rows.reduce((latest: string, r: any) => (r.created_at > latest ? r.created_at : latest), result.rows[0].created_at)
+      : null;
+
+    const byAudienceType = (["Prospects", "Customers"] as const).map((label) => {
+      const row = byLabel.get(label);
+      if (!row) return { label, totalMarketable: null, fatigued: null, fatiguedPct: null, pending: true };
+      const totalMarketable = row.total_count;
+      const notFatigued = row.healthy_count;
+      const fatigued = totalMarketable !== null && notFatigued !== null ? totalMarketable - notFatigued : null;
+      return {
+        label,
+        totalMarketable,
+        fatigued,
+        fatiguedPct: row.rate !== null ? 1 - Number(row.rate) : null,
+        pending: false,
+      };
+    });
+
+    if (!globalRow) {
       return NextResponse.json({
         status: "ok",
         threshold: FATIGUE_THRESHOLD,
@@ -38,16 +64,16 @@ export async function GET() {
         fatiguedPct: null,
         checkedAt: null,
         pending: true,
+        byAudienceType,
       }, {
         headers: { "Cache-Control": "no-store, max-age=0" },
       });
     }
 
-    const row = result.rows[0];
-    const totalMarketable = row.total_count;
-    const notFatigued = row.healthy_count;
+    const totalMarketable = globalRow.total_count;
+    const notFatigued = globalRow.healthy_count;
     const fatigued = totalMarketable !== null && notFatigued !== null ? totalMarketable - notFatigued : null;
-    const fatiguedPct = row.rate !== null ? 1 - Number(row.rate) : null; // stored rate is "not fatigued" — invert for display
+    const fatiguedPct = globalRow.rate !== null ? 1 - Number(globalRow.rate) : null;
 
     return NextResponse.json({
       status: "ok",
@@ -55,7 +81,8 @@ export async function GET() {
       totalMarketable,
       fatigued,
       fatiguedPct,
-      checkedAt: row.created_at,
+      checkedAt: mostRecentCheckedAt,
+      byAudienceType,
     }, {
       headers: { "Cache-Control": "no-store, max-age=0" },
     });
