@@ -1,6 +1,7 @@
 import { getPool } from "@/lib/db";
 
-// Slack alerting — posts to the webhook in SLACK_WEBHOOK_URL only when
+// Slack alerting — posts to the webhook in SLACK_WEBHOOK_URL_MOPS_EMAIL
+// (#mops_email) only when
 // Ready Room's own detection (Flagged Anomalies, Send Conflict
 // Detector) finds something that actually needs a look. This is
 // deliberately NOT a duplicate of the existing Dust/Zapier per-send
@@ -32,7 +33,7 @@ function internalFetchHeaders(): Record<string, string> {
 }
 
 async function postToSlack(text: string): Promise<void> {
-  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL_MOPS_EMAIL;
   if (!webhookUrl) return; // not configured yet — silently skip, don't fail the whole cron over this
 
   await fetch(webhookUrl, {
@@ -63,8 +64,8 @@ export async function checkAndPostSlackAlerts(): Promise<{ posted: string[]; ski
   const posted: string[] = [];
   const skipped: string[] = [];
 
-  if (!process.env.SLACK_WEBHOOK_URL) {
-    skipped.push("all (SLACK_WEBHOOK_URL not configured)");
+  if (!process.env.SLACK_WEBHOOK_URL_MOPS_EMAIL) {
+    skipped.push("all (SLACK_WEBHOOK_URL_MOPS_EMAIL not configured)");
     return { posted, skipped };
   }
 
