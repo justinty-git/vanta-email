@@ -2014,7 +2014,7 @@ class Component extends DCLogic {
         ? this.state.underutilizedError
         : (this.state.underutilizedData && this.state.underutilizedData.pending)
         ? 'Waiting on the first daily snapshot — check back after the next scheduled run'
-        : 'Checked against HubSpot\'s "[GLOBAL] Marketing Contacts" list' + (this.state.underutilizedData && this.state.underutilizedData.checkedAt ? ' · Last updated ' + new Date(this.state.underutilizedData.checkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
+        : (this.state.underutilizedData && this.state.underutilizedData.checkedAt ? 'Last updated ' + new Date(this.state.underutilizedData.checkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + new Date(this.state.underutilizedData.checkedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(' ', '') : ''),
       underutilizedHasData: !!(this.state.underutilizedData && this.state.underutilizedData.totalMarketable > 0),
       underutilizedCoveragePct: (this.state.underutilizedData && this.state.underutilizedData.coveragePct !== null) ? (this.state.underutilizedData.coveragePct * 100).toFixed(1) + '%' : '—',
       underutilizedCoveragePctColor: 'var(--text-primary)', // headline stays neutral regardless of trend direction — the small trend line below still carries the color signal, no need for the big number itself to look alarmist
