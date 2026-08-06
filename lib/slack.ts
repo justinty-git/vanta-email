@@ -43,9 +43,22 @@ async function postToSlack(text: string): Promise<void> {
   });
 }
 
+// Confirmed real gap: once something was alerted once, it was
+// permanently excluded from all future checks — no re-check, no
+// "resolved" signal, no reminder if it got worse. A false-positive
+// alert (now largely prevented by the MIN_AGE_HOURS fix in
+// anomalies/route.ts) would sit unresolved in Slack forever with no
+// correction. Fixed by adding a TTL: an item is only suppressed if it
+// was alerted within the last REMINDER_DAYS days. A genuinely resolved
+// issue naturally stops reappearing in the candidate pool on its own
+// (self-correcting, no code needed for that case) — this specifically
+// handles the OTHER case, a problem that's still ongoing well past the
+// window, which now gets a fresh reminder instead of silence.
+const REMINDER_DAYS = 7;
+
 async function alreadyAlerted(db: any, itemType: string, itemKey: string): Promise<boolean> {
   const result = await db.query(
-    `SELECT 1 FROM slack_alerts_sent WHERE item_type = $1 AND item_key = $2`,
+    `SELECT 1 FROM slack_alerts_sent WHERE item_type = $1 AND item_key = $2 AND first_alerted_at > NOW() - INTERVAL '${REMINDER_DAYS} days'`,
     [itemType, itemKey]
   );
   return result.rows.length > 0;
@@ -54,7 +67,7 @@ async function alreadyAlerted(db: any, itemType: string, itemKey: string): Promi
 async function markAlerted(db: any, itemType: string, itemKey: string): Promise<void> {
   await db.query(
     `INSERT INTO slack_alerts_sent (item_type, item_key) VALUES ($1, $2)
-     ON CONFLICT (item_type, item_key) DO NOTHING`,
+     ON CONFLICT (item_type, item_key) DO UPDATE SET first_alerted_at = NOW()`,
     [itemType, itemKey]
   );
 }

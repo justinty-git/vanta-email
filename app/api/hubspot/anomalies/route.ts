@@ -125,17 +125,32 @@ const EXCLUDE_SUFFIX = /\b(RC|OP)\d*\s*$/i;
 // excluded sends affect neither the candidate pool nor the baseline.
 const EXCLUDE_REENGAGEMENT = /\b(re-?engagement|win-?back|anti-?ghost|reactivat(e|ion)|dormant)\b/i;
 
+// Excludes sends younger than this from the candidate pool (and the
+// baseline). Confirmed real gap via a live example: a send flagged as
+// "Critical" for a 58% click-rate drop just a few hours after going
+// out — but clicks accumulate over hours/days, so a young send's
+// PARTIAL click rate will always look artificially low compared to a
+// fully-matured baseline built from older, fully-accumulated sends.
+// That's not a real anomaly, it's a timing artifact. Most email
+// engagement lands within the first 24 hours, so that's the threshold
+// used here — long enough for a real signal to emerge, short enough to
+// still catch problems promptly.
+const MIN_AGE_HOURS = 24;
+
 export async function GET() {
   try {
     const rawEmails = await fetchMarketingEmailsPaginated(3);
     const distinctStatesSeen = Array.from(
       new Set(rawEmails.map((e: any) => e.state).filter(Boolean))
     );
+    const minAgeMs = MIN_AGE_HOURS * 60 * 60 * 1000;
+    const ageCutoff = Date.now() - minAgeMs;
 
     const emails: EmailSummary[] = rawEmails
       .filter((e: any) => classifyEmailState(e.state) === "sent" && !!e.publishDate)
       .filter((e: any) => !EXCLUDE_SUFFIX.test(e.name || ""))
       .filter((e: any) => !EXCLUDE_REENGAGEMENT.test(e.name || ""))
+      .filter((e: any) => new Date(e.publishDate).getTime() <= ageCutoff)
       .sort(
         (a: any, b: any) =>
           new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()

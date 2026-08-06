@@ -1991,7 +1991,7 @@ class Component extends DCLogic {
         ? 'Scanning recent sends…'
         : this.state.anomaliesError
         ? this.state.anomaliesError
-        : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends · vs recent-batch median + known deliverability thresholds' + (this.state.anomaliesCheckedAt ? ' · Last updated ' + this.state.anomaliesCheckedAt : ''),
+        : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends (24h+ old) · vs recent-batch median + known deliverability thresholds' + (this.state.anomaliesCheckedAt ? ' · Last updated ' + this.state.anomaliesCheckedAt : ''),
 
       watchdog: watchdogRows,
       watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading…' : (this.state.workflowsError ? 'Error' : 'Manually maintained'),
