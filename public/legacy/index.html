@@ -309,7 +309,7 @@
         </div>
 
         <!-- Workflow Watchdog -->
-        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card); max-width:600px;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:var(--r-lg); padding:20px; box-shadow:var(--shadow-card);">
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
             <i class="fa-shield-halved alpaca-fa-regular" style="color:var(--icon-accent); font-size:15px;"></i>
             <span style="font-size:1.125rem; font-weight:600; color:var(--text-primary);">Workflow Watchdog</span>
@@ -319,9 +319,9 @@
           <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin-bottom:6px;">Prospects</div>
           <div style="display:flex; flex-direction:column;">
             <sc-for list="{{ watchdogProspects }}" as="w" hint-placeholder-count="4">
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:{{ w.rowBorder }};">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:11px 0; border-top:{{ w.rowBorder }};">
                 <div style="min-width:0;">
-                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.workflow }}</div>
+                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ w.workflow }}</div>
                   <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;"><a href="{{ w.hubspotUrl }}" target="_blank" style="color:var(--icon-accent); text-decoration:none;">View in HubSpot <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a></div>
                 </div>
                 <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:3px 9px; border-radius:999px; background:{{ w.stateBg }}; color:{{ w.stateColor }}; flex-shrink:0;">
@@ -334,9 +334,9 @@
           <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin:18px 0 6px;">Customers</div>
           <div style="display:flex; flex-direction:column;">
             <sc-for list="{{ watchdogCustomers }}" as="w" hint-placeholder-count="5">
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:{{ w.rowBorder }};">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:11px 0; border-top:{{ w.rowBorder }};">
                 <div style="min-width:0;">
-                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.workflow }}</div>
+                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary);">{{ w.workflow }}</div>
                   <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;"><a href="{{ w.hubspotUrl }}" target="_blank" style="color:var(--icon-accent); text-decoration:none;">View in HubSpot <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a></div>
                 </div>
                 <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:3px 9px; border-radius:999px; background:{{ w.stateBg }}; color:{{ w.stateColor }}; flex-shrink:0;">
