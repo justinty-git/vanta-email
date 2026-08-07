@@ -316,8 +316,24 @@
             <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ watchdogBadgeBg }}; color:{{ watchdogBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ watchdogBadgeLabel }}</span>
           </div>
           <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ watchdogCaption }}</div>
+          <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin-bottom:6px;">Prospect Nurtures — Campaigns</div>
           <div style="display:flex; flex-direction:column;">
-            <sc-for list="{{ watchdog }}" as="w" hint-placeholder-count="6">
+            <sc-for list="{{ watchdogProspects }}" as="w" hint-placeholder-count="4">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
+                <div style="min-width:0;">
+                  <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.workflow }}</div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;"><a href="{{ w.hubspotUrl }}" target="_blank" style="color:var(--icon-accent); text-decoration:none;">View in HubSpot <i class="fa-arrow-up-right-from-square alpaca-fa-regular" style="font-size:9px;"></i></a></div>
+                </div>
+                <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:3px 9px; border-radius:999px; background:{{ w.stateBg }}; color:{{ w.stateColor }}; flex-shrink:0;">
+                  <i class="{{ w.stateIcon }}" style="font-size:9px;"></i>{{ w.state }}
+                </span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin:18px 0 6px;">Customer Nurtures — Digital Success</div>
+          <div style="display:flex; flex-direction:column;">
+            <sc-for list="{{ watchdogCustomers }}" as="w" hint-placeholder-count="5">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
                 <div style="min-width:0;">
                   <div style="font-size:0.875rem; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ w.workflow }}</div>
@@ -1326,6 +1342,7 @@ class Component extends DCLogic {
       workflow: w.name,
       state: 'Active', stateBg: successBg, stateColor: success, stateIcon: 'fa-circle-check alpaca-fa-solid',
       hubspotUrl: w.hubspotUrl,
+      group: w.group,
     }));
   }
 
@@ -2008,6 +2025,8 @@ class Component extends DCLogic {
         : 'Last ' + (this.state.anomaliesData?.scannedCount ?? 0) + ' sends (24h+ old) · vs recent-batch median + known deliverability thresholds' + (this.state.anomaliesCheckedAt ? ' · Last updated ' + this.state.anomaliesCheckedAt : ''),
 
       watchdog: watchdogRows,
+      watchdogProspects: watchdogRows.filter(w => w.group === 'Prospects'),
+      watchdogCustomers: watchdogRows.filter(w => w.group === 'Customers'),
       watchdogBadgeLabel: this.state.workflowsLoading ? 'Loading…' : (this.state.workflowsError ? 'Error' : 'Manually maintained'),
       watchdogBadgeBg: this.state.workflowsError ? 'var(--badge-danger-bg)' : 'var(--badge-neutral-bg)',
       watchdogBadgeColor: this.state.workflowsError ? 'var(--badge-danger-text)' : 'var(--badge-neutral-text)',
