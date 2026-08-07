@@ -253,13 +253,14 @@ export async function checkAndPostSendReporting(): Promise<{ posted: string[]; s
       try {
         const stats = await fetchEmailStats(email.id);
         const clickRate = stats.delivered > 0 ? ((stats.clicks / stats.delivered) * 100).toFixed(1) : "0.0";
+        const unsubRate = stats.delivered > 0 ? ((stats.unsubscribed / stats.delivered) * 100).toFixed(1) : "0.0";
         const headerLabel = stage.label === "24h" ? "Performance" : "Performance (3-day update)";
         const text =
           `*📊 ${headerLabel} — ${email.name}*\n` +
           `Sent: ${stats.sent}\n` +
           `Delivered: ${stats.delivered}\n` +
           `Clicked: ${stats.clicks} (${clickRate}%)\n` +
-          `Unsubscribed: ${stats.unsubscribed}`;
+          `Unsubscribed: ${stats.unsubscribed} (${unsubRate}%)`;
         await postToSlack(text, "SLACK_WEBHOOK_URL");
         await markAlerted(db, stage.itemType, email.id);
         posted.push(`${stage.itemType}:${email.id}`);
