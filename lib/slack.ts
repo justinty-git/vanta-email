@@ -1,13 +1,18 @@
 import { getPool } from "@/lib/db";
 import { fetchMarketingEmailsPaginated, classifyEmailState, fetchEmailStats } from "@/lib/hubspot";
 
-// Slack alerting — posts to the webhook in SLACK_WEBHOOK_URL_MOPS_EMAIL
-// (#mops_email) only when
-// Ready Room's own detection (Flagged Anomalies, Send Conflict
-// Detector) finds something that actually needs a look. This is
-// deliberately NOT a duplicate of the existing Dust/Zapier per-send
-// reporting in Slack — that already reports every send unconditionally.
-// This is the analytical layer on top: signal, not volume.
+// Slack alerting — two separate destinations:
+// - SLACK_WEBHOOK_URL_MOPS_EMAIL (#mops-email): anomaly/conflict alerts
+//   only, when Ready Room's own detection finds something that
+//   actually needs a look.
+// - SLACK_WEBHOOK_URL (#mops-email-metrics, formerly
+//   #mops-marketing-email-metrics): routine send reporting stopgap.
+//   Fixed a real misrouting bug — this used to also post to
+//   MOPS_EMAIL, dumping ~177 routine reporting messages into the
+//   anomaly-alerts channel in one run. These are deliberately separate
+//   webhooks/channels: one is "look at this, something's wrong," the
+//   other is "here's what happened" — mixing them defeats the purpose
+//   of the anomaly channel being low-volume and high-signal.
 //
 // Runs as part of the existing twice-daily snapshot cron (not a
 // separate cron schedule) — see app/api/cron/snapshot-metrics/route.ts.
@@ -33,8 +38,8 @@ function internalFetchHeaders(): Record<string, string> {
   return secret ? { "x-vercel-protection-bypass": secret } : {};
 }
 
-async function postToSlack(text: string): Promise<void> {
-  const webhookUrl = process.env.SLACK_WEBHOOK_URL_MOPS_EMAIL;
+async function postToSlack(text: string, webhookEnvVar: string): Promise<void> {
+  const webhookUrl = process.env[webhookEnvVar];
   if (!webhookUrl) return; // not configured yet — silently skip, don't fail the whole cron over this
 
   await fetch(webhookUrl, {
@@ -102,7 +107,7 @@ export async function checkAndPostSlackAlerts(): Promise<{ posted: string[]; ski
           `${emoji} *${f.riskLabel} anomaly flagged* — ${f.emailName}\n` +
           `${f.cause}\n` +
           `<${APP_BASE_URL}|View in Ready Room →>`;
-        await postToSlack(text);
+        await postToSlack(text, "SLACK_WEBHOOK_URL_MOPS_EMAIL");
         await markAlerted(db, "anomaly", key);
         posted.push(`anomaly:${key}`);
       }
@@ -135,7 +140,7 @@ export async function checkAndPostSlackAlerts(): Promise<{ posted: string[]; ski
           `⚠️ *Send conflict* — "${c.emailA.name}" and "${c.emailB.name}"\n` +
           `${whenText}, ${overlapText}\n` +
           `<${APP_BASE_URL}|View in Ready Room →>`;
-        await postToSlack(text);
+        await postToSlack(text, "SLACK_WEBHOOK_URL_MOPS_EMAIL");
         await markAlerted(db, "conflict", key);
         posted.push(`conflict:${key}`);
       }
@@ -169,14 +174,21 @@ export async function checkAndPostSlackAlerts(): Promise<{ posted: string[]; ski
 const SEND_REPORT_MIN_AGE_HOURS = 24;
 const SEND_REPORT_3DAY_HOURS = 72;
 const SEND_REPORT_LOOKBACK = 60; // widened from 30 now that stage 3 needs a send to stay in this window for a full 3 days, not just 24h — bounded, not unlimited history
+// Confirmed real issue from the first live run: with a 60-send lookback
+// and low-frequency sending, "recent 60 sends" reached back over a
+// month. Sends that old still passed the "3+ days old" check and got
+// posted as "Performance (3-day update)" — technically true (3+ days
+// HAD passed) but a misleading label for something a month old. Caps
+// how far back any stage will fire at all, regardless of lookback size.
+const SEND_REPORT_MAX_AGE_DAYS = 10;
 
 export async function checkAndPostSendReporting(): Promise<{ posted: string[]; skipped: string[] }> {
   const db = getPool();
   const posted: string[] = [];
   const skipped: string[] = [];
 
-  if (!process.env.SLACK_WEBHOOK_URL_MOPS_EMAIL) {
-    skipped.push("all (SLACK_WEBHOOK_URL_MOPS_EMAIL not configured)");
+  if (!process.env.SLACK_WEBHOOK_URL) {
+    skipped.push("all (SLACK_WEBHOOK_URL not configured)");
     return { posted, skipped };
   }
 
@@ -194,15 +206,24 @@ export async function checkAndPostSendReporting(): Promise<{ posted: string[]; s
 
   const ageCutoff24h = Date.now() - SEND_REPORT_MIN_AGE_HOURS * 60 * 60 * 1000;
   const ageCutoff3day = Date.now() - SEND_REPORT_3DAY_HOURS * 60 * 60 * 1000;
+  const maxAgeCutoffMs = Date.now() - SEND_REPORT_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
 
   for (const email of emails) {
     const publishMs = new Date(email.publishDate).getTime();
+
+    // Applies to ALL stages, not just 2/3 — an "Email sent" notice for
+    // a month-old email is just as misleading as a mislabeled "3-day
+    // update" would be. If it's older than this, skip it entirely.
+    if (publishMs < maxAgeCutoffMs) {
+      skipped.push(`${email.id} (older than ${SEND_REPORT_MAX_AGE_DAYS}d, skipping all stages)`);
+      continue;
+    }
 
     // Stage 1: immediate "sent" notice — no age requirement, post as soon as we see it.
     const noticeKey = email.id;
     if (!(await alreadyAlerted(db, "send_notice", noticeKey))) {
       const text = `*📤 Email sent — ${email.name}*`;
-      await postToSlack(text);
+      await postToSlack(text, "SLACK_WEBHOOK_URL");
       await markAlerted(db, "send_notice", noticeKey);
       posted.push(`send_notice:${email.id}`);
     } else {
@@ -241,7 +262,7 @@ export async function checkAndPostSendReporting(): Promise<{ posted: string[]; s
           `Opened: ${stats.opens} (${openRate}%)\n` +
           `Clicked: ${stats.clicks} (${clickRate}%)\n` +
           `Unsubscribed: ${stats.unsubscribed}`;
-        await postToSlack(text);
+        await postToSlack(text, "SLACK_WEBHOOK_URL");
         await markAlerted(db, stage.itemType, email.id);
         posted.push(`${stage.itemType}:${email.id}`);
       } catch (error) {
