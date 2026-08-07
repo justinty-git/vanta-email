@@ -152,26 +152,23 @@ export async function checkAndPostSlackAlerts(): Promise<{ posted: string[]; ski
 // --- Routine send reporting (stopgap, per Justin — Dust/Zapier out of
 // credits, this channel lost its per-send reporting entirely) ---
 //
-// Deliberately simplified from Dust/Zapier's real cadence, which (per
-// a real screenshot) is actually 4 stages: immediate "sent" notice,
-// ~24h delivery-only update, ~3-day full engagement update, ~7-day
-// final check. Matching that exactly would take real time to get
-// right; this is a stopgap, not a full replacement. Two stages
-// instead: an immediate "sent" notice, then ONE metrics follow-up once
-// the send has matured (reusing the same 24h MIN_AGE_HOURS threshold
-// already proven for Anomalies — enough time for delivery + real
-// engagement to land, without waiting a full week to say anything).
+// Still simplified from Dust/Zapier's real cadence (4 stages: immediate,
+// ~24h delivery-only, ~3-day full engagement, ~7-day final check).
+// This does 3: immediate "sent" notice, a 24h metrics update, and a
+// 3-day metrics update — the 24h and 3-day stages are independent
+// checks (not chained), since an email that's already had its 24h
+// update posted still needs its own separate 3-day check in a later
+// run. No 7-day final stage (yet) — can add the same pattern for a
+// 4th stage if this stopgap needs to live longer than expected.
 //
-// Deliberately UNFILTERED — this reports on every real "sent" email,
-// no RC/OP or re-engagement exclusions. Those exclusions exist
-// specifically for anomaly DETECTION (comparing sends against each
-// other); routine reporting isn't a comparison, so there's nothing for
-// an unusual send type to skew. Matches Dust's original behavior,
-// which reported on every send unconditionally, including small
-// internal/test sends per the reference screenshot.
+// Deliberately UNFILTERED (no RC/OP or re-engagement exclusions) —
+// this is routine reporting, not send-to-send comparison, so there's
+// nothing for an unusual send type to skew. Matches Dust's original
+// behavior of reporting on every real send unconditionally.
 
 const SEND_REPORT_MIN_AGE_HOURS = 24;
-const SEND_REPORT_LOOKBACK = 30; // most recent N sends considered per run — bounded, not unlimited history
+const SEND_REPORT_3DAY_HOURS = 72;
+const SEND_REPORT_LOOKBACK = 60; // widened from 30 now that stage 3 needs a send to stay in this window for a full 3 days, not just 24h — bounded, not unlimited history
 
 export async function checkAndPostSendReporting(): Promise<{ posted: string[]; skipped: string[] }> {
   const db = getPool();
@@ -195,9 +192,12 @@ export async function checkAndPostSendReporting(): Promise<{ posted: string[]; s
     return { posted, skipped: [`fetch sends failed: ${(error as Error).message}`] };
   }
 
-  const ageCutoffMs = Date.now() - SEND_REPORT_MIN_AGE_HOURS * 60 * 60 * 1000;
+  const ageCutoff24h = Date.now() - SEND_REPORT_MIN_AGE_HOURS * 60 * 60 * 1000;
+  const ageCutoff3day = Date.now() - SEND_REPORT_3DAY_HOURS * 60 * 60 * 1000;
 
   for (const email of emails) {
+    const publishMs = new Date(email.publishDate).getTime();
+
     // Stage 1: immediate "sent" notice — no age requirement, post as soon as we see it.
     const noticeKey = email.id;
     if (!(await alreadyAlerted(db, "send_notice", noticeKey))) {
@@ -209,30 +209,41 @@ export async function checkAndPostSendReporting(): Promise<{ posted: string[]; s
       skipped.push(`send_notice:${email.id} (already posted)`);
     }
 
-    // Stage 2: one metrics follow-up, once the send is old enough to have real numbers.
-    const metricsKey = email.id;
-    const isMatureEnough = new Date(email.publishDate).getTime() <= ageCutoffMs;
-    if (!isMatureEnough) {
-      skipped.push(`send_metrics:${email.id} (too young for metrics yet)`);
-      continue;
-    }
-    if (await alreadyAlerted(db, "send_metrics", metricsKey)) {
-      skipped.push(`send_metrics:${email.id} (already posted)`);
-      continue;
-    }
-    try {
-      const stats = await fetchEmailStats(email.id);
-      const openRate = stats.delivered > 0 ? ((stats.opens / stats.delivered) * 100).toFixed(1) : "0.0";
-      const clickRate = stats.delivered > 0 ? ((stats.clicks / stats.delivered) * 100).toFixed(1) : "0.0";
-      const text =
-        `📊 *Performance* — ${email.name}\n` +
-        `Sent: ${stats.sent} · Delivered: ${stats.delivered}\n` +
-        `Opened: ${stats.opens} (${openRate}%) · Clicked: ${stats.clicks} (${clickRate}%) · Unsubscribed: ${stats.unsubscribed}`;
-      await postToSlack(text);
-      await markAlerted(db, "send_metrics", metricsKey);
-      posted.push(`send_metrics:${email.id}`);
-    } catch (error) {
-      skipped.push(`send_metrics:${email.id} (fetch error: ${(error as Error).message})`);
+    // Stages 2 and 3 are independent checks, NOT chained with an early
+    // continue — an email that's already had its 24h update posted
+    // still needs its own separate check for the 3-day update in a
+    // later run. Each stage only cares about its own age threshold and
+    // its own dedup key.
+    const stages: Array<{ itemType: string; cutoffMs: number; label: string }> = [
+      { itemType: "send_metrics", cutoffMs: ageCutoff24h, label: "24h" },
+      { itemType: "send_metrics_3day", cutoffMs: ageCutoff3day, label: "3-day" },
+    ];
+
+    for (const stage of stages) {
+      const isMatureEnough = publishMs <= stage.cutoffMs;
+      if (!isMatureEnough) {
+        skipped.push(`${stage.itemType}:${email.id} (too young for ${stage.label} update yet)`);
+        continue;
+      }
+      if (await alreadyAlerted(db, stage.itemType, email.id)) {
+        skipped.push(`${stage.itemType}:${email.id} (already posted)`);
+        continue;
+      }
+      try {
+        const stats = await fetchEmailStats(email.id);
+        const openRate = stats.delivered > 0 ? ((stats.opens / stats.delivered) * 100).toFixed(1) : "0.0";
+        const clickRate = stats.delivered > 0 ? ((stats.clicks / stats.delivered) * 100).toFixed(1) : "0.0";
+        const headerLabel = stage.label === "24h" ? "Performance" : "Performance (3-day update)";
+        const text =
+          `📊 *${headerLabel}* — ${email.name}\n` +
+          `Sent: ${stats.sent} · Delivered: ${stats.delivered}\n` +
+          `Opened: ${stats.opens} (${openRate}%) · Clicked: ${stats.clicks} (${clickRate}%) · Unsubscribed: ${stats.unsubscribed}`;
+        await postToSlack(text);
+        await markAlerted(db, stage.itemType, email.id);
+        posted.push(`${stage.itemType}:${email.id}`);
+      } catch (error) {
+        skipped.push(`${stage.itemType}:${email.id} (fetch error: ${(error as Error).message})`);
+      }
     }
   }
 
