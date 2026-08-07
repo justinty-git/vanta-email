@@ -316,7 +316,7 @@
             <span style="display:inline-flex; align-items:center; gap:5px; font-size:0.6875rem; font-weight:600; padding:2px 9px; border-radius:999px; background:{{ watchdogBadgeBg }}; color:{{ watchdogBadgeColor }}; white-space:nowrap;"><i class="fa-bolt alpaca-fa-solid" style="font-size:9px;"></i>{{ watchdogBadgeLabel }}</span>
           </div>
           <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">{{ watchdogCaption }}</div>
-          <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin-bottom:6px;">Prospect Nurtures — Campaigns</div>
+          <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin-bottom:6px;">Prospects</div>
           <div style="display:flex; flex-direction:column;">
             <sc-for list="{{ watchdogProspects }}" as="w" hint-placeholder-count="4">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
@@ -331,7 +331,7 @@
             </sc-for>
           </div>
 
-          <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin:18px 0 6px;">Customer Nurtures — Digital Success</div>
+          <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--icon-accent); padding-bottom:6px; border-bottom:2px solid var(--border-table-strong); margin:18px 0 6px;">Customers</div>
           <div style="display:flex; flex-direction:column;">
             <sc-for list="{{ watchdogCustomers }}" as="w" hint-placeholder-count="5">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border-table);">
@@ -2034,7 +2034,7 @@ class Component extends DCLogic {
         ? 'Loading…'
         : this.state.workflowsError
         ? this.state.workflowsError
-        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') + ' · Justin updates this list directly, not pulled from the API' : ''),
+        : (this.state.workflowsData ? this.state.workflowsData.matchedCount + ' nurture workflow' + (this.state.workflowsData.matchedCount === 1 ? '' : 's') : ''),
       watchdogEmpty: !this.state.workflowsLoading && !this.state.workflowsError && watchdogRows.length === 0,
       watchdogEmptyMessage: 'No nurture workflows listed yet.',
 
