@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { hubspotFetch, fetchMarketingEmailsPaginated, classifyEmailState } from "@/lib/hubspot";
+import { fetchMarketingEmailsPaginated, classifyEmailState, fetchEmailStats as fetchMetrics, EmailStats } from "@/lib/hubspot";
 
 // GET /api/hubspot/performance
 //
@@ -54,34 +54,6 @@ const TRAILING_30D_DAYS = 30;
 const DG_NU_PATTERN = /\b(DG|NU)\d*\b/i;
 
 type EmailSummary = { id: string; name: string; publishDate: string };
-type Metrics = {
-  sent: number;
-  delivered: number;
-  opens: number;
-  clicks: number;
-  unsubscribed: number;
-};
-
-async function fetchMetrics(emailId: string): Promise<Metrics> {
-  const startTimestamp = new Date("2021-01-01").toISOString();
-  const endTimestamp = new Date().toISOString();
-  const data = await hubspotFetch(
-    `/marketing/v3/emails/statistics/list?emailIds=${encodeURIComponent(
-      emailId
-    )}&startTimestamp=${encodeURIComponent(
-      startTimestamp
-    )}&endTimestamp=${encodeURIComponent(endTimestamp)}`
-  );
-  const counters = data.aggregate?.counters || {};
-  const sent = counters.sent ?? 0;
-  return {
-    sent,
-    delivered: counters.delivered ?? counters.deliveries ?? sent,
-    opens: counters.open ?? 0,
-    clicks: counters.click ?? 0,
-    unsubscribed: counters.unsubscribed ?? 0,
-  };
-}
 
 // Monday-start week key, e.g. "2026-07-20"
 function weekKey(dateStr: string): string {
@@ -119,7 +91,7 @@ export async function GET() {
     const scanned = inWindow.slice(0, MAX_EMAILS_SCANNED);
     const truncated = inWindow.length > scanned.length;
 
-    const metricsByEmail = new Map<string, Metrics>();
+    const metricsByEmail = new Map<string, EmailStats>();
     for (const e of scanned) {
       try {
         metricsByEmail.set(e.id, await fetchMetrics(e.id));

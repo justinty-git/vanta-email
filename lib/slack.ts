@@ -1,4 +1,5 @@
 import { getPool } from "@/lib/db";
+import { fetchMarketingEmailsPaginated, classifyEmailState, fetchEmailStats } from "@/lib/hubspot";
 
 // Slack alerting — posts to the webhook in SLACK_WEBHOOK_URL_MOPS_EMAIL
 // (#mops_email) only when
@@ -143,6 +144,96 @@ export async function checkAndPostSlackAlerts(): Promise<{ posted: string[]; ski
     }
   } catch (error) {
     skipped.push("conflicts (fetch error: " + (error as Error).message + ")");
+  }
+
+  return { posted, skipped };
+}
+
+// --- Routine send reporting (stopgap, per Justin — Dust/Zapier out of
+// credits, this channel lost its per-send reporting entirely) ---
+//
+// Deliberately simplified from Dust/Zapier's real cadence, which (per
+// a real screenshot) is actually 4 stages: immediate "sent" notice,
+// ~24h delivery-only update, ~3-day full engagement update, ~7-day
+// final check. Matching that exactly would take real time to get
+// right; this is a stopgap, not a full replacement. Two stages
+// instead: an immediate "sent" notice, then ONE metrics follow-up once
+// the send has matured (reusing the same 24h MIN_AGE_HOURS threshold
+// already proven for Anomalies — enough time for delivery + real
+// engagement to land, without waiting a full week to say anything).
+//
+// Deliberately UNFILTERED — this reports on every real "sent" email,
+// no RC/OP or re-engagement exclusions. Those exclusions exist
+// specifically for anomaly DETECTION (comparing sends against each
+// other); routine reporting isn't a comparison, so there's nothing for
+// an unusual send type to skew. Matches Dust's original behavior,
+// which reported on every send unconditionally, including small
+// internal/test sends per the reference screenshot.
+
+const SEND_REPORT_MIN_AGE_HOURS = 24;
+const SEND_REPORT_LOOKBACK = 30; // most recent N sends considered per run — bounded, not unlimited history
+
+export async function checkAndPostSendReporting(): Promise<{ posted: string[]; skipped: string[] }> {
+  const db = getPool();
+  const posted: string[] = [];
+  const skipped: string[] = [];
+
+  if (!process.env.SLACK_WEBHOOK_URL_MOPS_EMAIL) {
+    skipped.push("all (SLACK_WEBHOOK_URL_MOPS_EMAIL not configured)");
+    return { posted, skipped };
+  }
+
+  let emails: Array<{ id: string; name: string; publishDate: string }>;
+  try {
+    const rawEmails = await fetchMarketingEmailsPaginated(3);
+    emails = rawEmails
+      .filter((e: any) => classifyEmailState(e.state) === "sent" && !!e.publishDate)
+      .sort((a: any, b: any) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime())
+      .slice(0, SEND_REPORT_LOOKBACK)
+      .map((e: any) => ({ id: e.id, name: e.name, publishDate: e.publishDate }));
+  } catch (error) {
+    return { posted, skipped: [`fetch sends failed: ${(error as Error).message}`] };
+  }
+
+  const ageCutoffMs = Date.now() - SEND_REPORT_MIN_AGE_HOURS * 60 * 60 * 1000;
+
+  for (const email of emails) {
+    // Stage 1: immediate "sent" notice — no age requirement, post as soon as we see it.
+    const noticeKey = email.id;
+    if (!(await alreadyAlerted(db, "send_notice", noticeKey))) {
+      const text = `📤 *Email sent* — ${email.name}`;
+      await postToSlack(text);
+      await markAlerted(db, "send_notice", noticeKey);
+      posted.push(`send_notice:${email.id}`);
+    } else {
+      skipped.push(`send_notice:${email.id} (already posted)`);
+    }
+
+    // Stage 2: one metrics follow-up, once the send is old enough to have real numbers.
+    const metricsKey = email.id;
+    const isMatureEnough = new Date(email.publishDate).getTime() <= ageCutoffMs;
+    if (!isMatureEnough) {
+      skipped.push(`send_metrics:${email.id} (too young for metrics yet)`);
+      continue;
+    }
+    if (await alreadyAlerted(db, "send_metrics", metricsKey)) {
+      skipped.push(`send_metrics:${email.id} (already posted)`);
+      continue;
+    }
+    try {
+      const stats = await fetchEmailStats(email.id);
+      const openRate = stats.delivered > 0 ? ((stats.opens / stats.delivered) * 100).toFixed(1) : "0.0";
+      const clickRate = stats.delivered > 0 ? ((stats.clicks / stats.delivered) * 100).toFixed(1) : "0.0";
+      const text =
+        `📊 *Performance* — ${email.name}\n` +
+        `Sent: ${stats.sent} · Delivered: ${stats.delivered}\n` +
+        `Opened: ${stats.opens} (${openRate}%) · Clicked: ${stats.clicks} (${clickRate}%) · Unsubscribed: ${stats.unsubscribed}`;
+      await postToSlack(text);
+      await markAlerted(db, "send_metrics", metricsKey);
+      posted.push(`send_metrics:${email.id}`);
+    } catch (error) {
+      skipped.push(`send_metrics:${email.id} (fetch error: ${(error as Error).message})`);
+    }
   }
 
   return { posted, skipped };

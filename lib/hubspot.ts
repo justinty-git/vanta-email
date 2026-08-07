@@ -421,3 +421,33 @@ export async function computeFatigue(audienceFilter?: { propertyName: string; op
     return { totalMarketable: null, fatigued: null, fatiguedPct: null, threshold: FATIGUE_THRESHOLD, error: (error as Error).message };
   }
 }
+
+// --- Per-email stats (shared by Performance and Slack send-reporting) ---
+export type EmailStats = {
+  sent: number;
+  delivered: number;
+  opens: number;
+  clicks: number;
+  unsubscribed: number;
+};
+
+export async function fetchEmailStats(emailId: string): Promise<EmailStats> {
+  const startTimestamp = new Date("2021-01-01").toISOString();
+  const endTimestamp = new Date().toISOString();
+  const data = await hubspotFetch(
+    `/marketing/v3/emails/statistics/list?emailIds=${encodeURIComponent(
+      emailId
+    )}&startTimestamp=${encodeURIComponent(
+      startTimestamp
+    )}&endTimestamp=${encodeURIComponent(endTimestamp)}`
+  );
+  const counters = data.aggregate?.counters || {};
+  const sent = counters.sent ?? 0;
+  return {
+    sent,
+    delivered: counters.delivered ?? counters.deliveries ?? sent,
+    opens: counters.open ?? 0,
+    clicks: counters.click ?? 0,
+    unsubscribed: counters.unsubscribed ?? 0,
+  };
+}

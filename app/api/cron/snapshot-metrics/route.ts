@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { computeSegmentHealth, computeUnderutilized, computeSegmentSizing, computeSourceHealth, computeFatigue, AUDIENCE_TYPE_FILTERS, sleep } from "@/lib/hubspot";
 import { ensureSchema, getPool } from "@/lib/db";
-import { checkAndPostSlackAlerts } from "@/lib/slack";
+import { checkAndPostSlackAlerts, checkAndPostSendReporting } from "@/lib/slack";
 
 export const dynamic = "force-dynamic";
 
@@ -177,12 +177,25 @@ export async function GET(request: Request) {
       slackAlerts = { posted: [], skipped: [`slack check failed: ${(error as Error).message}`] };
     }
 
+    // Routine send reporting — stopgap while Dust/Zapier is out of
+    // credits. NOTE: the first run after this ships will post a burst
+    // of "sent" notices for the last 30 sends at once (catching up on
+    // everything that went unreported during the outage) — expected,
+    // not a bug.
+    let sendReporting: { posted: string[]; skipped: string[] } = { posted: [], skipped: [] };
+    try {
+      sendReporting = await checkAndPostSendReporting();
+    } catch (error) {
+      sendReporting = { posted: [], skipped: [`send reporting failed: ${(error as Error).message}`] };
+    }
+
     return NextResponse.json({
       status: "ok",
       snapshotDate,
       written,
       skipped,
       slackAlerts,
+      sendReporting,
     });
   } catch (error) {
     return NextResponse.json(
