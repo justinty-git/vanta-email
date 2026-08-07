@@ -201,7 +201,7 @@ export async function checkAndPostSendReporting(): Promise<{ posted: string[]; s
     // Stage 1: immediate "sent" notice — no age requirement, post as soon as we see it.
     const noticeKey = email.id;
     if (!(await alreadyAlerted(db, "send_notice", noticeKey))) {
-      const text = `📤 *Email sent* — ${email.name}`;
+      const text = `*📤 Email sent — ${email.name}*`;
       await postToSlack(text);
       await markAlerted(db, "send_notice", noticeKey);
       posted.push(`send_notice:${email.id}`);
@@ -235,9 +235,12 @@ export async function checkAndPostSendReporting(): Promise<{ posted: string[]; s
         const clickRate = stats.delivered > 0 ? ((stats.clicks / stats.delivered) * 100).toFixed(1) : "0.0";
         const headerLabel = stage.label === "24h" ? "Performance" : "Performance (3-day update)";
         const text =
-          `📊 *${headerLabel}* — ${email.name}\n` +
-          `Sent: ${stats.sent} · Delivered: ${stats.delivered}\n` +
-          `Opened: ${stats.opens} (${openRate}%) · Clicked: ${stats.clicks} (${clickRate}%) · Unsubscribed: ${stats.unsubscribed}`;
+          `*📊 ${headerLabel} — ${email.name}*\n` +
+          `Sent: ${stats.sent}\n` +
+          `Delivered: ${stats.delivered}\n` +
+          `Opened: ${stats.opens} (${openRate}%)\n` +
+          `Clicked: ${stats.clicks} (${clickRate}%)\n` +
+          `Unsubscribed: ${stats.unsubscribed}`;
         await postToSlack(text);
         await markAlerted(db, stage.itemType, email.id);
         posted.push(`${stage.itemType}:${email.id}`);
