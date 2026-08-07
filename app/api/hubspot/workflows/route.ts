@@ -21,8 +21,11 @@ const NURTURE_WORKFLOWS: Array<{ name: string; url: string }> = [
   { name: "[GLOBAL] FY27 | Prospects | Nurture | Funnel | Signal 2", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1851248399/edit" },
   { name: "[NAMER] FY27 | Prospects | Nurture | Funnel | Signal 3", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1851342624/edit" },
   { name: "[GLOBAL] FY27 | Prospects | Nurture | Funnel | Signal 4", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1851343468/edit" },
-  { name: "[GLOBAL] FY27 | Customers | CS | Nurture | Onboarding + SOC 2 Launchpad", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1844417284/edit" },
-  { name: "[GLOBAL] FY27 | Customers | CS | Nurture | Compliance Roadmap", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1845633162/edit" },
+  { name: "[GLOBAL] FY27 | Customers | CS | Nurture | V2 | Onboarding | Path 2 | Compliance Roadmap", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1862801577/edit" },
+  { name: "[GLOBAL] FY27 | Customers | CS | Nurture | V2 | Onboarding | Re-engagement Workshop", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1845633162/edit" },
+  { name: "[GLOBAL] FY27 | Customers | CS | Nurture | V2 | Onboarding | SOC 2 Guide", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1861414455/edit" },
+  { name: "[GLOBAL] FY27 | Customers | CS | Nurture | V2 | Audit Readiness", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1862801679/edit" },
+  { name: "[GLOBAL] FY27 | Customers | CS | Nurture | V2 | Login Sequence", url: "https://app.hubspot.com/workflows/8588479/platform/flow/1863237997/edit" },
 ];
 
 export async function GET() {
