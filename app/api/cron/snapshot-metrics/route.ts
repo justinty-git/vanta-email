@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { computeSegmentHealth, computeUnderutilized, computeSegmentSizing, computeSourceHealth, computeFatigue, AUDIENCE_TYPE_FILTERS } from "@/lib/hubspot";
+import { computeSegmentHealth, computeUnderutilized, computeSegmentSizing, computeSourceHealth, computeFatigue, AUDIENCE_TYPE_FILTERS, sleep } from "@/lib/hubspot";
 import { ensureSchema, getPool } from "@/lib/db";
 import { checkAndPostSlackAlerts } from "@/lib/slack";
 
@@ -97,7 +97,9 @@ export async function GET(request: Request) {
     } catch (error) {
       skipped.push(`underutilized:Global (${(error as Error).message})`);
     }
-    for (const label of ["Prospects", "Customers"] as const) {
+    for (let i = 0; i < (["Prospects", "Customers"] as const).length; i++) {
+      const label = (["Prospects", "Customers"] as const)[i];
+      await sleep(350);
       try {
         const u = await computeUnderutilized(AUDIENCE_TYPE_FILTERS[label]);
         const reached = u.totalMarketable - u.underutilized;
@@ -147,7 +149,9 @@ export async function GET(request: Request) {
     } catch (error) {
       skipped.push(`fatigue:Global (${(error as Error).message})`);
     }
-    for (const label of ["Prospects", "Customers"] as const) {
+    for (let i = 0; i < (["Prospects", "Customers"] as const).length; i++) {
+      const label = (["Prospects", "Customers"] as const)[i];
+      await sleep(350);
       try {
         const f = await computeFatigue(AUDIENCE_TYPE_FILTERS[label]);
         if (f.totalMarketable === null || f.fatigued === null) {
